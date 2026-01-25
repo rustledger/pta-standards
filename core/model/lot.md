@@ -138,6 +138,15 @@ After AVERAGE booking:
 - Date specificity is lost (averaged positions have no specific date)
 - Labels are lost
 
+### AVERAGE_ONLY
+
+Like AVERAGE, but also consolidates lots on augmentation:
+
+- On reduction: Same behavior as AVERAGE
+- On augmentation: Merges new position with existing positions at average cost
+
+This enforces uniform cost treatment throughout an account's lifetime.
+
 ### NONE
 
 Disables booking entirely:
@@ -156,6 +165,8 @@ Cost specifications appear in curly braces `{}` and MAY contain (in any order):
 - **Amount**: `23.00 USD` - per-unit cost
 - **Date**: `2024-04-25` - acquisition date
 - **Label**: `"lot-id"` - user identifier
+- **Merge marker**: `*` - merge all lots at average cost
+- **Commission**: `+9.95 USD` - add to cost basis
 
 ### Examples
 
@@ -165,6 +176,9 @@ Cost specifications appear in curly braces `{}` and MAY contain (in any order):
 {"lot-id"}
 {23.00 USD, 2024-04-25}
 {2024-04-25, 23.00 USD, "lot-id"}
+{500 USD, 2024-01-15, "lot-a"}
+{*}                              ; merge at average cost
+{500 + 9.95 USD}                 ; include commission in cost
 ```
 
 ### For Augmentations

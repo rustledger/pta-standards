@@ -148,6 +148,28 @@ Document files MUST match pattern: `YYYY-MM-DD.description.extension`
 - **Repeatable:** No
 - **Description:** Include thousand separators in number output.
 
+### long_string_maxlines
+
+- **Type:** Integer
+- **Default:** 64
+- **Repeatable:** No
+- **Description:** Line threshold for multi-line string warnings.
+
+---
+
+## Currency Conversion
+
+### conversion_currency
+
+- **Type:** String
+- **Default:** "NOTHING"
+- **Repeatable:** No
+- **Description:** Imaginary currency used for conversions at zero rate. Allows currency exchanges without explicit prices.
+
+```beancount
+option "conversion_currency" "NOTHING"
+```
+
 ---
 
 ## Plugins
