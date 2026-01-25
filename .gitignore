@@ -21,3 +21,6 @@ Thumbs.db
 *.pdf
 railroad/
 generated/
+
+# Reference repos (cloned, not tracked)
+references/
