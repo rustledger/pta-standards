@@ -54,6 +54,25 @@ Lines starting with semicolon are comments:
 
 Non-directive lines are silently ignored, enabling org-mode formatting.
 
+## Transaction Flags
+
+Flags indicate transaction status:
+
+| Flag | Meaning |
+|------|---------|
+| `*` | Complete - "this looks correct" |
+| `!` | Incomplete - needs review, "this looks incorrect" |
+| `txn` | Equivalent to `*` (keyword form) |
+| `P` | Padding - auto-inserted by pad directive |
+
+The `txn` keyword is optional; a flag alone suffices:
+
+```beancount
+2024-01-15 * "Using star flag"
+2024-01-15 txn "Using txn keyword"
+2024-01-15 ! "Pending transaction"
+```
+
 ## Accounts
 
 Account names consist of colon-separated components:
@@ -76,9 +95,10 @@ Every account MUST start with one of five root types:
 
 ### Component Rules
 
-- MUST start with a capital letter or number
-- MAY contain letters, numbers, and dashes
-- MUST NOT contain spaces or special characters
+- First word MUST be one of the five root types
+- Each component MUST begin with a capital letter
+- Subsequent characters MAY be letters, numbers, or dashes
+- MUST NOT contain spaces or special characters other than dash
 
 **Examples:**
 ```
@@ -86,6 +106,7 @@ Assets:US:BofA:Checking
 Assets:US:BofA:Savings
 Expenses:Food:Groceries
 Liabilities:CreditCard:Chase
+Income:Salary:2024
 ```
 
 ## Commodities/Currencies
@@ -171,6 +192,19 @@ pushtag #berlin-trip
 poptag #berlin-trip
 ```
 
+### Metadata Stack
+
+Apply metadata to multiple directives:
+
+```beancount
+pushmeta location: "Berlin"
+2024-04-23 * "Hotel"
+  ...
+2024-04-24 * "Restaurant"
+  ...
+popmeta location:
+```
+
 ## Links
 
 Caret-prefixed identifiers connecting related transactions:
@@ -213,6 +247,15 @@ Key-value pairs attached to directives or postings:
 - Amounts: `100 USD`
 - Booleans: `TRUE`, `FALSE`
 
+### Automatic Metadata
+
+All directives automatically include:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `filename` | String | Source file path |
+| `lineno` | Integer | Line number in source file |
+
 ## Directive Types
 
 | Directive | Purpose |
@@ -251,7 +294,21 @@ include "accounts.beancount"
 include "2024/january.beancount"
 ```
 
-Relative paths resolve to including file's directory.
+### Path Resolution
+
+- Relative paths resolve to the **including file's directory**
+- Absolute paths are used as-is
+- Glob patterns are NOT supported
+
+### Option Scoping
+
+- Options are parsed per-file during include processing
+- Only the **top-level file's options** apply to the final ledger
+- Options in included files are parsed but do not override
+
+### Circular Includes
+
+Circular include dependencies MUST be detected and reported as errors.
 
 ## Plugins
 

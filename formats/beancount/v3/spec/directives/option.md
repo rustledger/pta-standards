@@ -184,6 +184,36 @@ option "conversion_currency" "NOTHING"
 
 ---
 
+## Legacy & Experimental
+
+### use_legacy_fixed_tolerances
+
+- **Type:** Boolean
+- **Default:** TRUE
+- **Repeatable:** No
+- **Description:** Restore legacy fixed tolerance handling. When true, balance/pad use 0.015 and transactions use 0.005.
+
+### experiment_explicit_tolerances
+
+- **Type:** Boolean
+- **Default:** TRUE
+- **Repeatable:** No
+- **Description:** Enable explicit tolerance syntax on balance assertions: `<number> ~ <tolerance> <currency>`.
+
+---
+
+## Deprecated Options
+
+These options are deprecated and SHOULD NOT be used in new files:
+
+| Option | Replacement |
+|--------|-------------|
+| `default_tolerance` | `inferred_tolerance_default` |
+| `tolerance` | No effect; use tolerance options above |
+| `plugin` (as option) | Use `plugin` directive instead |
+
+---
+
 ## Option Value Types
 
 | Type | Format | Example |
