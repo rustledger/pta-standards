@@ -1,0 +1,23 @@
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+target/
+node_modules/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+*.pdf
+railroad/
+generated/
