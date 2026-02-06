@@ -1,0 +1,313 @@
+(* Beancount EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This grammar defines the concrete syntax for Beancount v3.
+ * Semantic validation (account lifecycle, balance checks) is not covered.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *   -     exception
+ *)
+
+(* =========================================================================== *)
+(* TOP LEVEL                                                                   *)
+(* =========================================================================== *)
+
+file = { line, NEWLINE }, [ line ] ;
+
+line = directive
+     | option_directive
+     | include_directive
+     | plugin_directive
+     | pushtag_directive
+     | poptag_directive
+     | pushmeta_directive
+     | popmeta_directive
+     | comment_line
+     | empty_line ;
+
+empty_line = { WHITESPACE } ;
+
+comment_line = { WHITESPACE }, ";", { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* DIRECTIVES                                                                  *)
+(* =========================================================================== *)
+
+directive = date, WHITESPACE, { WHITESPACE }, directive_body,
+            [ trailing_comment ], { NEWLINE, metadata_line } ;
+
+directive_body = transaction
+               | balance
+               | open
+               | close
+               | commodity_directive
+               | pad
+               | event
+               | query
+               | note
+               | document
+               | price
+               | custom ;
+
+(* --------------------------------------------------------------------------- *)
+(* Transaction                                                                 *)
+(* --------------------------------------------------------------------------- *)
+
+transaction = txn_flag,
+              [ WHITESPACE, { WHITESPACE }, txn_strings ],
+              { WHITESPACE, { WHITESPACE }, tags_links },
+              { NEWLINE, ( posting_line | metadata_line ) }- ;
+
+txn_flag = "*" | "!" | "txn" | "P" | "#" ;
+
+txn_strings = string, [ WHITESPACE, { WHITESPACE }, string ] ;
+              (* payee + narration, or just narration *)
+
+posting_line = WHITESPACE, { WHITESPACE }, posting,
+               [ trailing_comment ],
+               { NEWLINE, posting_metadata_line } ;
+
+posting = [ posting_flag ], account,
+          [ WHITESPACE, { WHITESPACE }, amount, [ cost_spec ], [ price_annotation ] ] ;
+
+posting_flag = "*" | "!" ;
+
+cost_spec = { WHITESPACE }, "{", { WHITESPACE }, [ cost_comp_list ], { WHITESPACE }, "}"
+          | { WHITESPACE }, "{{", { WHITESPACE }, [ cost_comp_list ], { WHITESPACE }, "}}" ;
+          (* single braces = per-unit cost, double braces = total cost *)
+
+cost_comp_list = cost_comp, { { WHITESPACE }, ",", { WHITESPACE }, cost_comp } ;
+
+cost_comp = amount        (* cost per unit *)
+          | date          (* acquisition date *)
+          | string        (* lot label *)
+          | "*" ;         (* merge cost *)
+
+price_annotation = { WHITESPACE }, ( "@@" | "@" ), { WHITESPACE }, amount ;
+                   (* @@ = total price, @ = per-unit price *)
+
+(* --------------------------------------------------------------------------- *)
+(* Balance Assertion                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+balance = "balance", WHITESPACE, { WHITESPACE }, account,
+          WHITESPACE, { WHITESPACE }, amount_with_tolerance ;
+
+amount_with_tolerance = amount, [ { WHITESPACE }, "~", { WHITESPACE }, number ] ;
+
+(* --------------------------------------------------------------------------- *)
+(* Open Account                                                                *)
+(* --------------------------------------------------------------------------- *)
+
+open = "open", WHITESPACE, { WHITESPACE }, account,
+       [ WHITESPACE, { WHITESPACE }, currency_list ],
+       [ WHITESPACE, { WHITESPACE }, string ] ;
+       (* optional currency constraints and booking method *)
+
+currency_list = currency, { { WHITESPACE }, ",", { WHITESPACE }, currency } ;
+
+(* --------------------------------------------------------------------------- *)
+(* Close Account                                                               *)
+(* --------------------------------------------------------------------------- *)
+
+close = "close", WHITESPACE, { WHITESPACE }, account ;
+
+(* --------------------------------------------------------------------------- *)
+(* Commodity Declaration                                                       *)
+(* --------------------------------------------------------------------------- *)
+
+commodity_directive = "commodity", WHITESPACE, { WHITESPACE }, currency ;
+
+(* --------------------------------------------------------------------------- *)
+(* Pad                                                                         *)
+(* --------------------------------------------------------------------------- *)
+
+pad = "pad", WHITESPACE, { WHITESPACE }, account,
+      WHITESPACE, { WHITESPACE }, account ;
+
+(* --------------------------------------------------------------------------- *)
+(* Event                                                                       *)
+(* --------------------------------------------------------------------------- *)
+
+event = "event", WHITESPACE, { WHITESPACE }, string,
+        WHITESPACE, { WHITESPACE }, string ;
+
+(* --------------------------------------------------------------------------- *)
+(* Query                                                                       *)
+(* --------------------------------------------------------------------------- *)
+
+query = "query", WHITESPACE, { WHITESPACE }, string,
+        WHITESPACE, { WHITESPACE }, string ;
+
+(* --------------------------------------------------------------------------- *)
+(* Note                                                                        *)
+(* --------------------------------------------------------------------------- *)
+
+note = "note", WHITESPACE, { WHITESPACE }, account,
+       WHITESPACE, { WHITESPACE }, string ;
+
+(* --------------------------------------------------------------------------- *)
+(* Document                                                                    *)
+(* --------------------------------------------------------------------------- *)
+
+document = "document", WHITESPACE, { WHITESPACE }, account,
+           WHITESPACE, { WHITESPACE }, string,
+           { WHITESPACE, { WHITESPACE }, tags_links } ;
+
+(* --------------------------------------------------------------------------- *)
+(* Price                                                                       *)
+(* --------------------------------------------------------------------------- *)
+
+price = "price", WHITESPACE, { WHITESPACE }, currency,
+        WHITESPACE, { WHITESPACE }, amount ;
+
+(* --------------------------------------------------------------------------- *)
+(* Custom                                                                      *)
+(* --------------------------------------------------------------------------- *)
+
+custom = "custom", WHITESPACE, { WHITESPACE }, string,
+         { WHITESPACE, { WHITESPACE }, custom_value } ;
+
+custom_value = string | date | boolean | amount | account | number ;
+
+boolean = "TRUE" | "FALSE" ;
+
+(* =========================================================================== *)
+(* META DIRECTIVES (undated)                                                   *)
+(* =========================================================================== *)
+
+option_directive = "option", WHITESPACE, { WHITESPACE }, string,
+                   WHITESPACE, { WHITESPACE }, string, [ trailing_comment ] ;
+
+include_directive = "include", WHITESPACE, { WHITESPACE }, string,
+                    [ trailing_comment ] ;
+
+plugin_directive = "plugin", WHITESPACE, { WHITESPACE }, string,
+                   [ WHITESPACE, { WHITESPACE }, string ], [ trailing_comment ] ;
+
+pushtag_directive = "pushtag", WHITESPACE, { WHITESPACE }, tag,
+                    [ trailing_comment ] ;
+
+poptag_directive = "poptag", WHITESPACE, { WHITESPACE }, tag,
+                   [ trailing_comment ] ;
+
+pushmeta_directive = "pushmeta", WHITESPACE, { WHITESPACE }, metadata_key, ":",
+                     { WHITESPACE }, metadata_value, [ trailing_comment ] ;
+
+popmeta_directive = "popmeta", WHITESPACE, { WHITESPACE }, metadata_key, ":",
+                    [ trailing_comment ] ;
+
+(* =========================================================================== *)
+(* METADATA                                                                    *)
+(* =========================================================================== *)
+
+metadata_line = WHITESPACE, { WHITESPACE }, metadata_key, ":",
+                { WHITESPACE }, metadata_value, [ trailing_comment ] ;
+
+posting_metadata_line = WHITESPACE, { WHITESPACE }, WHITESPACE, { WHITESPACE },
+                        metadata_key, ":", { WHITESPACE }, metadata_value,
+                        [ trailing_comment ] ;
+                        (* posting metadata has extra indentation *)
+
+metadata_key = ASCII_ALPHA_LOWER, { ASCII_ALPHANUMERIC | "-" | "_" } ;
+
+metadata_value = string
+               | account
+               | currency
+               | date
+               | tag
+               | amount
+               | number ;
+
+(* =========================================================================== *)
+(* PRIMITIVES (Lexical Rules)                                                  *)
+(* =========================================================================== *)
+
+(* Date: YYYY-MM-DD or YYYY/MM/DD *)
+date = ASCII_DIGIT, ASCII_DIGIT, ASCII_DIGIT, ASCII_DIGIT,
+       ( "-" | "/" ),
+       ASCII_DIGIT, ASCII_DIGIT,
+       ( "-" | "/" ),
+       ASCII_DIGIT, ASCII_DIGIT ;
+
+(* Account: colon-separated components starting with root type *)
+account = account_type, { ":", account_component }- ;
+
+account_type = "Assets" | "Liabilities" | "Equity" | "Income" | "Expenses" ;
+
+account_component = ( ASCII_ALPHA_UPPER | ASCII_DIGIT ),
+                    { ASCII_ALPHANUMERIC | "-" } ;
+
+(* Currency/Commodity: uppercase identifier *)
+(* Note: Lexer must verify followed by delimiter (whitespace, comma, etc.) *)
+currency = ASCII_ALPHA_UPPER,
+           { ASCII_ALPHA_UPPER | ASCII_DIGIT | "'" | "." | "_" | "-" } ;
+
+(* Amount: number followed by currency *)
+amount = number, WHITESPACE, { WHITESPACE }, currency ;
+
+(* Number: decimal with optional sign and digit grouping *)
+number = [ "-" ], number_unsigned ;
+
+number_unsigned = ( ASCII_DIGIT | "," ), { ASCII_DIGIT | "," }, [ ".", { ASCII_DIGIT }- ]
+                | ".", { ASCII_DIGIT }- ;
+
+(* String: double-quoted, supports escapes *)
+string = '"', { string_content }, '"' ;
+
+string_content = ANY - ( '"' | "\" )
+               | "\", ANY ;
+
+(* Tag: hash followed by identifier *)
+tag = "#", { ASCII_ALPHANUMERIC | "-" | "_" | "/" }- ;
+
+(* Link: caret followed by identifier *)
+link = "^", { ASCII_ALPHANUMERIC | "-" | "_" | "/" }- ;
+
+tags_links = { tag | link }- ;
+
+(* =========================================================================== *)
+(* WHITESPACE & COMMENTS                                                       *)
+(* =========================================================================== *)
+
+trailing_comment = { WHITESPACE }, ";", { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+ASCII_DIGIT = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ASCII_ALPHA_UPPER = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+                  | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+                  | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+ASCII_ALPHA_LOWER = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+                  | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+                  | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+ASCII_ALPHANUMERIC = ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER | ASCII_DIGIT ;
+
+(* =========================================================================== *)
+(* EXPRESSION GRAMMAR (Optional - for arithmetic in amounts)                   *)
+(* =========================================================================== *)
+
+(* Uncomment to support expressions like: (1 + 2) * 3.5
+expr = term, { ( "+" | "-" ), term } ;
+term = factor, { ( "*" | "/" ), factor } ;
+factor = number | "(", expr, ")" | "-", factor ;
+*)
