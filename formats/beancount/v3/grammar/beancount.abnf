@@ -1,0 +1,289 @@
+; Beancount ABNF Grammar
+; RFC 5234 Augmented BNF notation
+;
+; This grammar defines the concrete syntax for Beancount v3.
+; Semantic validation (account lifecycle, balance checks) is not covered.
+;
+; Notation (RFC 5234):
+;   =       definition
+;   =/      incremental alternation
+;   /       alternation
+;   [ ]     optional (0 or 1)
+;   *       repetition (* = 0+, 1* = 1+, 2*4 = 2-4)
+;   ( )     grouping
+;   ""      case-insensitive literal
+;   %s""    case-sensitive literal
+;   %x      hexadecimal character
+;   ;       comment
+
+; ===========================================================================
+; TOP LEVEL
+; ===========================================================================
+
+file            = *( line NEWLINE ) [ line ]
+
+line            = directive
+                / option-directive
+                / include-directive
+                / plugin-directive
+                / pushtag-directive
+                / poptag-directive
+                / pushmeta-directive
+                / popmeta-directive
+                / comment-line
+                / empty-line
+
+empty-line      = *WSP
+
+comment-line    = *WSP ";" *( VCHAR / WSP )
+
+; ===========================================================================
+; DIRECTIVES
+; ===========================================================================
+
+directive       = date 1*WSP directive-body [ trailing-comment ]
+                  *( NEWLINE metadata-line )
+
+directive-body  = transaction
+                / balance
+                / open
+                / close
+                / commodity-directive
+                / pad
+                / event
+                / query-directive
+                / note
+                / document
+                / price
+                / custom
+
+; ---------------------------------------------------------------------------
+; Transaction
+; ---------------------------------------------------------------------------
+
+transaction     = txn-flag [ 1*WSP txn-strings ] *( 1*WSP tags-links )
+                  1*( NEWLINE ( posting-line / metadata-line ) )
+
+txn-flag        = %s"*" / %s"!" / %s"txn" / %s"P" / %s"#"
+
+txn-strings     = string [ 1*WSP string ]
+                  ; payee + narration, or just narration
+
+posting-line    = 1*WSP posting [ trailing-comment ]
+                  *( NEWLINE posting-metadata-line )
+
+posting         = [ posting-flag ] account
+                  [ 1*WSP amount [ cost-spec ] [ price-annotation ] ]
+
+posting-flag    = %s"*" / %s"!"
+
+cost-spec       = *WSP "{" *WSP [ cost-comp-list ] *WSP "}"
+                / *WSP "{{" *WSP [ cost-comp-list ] *WSP "}}"
+                  ; single braces = per-unit, double = total cost
+
+cost-comp-list  = cost-comp *( *WSP "," *WSP cost-comp )
+
+cost-comp       = amount          ; cost per unit
+                / date            ; acquisition date
+                / string          ; lot label
+                / %s"*"           ; merge cost
+
+price-annotation = *WSP ( "@@" / "@" ) *WSP amount
+                   ; @@ = total price, @ = per-unit price
+
+; ---------------------------------------------------------------------------
+; Balance Assertion
+; ---------------------------------------------------------------------------
+
+balance         = %s"balance" 1*WSP account 1*WSP amount-with-tolerance
+
+amount-with-tolerance = amount [ *WSP "~" *WSP number ]
+
+; ---------------------------------------------------------------------------
+; Open Account
+; ---------------------------------------------------------------------------
+
+open            = %s"open" 1*WSP account [ 1*WSP currency-list ]
+                  [ 1*WSP string ]
+                  ; optional currency constraints and booking method
+
+currency-list   = currency *( *WSP "," *WSP currency )
+
+; ---------------------------------------------------------------------------
+; Close Account
+; ---------------------------------------------------------------------------
+
+close           = %s"close" 1*WSP account
+
+; ---------------------------------------------------------------------------
+; Commodity Declaration
+; ---------------------------------------------------------------------------
+
+commodity-directive = %s"commodity" 1*WSP currency
+
+; ---------------------------------------------------------------------------
+; Pad
+; ---------------------------------------------------------------------------
+
+pad             = %s"pad" 1*WSP account 1*WSP account
+
+; ---------------------------------------------------------------------------
+; Event
+; ---------------------------------------------------------------------------
+
+event           = %s"event" 1*WSP string 1*WSP string
+
+; ---------------------------------------------------------------------------
+; Query
+; ---------------------------------------------------------------------------
+
+query-directive = %s"query" 1*WSP string 1*WSP string
+
+; ---------------------------------------------------------------------------
+; Note
+; ---------------------------------------------------------------------------
+
+note            = %s"note" 1*WSP account 1*WSP string
+
+; ---------------------------------------------------------------------------
+; Document
+; ---------------------------------------------------------------------------
+
+document        = %s"document" 1*WSP account 1*WSP string
+                  *( 1*WSP tags-links )
+
+; ---------------------------------------------------------------------------
+; Price
+; ---------------------------------------------------------------------------
+
+price           = %s"price" 1*WSP currency 1*WSP amount
+
+; ---------------------------------------------------------------------------
+; Custom
+; ---------------------------------------------------------------------------
+
+custom          = %s"custom" 1*WSP string *( 1*WSP custom-value )
+
+custom-value    = string / date / boolean / amount / account / number
+
+boolean         = %s"TRUE" / %s"FALSE"
+
+; ===========================================================================
+; META DIRECTIVES (undated)
+; ===========================================================================
+
+option-directive  = %s"option" 1*WSP string 1*WSP string [ trailing-comment ]
+
+include-directive = %s"include" 1*WSP string [ trailing-comment ]
+
+plugin-directive  = %s"plugin" 1*WSP string [ 1*WSP string ] [ trailing-comment ]
+
+pushtag-directive = %s"pushtag" 1*WSP tag [ trailing-comment ]
+
+poptag-directive  = %s"poptag" 1*WSP tag [ trailing-comment ]
+
+pushmeta-directive = %s"pushmeta" 1*WSP metadata-key ":" *WSP metadata-value
+                     [ trailing-comment ]
+
+popmeta-directive  = %s"popmeta" 1*WSP metadata-key ":" [ trailing-comment ]
+
+; ===========================================================================
+; METADATA
+; ===========================================================================
+
+metadata-line   = 1*WSP metadata-key ":" *WSP metadata-value [ trailing-comment ]
+
+posting-metadata-line = 2*WSP metadata-key ":" *WSP metadata-value
+                        [ trailing-comment ]
+                        ; posting metadata has extra indentation
+
+metadata-key    = LALPHA *( LALPHA / DIGIT / "-" / "_" )
+
+metadata-value  = string
+                / account
+                / currency
+                / date
+                / tag
+                / amount
+                / number
+
+; ===========================================================================
+; PRIMITIVES (Lexical Rules)
+; ===========================================================================
+
+; Date: YYYY-MM-DD or YYYY/MM/DD
+date            = 4DIGIT ( "-" / "/" ) 2DIGIT ( "-" / "/" ) 2DIGIT
+
+; Account: colon-separated components starting with root type
+account         = account-type 1*( ":" account-component )
+
+account-type    = %s"Assets"
+                / %s"Liabilities"
+                / %s"Equity"
+                / %s"Income"
+                / %s"Expenses"
+
+account-component = ( UALPHA / DIGIT ) *( ALPHA / DIGIT / "-" )
+
+; Currency/Commodity: uppercase identifier
+; Note: Lexer must verify followed by delimiter
+currency        = UALPHA *( UALPHA / DIGIT / "'" / "." / "_" / "-" )
+
+; Amount: number followed by currency
+amount          = number 1*WSP currency
+
+; Number: decimal with optional sign and digit grouping
+number          = [ "-" ] number-unsigned
+
+number-unsigned = 1*( DIGIT / "," ) [ "." 1*DIGIT ]
+                / "." 1*DIGIT
+
+; String: double-quoted, supports escapes
+string          = DQUOTE *string-content DQUOTE
+
+string-content  = %x20-21        ; space and !
+                / %x23-5B        ; # through [
+                / %x5D-7E        ; ] through ~
+                / %x80-10FFFF    ; UTF-8 continuation
+                / "\" %x00-7F    ; escaped character
+
+; Tag: hash followed by identifier
+tag             = "#" 1*( ALPHA / DIGIT / "-" / "_" / "/" )
+
+; Link: caret followed by identifier
+link            = "^" 1*( ALPHA / DIGIT / "-" / "_" / "/" )
+
+tags-links      = 1*( tag / link )
+
+; ===========================================================================
+; WHITESPACE & COMMENTS
+; ===========================================================================
+
+trailing-comment = *WSP ";" *( VCHAR / WSP )
+
+; ===========================================================================
+; CORE RULES (RFC 5234 Standard)
+; ===========================================================================
+
+ALPHA           = %x41-5A / %x61-7A     ; A-Z / a-z
+UALPHA          = %x41-5A               ; A-Z (uppercase only)
+LALPHA          = %x61-7A               ; a-z (lowercase only)
+DIGIT           = %x30-39               ; 0-9
+DQUOTE          = %x22                  ; "
+SP              = %x20                  ; space
+HTAB            = %x09                  ; horizontal tab
+WSP             = SP / HTAB             ; whitespace
+VCHAR           = %x21-7E               ; visible characters
+CR              = %x0D                  ; carriage return
+LF              = %x0A                  ; line feed
+CRLF            = CR LF
+NEWLINE         = CRLF / LF / CR        ; any line ending
+
+; ===========================================================================
+; EXPRESSION GRAMMAR (Optional - for arithmetic in amounts)
+; ===========================================================================
+
+; Uncomment to support expressions like: (1 + 2) * 3.5
+; expr   = term *( ( "+" / "-" ) term )
+; term   = factor *( ( "*" / "/" ) factor )
+; factor = number / "(" expr ")" / "-" factor
