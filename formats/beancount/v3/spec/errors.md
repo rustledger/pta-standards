@@ -415,3 +415,144 @@ Validation occurs in multiple phases:
 - E8001: DOCUMENT_FILE_NOT_FOUND
 - E5001: CURRENCY_NOT_DECLARED
 - E10002: DATE_IN_FUTURE
+
+---
+
+## Machine-Readable Format
+
+Implementations SHOULD support structured error output for tooling integration.
+
+### JSON Format
+
+```json
+{
+  "errors": [
+    {
+      "code": "E3001",
+      "severity": "error",
+      "message": "Transaction does not balance: residual 50 USD",
+      "location": {
+        "file": "ledger.beancount",
+        "line": 15,
+        "column": 1,
+        "span": {
+          "start": 342,
+          "end": 425
+        }
+      },
+      "date": "2024-01-15",
+      "context": {
+        "expected": "0 USD",
+        "actual": "50 USD",
+        "currency": "USD"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "errors": 1,
+    "warnings": 0,
+    "info": 0
+  }
+}
+```
+
+### SARIF Format
+
+For IDE integration, implementations MAY output [SARIF](https://sarifweb.azurewebsites.net/) (Static Analysis Results Interchange Format):
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [{
+    "tool": {
+      "driver": {
+        "name": "beancount",
+        "version": "3.0.0",
+        "rules": [{
+          "id": "E3001",
+          "name": "TransactionUnbalanced",
+          "shortDescription": {
+            "text": "Transaction does not balance"
+          },
+          "helpUri": "https://beancount.io/errors/E3001"
+        }]
+      }
+    },
+    "results": [{
+      "ruleId": "E3001",
+      "level": "error",
+      "message": {
+        "text": "Transaction does not balance: residual 50 USD"
+      },
+      "locations": [{
+        "physicalLocation": {
+          "artifactLocation": {
+            "uri": "ledger.beancount"
+          },
+          "region": {
+            "startLine": 15,
+            "startColumn": 1
+          }
+        }
+      }]
+    }]
+  }]
+}
+```
+
+---
+
+## Error Message Style Guide
+
+Error messages SHOULD:
+
+1. **Be specific**: Include actual values, not just "invalid"
+2. **Be actionable**: Suggest how to fix when possible
+3. **Reference locations**: Include file, line, column
+4. **Use consistent terminology**: Match spec terminology
+5. **Avoid jargon**: Prefer "balance assertion failed" over "invariant violation"
+
+### Message Format
+
+```
+[code] category: brief description
+  --> file:line:column
+  |
+N | <source line>
+  | ^^^^^^^^^^^^^ detailed explanation
+  |
+  = key: value (context)
+  = hint: suggestion for fixing
+```
+
+### Example
+
+```
+[E3001] error: transaction does not balance
+  --> ledger.beancount:15:1
+   |
+15 | 2024-01-15 * "Coffee"
+   | ^^^^^^^^^^^^^^^^^^^^^ residual amount: 50 USD
+   |
+   = expected: 0 USD
+   = actual: 50 USD
+   = hint: add a posting for -50 USD to balance
+```
+
+---
+
+## Extensibility
+
+Implementations MAY define additional error codes:
+
+| Range | Reserved For |
+|-------|--------------|
+| E0001-E0999 | Reserved (do not use) |
+| E1001-E10999 | Standard errors (this spec) |
+| E11000-E19999 | Implementation-specific |
+| E20000-E29999 | Plugin errors |
+| E30000+ | User-defined |
+
+Custom errors MUST use codes outside the standard range and SHOULD document their meaning.

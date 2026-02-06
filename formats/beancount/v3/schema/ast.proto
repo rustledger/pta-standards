@@ -1,0 +1,293 @@
+// Beancount AST Protocol Buffers Schema
+// For binary serialization and gRPC APIs
+//
+// Version: v3
+// License: MIT
+
+syntax = "proto3";
+
+package beancount.v3;
+
+option go_package = "github.com/pta-standards/beancount/v3/ast";
+option java_package = "org.ptastandards.beancount.v3.ast";
+option java_multiple_files = true;
+
+// =============================================================================
+// TOP LEVEL
+// =============================================================================
+
+// Complete parsed ledger
+message Ledger {
+  Options options = 1;
+  repeated Plugin plugins = 2;
+  repeated Directive directives = 3;
+  repeated Error errors = 4;
+}
+
+// Ledger-wide options
+message Options {
+  optional string title = 1;
+  repeated string operating_currency = 2;
+  optional string account_previous_balances = 3;
+  optional string account_previous_earnings = 4;
+  optional string account_previous_conversions = 5;
+  optional string account_current_earnings = 6;
+  optional string account_current_conversions = 7;
+  optional string account_unrealized_gains = 8;
+  optional string account_rounding = 9;
+  optional BookingMethod booking_method = 10;
+  map<string, string> inferred_tolerance_default = 11;
+  optional string inferred_tolerance_multiplier = 12;
+  optional bool infer_tolerance_from_cost = 13;
+  repeated string documents = 14;
+  optional string name_assets = 15;
+  optional string name_liabilities = 16;
+  optional string name_equity = 17;
+  optional string name_income = 18;
+  optional string name_expenses = 19;
+}
+
+// Plugin declaration
+message Plugin {
+  string name = 1;
+  optional string config = 2;
+}
+
+// =============================================================================
+// DIRECTIVES
+// =============================================================================
+
+// Union of all directive types
+message Directive {
+  oneof directive {
+    Transaction transaction = 1;
+    Balance balance = 2;
+    Open open = 3;
+    Close close = 4;
+    Commodity commodity = 5;
+    Pad pad = 6;
+    Event event = 7;
+    Query query = 8;
+    Note note = 9;
+    Document document = 10;
+    Price price = 11;
+    Custom custom = 12;
+  }
+}
+
+// Transaction directive
+message Transaction {
+  Date date = 1;
+  TxnFlag flag = 2;
+  optional string payee = 3;
+  string narration = 4;
+  repeated string tags = 5;
+  repeated string links = 6;
+  map<string, MetaValue> meta = 7;
+  repeated Posting postings = 8;
+}
+
+// Posting within a transaction
+message Posting {
+  optional PostingFlag flag = 1;
+  string account = 2;
+  optional Amount units = 3;
+  optional CostSpec cost = 4;
+  optional Amount price = 5;
+  map<string, MetaValue> meta = 6;
+}
+
+// Balance assertion directive
+message Balance {
+  Date date = 1;
+  string account = 2;
+  Amount amount = 3;
+  optional string tolerance = 4;  // Decimal as string
+  map<string, MetaValue> meta = 5;
+}
+
+// Open account directive
+message Open {
+  Date date = 1;
+  string account = 2;
+  repeated string currencies = 3;
+  optional BookingMethod booking = 4;
+  map<string, MetaValue> meta = 5;
+}
+
+// Close account directive
+message Close {
+  Date date = 1;
+  string account = 2;
+  map<string, MetaValue> meta = 3;
+}
+
+// Commodity declaration directive
+message Commodity {
+  Date date = 1;
+  string currency = 2;
+  map<string, MetaValue> meta = 3;
+}
+
+// Pad directive
+message Pad {
+  Date date = 1;
+  string account = 2;
+  string source_account = 3;
+  map<string, MetaValue> meta = 4;
+}
+
+// Event directive
+message Event {
+  Date date = 1;
+  string name = 2;
+  string value = 3;
+  map<string, MetaValue> meta = 4;
+}
+
+// Query directive (stored query)
+message Query {
+  Date date = 1;
+  string name = 2;
+  string query_string = 3;
+  map<string, MetaValue> meta = 4;
+}
+
+// Note directive
+message Note {
+  Date date = 1;
+  string account = 2;
+  string comment = 3;
+  repeated string tags = 4;
+  repeated string links = 5;
+  map<string, MetaValue> meta = 6;
+}
+
+// Document directive
+message Document {
+  Date date = 1;
+  string account = 2;
+  string filename = 3;
+  repeated string tags = 4;
+  repeated string links = 5;
+  map<string, MetaValue> meta = 6;
+}
+
+// Price directive
+message Price {
+  Date date = 1;
+  string currency = 2;
+  Amount amount = 3;
+  map<string, MetaValue> meta = 4;
+}
+
+// Custom directive
+message Custom {
+  Date date = 1;
+  string name = 2;
+  repeated CustomValue values = 3;
+  map<string, MetaValue> meta = 4;
+}
+
+// =============================================================================
+// PRIMITIVES
+// =============================================================================
+
+// Amount: number with currency
+message Amount {
+  string number = 1;    // Decimal as string to preserve precision
+  string currency = 2;
+}
+
+// Cost specification for positions
+message CostSpec {
+  optional string number_per = 1;    // Per-unit cost
+  optional string number_total = 2;  // Total cost
+  optional string currency = 3;
+  optional Date date = 4;
+  optional string label = 5;
+  optional bool merge = 6;
+}
+
+// Date (YYYY-MM-DD)
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+// Custom directive value types
+message CustomValue {
+  oneof value {
+    string string_value = 1;
+    string number_value = 2;  // Decimal as string
+    bool bool_value = 3;
+    Date date_value = 4;
+    Amount amount_value = 5;
+    string account_value = 6;
+  }
+}
+
+// Metadata value types
+message MetaValue {
+  oneof value {
+    string string_value = 1;
+    string number_value = 2;  // Decimal as string
+    bool bool_value = 3;
+    Date date_value = 4;
+    Amount amount_value = 5;
+    string account_value = 6;
+    string currency_value = 7;
+    string tag_value = 8;
+  }
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+// Transaction status flag
+enum TxnFlag {
+  TXN_FLAG_UNSPECIFIED = 0;
+  TXN_FLAG_COMPLETE = 1;      // *
+  TXN_FLAG_INCOMPLETE = 2;    // !
+  TXN_FLAG_PADDING = 3;       // P
+  TXN_FLAG_SUMMARIZE = 4;     // S
+  TXN_FLAG_TRANSFER = 5;      // T
+}
+
+// Posting status flag
+enum PostingFlag {
+  POSTING_FLAG_UNSPECIFIED = 0;
+  POSTING_FLAG_COMPLETE = 1;    // *
+  POSTING_FLAG_INCOMPLETE = 2;  // !
+}
+
+// Booking method for lot matching
+enum BookingMethod {
+  BOOKING_METHOD_UNSPECIFIED = 0;
+  BOOKING_METHOD_STRICT = 1;
+  BOOKING_METHOD_FIFO = 2;
+  BOOKING_METHOD_LIFO = 3;
+  BOOKING_METHOD_HIFO = 4;
+  BOOKING_METHOD_AVERAGE = 5;
+  BOOKING_METHOD_NONE = 6;
+}
+
+// =============================================================================
+// ERRORS
+// =============================================================================
+
+// Parse or validation error
+message Error {
+  SourceLocation source = 1;
+  string message = 2;
+  optional Directive entry = 3;
+}
+
+// Source file location
+message SourceLocation {
+  string filename = 1;
+  int32 lineno = 2;
+  optional int32 column = 3;
+}

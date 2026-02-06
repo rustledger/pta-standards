@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/beancount/v3/ast.schema.json",
+  "title": "Beancount AST",
+  "description": "JSON Schema for Beancount v3 Abstract Syntax Tree",
+  "type": "object",
+  "required": ["directives"],
+  "properties": {
+    "options": {
+      "$ref": "#/$defs/Options"
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Plugin"
+      }
+    },
+    "directives": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Directive"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Error"
+      }
+    }
+  },
+  "$defs": {
+    "Options": {
+      "type": "object",
+      "description": "Ledger-wide options from 'option' directives",
+      "properties": {
+        "title": { "type": "string" },
+        "operating_currency": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "account_previous_balances": { "type": "string" },
+        "account_previous_earnings": { "type": "string" },
+        "account_previous_conversions": { "type": "string" },
+        "account_current_earnings": { "type": "string" },
+        "account_current_conversions": { "type": "string" },
+        "account_unrealized_gains": { "type": "string" },
+        "account_rounding": { "type": "string" },
+        "booking_method": { "$ref": "#/$defs/BookingMethod" },
+        "inferred_tolerance_default": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "inferred_tolerance_multiplier": { "type": "string" },
+        "infer_tolerance_from_cost": { "type": "boolean" },
+        "documents": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "name_assets": { "type": "string" },
+        "name_liabilities": { "type": "string" },
+        "name_equity": { "type": "string" },
+        "name_income": { "type": "string" },
+        "name_expenses": { "type": "string" },
+        "long_string_maxlines": { "type": "integer" },
+        "insert_pythonpath": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "Plugin": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Plugin module name"
+        },
+        "config": {
+          "type": "string",
+          "description": "Optional configuration string"
+        }
+      }
+    },
+    "Directive": {
+      "oneOf": [
+        { "$ref": "#/$defs/Transaction" },
+        { "$ref": "#/$defs/Balance" },
+        { "$ref": "#/$defs/Open" },
+        { "$ref": "#/$defs/Close" },
+        { "$ref": "#/$defs/Commodity" },
+        { "$ref": "#/$defs/Pad" },
+        { "$ref": "#/$defs/Event" },
+        { "$ref": "#/$defs/Query" },
+        { "$ref": "#/$defs/Note" },
+        { "$ref": "#/$defs/Document" },
+        { "$ref": "#/$defs/Price" },
+        { "$ref": "#/$defs/Custom" }
+      ]
+    },
+    "Transaction": {
+      "type": "object",
+      "required": ["type", "date", "flag", "postings"],
+      "properties": {
+        "type": { "const": "transaction" },
+        "date": { "$ref": "#/$defs/Date" },
+        "flag": { "$ref": "#/$defs/TxnFlag" },
+        "payee": { "type": ["string", "null"] },
+        "narration": { "type": "string" },
+        "tags": { "$ref": "#/$defs/Tags" },
+        "links": { "$ref": "#/$defs/Links" },
+        "meta": { "$ref": "#/$defs/Metadata" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" },
+          "minItems": 1
+        }
+      }
+    },
+    "Posting": {
+      "type": "object",
+      "required": ["account"],
+      "properties": {
+        "flag": { "$ref": "#/$defs/PostingFlag" },
+        "account": { "$ref": "#/$defs/Account" },
+        "units": { "$ref": "#/$defs/Amount" },
+        "cost": { "$ref": "#/$defs/CostSpec" },
+        "price": { "$ref": "#/$defs/Amount" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Balance": {
+      "type": "object",
+      "required": ["type", "date", "account", "amount"],
+      "properties": {
+        "type": { "const": "balance" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "tolerance": { "$ref": "#/$defs/Decimal" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Open": {
+      "type": "object",
+      "required": ["type", "date", "account"],
+      "properties": {
+        "type": { "const": "open" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "currencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Currency" }
+        },
+        "booking": { "$ref": "#/$defs/BookingMethod" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Close": {
+      "type": "object",
+      "required": ["type", "date", "account"],
+      "properties": {
+        "type": { "const": "close" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Commodity": {
+      "type": "object",
+      "required": ["type", "date", "currency"],
+      "properties": {
+        "type": { "const": "commodity" },
+        "date": { "$ref": "#/$defs/Date" },
+        "currency": { "$ref": "#/$defs/Currency" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Pad": {
+      "type": "object",
+      "required": ["type", "date", "account", "source_account"],
+      "properties": {
+        "type": { "const": "pad" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "source_account": { "$ref": "#/$defs/Account" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Event": {
+      "type": "object",
+      "required": ["type", "date", "name", "value"],
+      "properties": {
+        "type": { "const": "event" },
+        "date": { "$ref": "#/$defs/Date" },
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Query": {
+      "type": "object",
+      "required": ["type", "date", "name", "query_string"],
+      "properties": {
+        "type": { "const": "query" },
+        "date": { "$ref": "#/$defs/Date" },
+        "name": { "type": "string" },
+        "query_string": { "type": "string" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Note": {
+      "type": "object",
+      "required": ["type", "date", "account", "comment"],
+      "properties": {
+        "type": { "const": "note" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "comment": { "type": "string" },
+        "tags": { "$ref": "#/$defs/Tags" },
+        "links": { "$ref": "#/$defs/Links" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Document": {
+      "type": "object",
+      "required": ["type", "date", "account", "filename"],
+      "properties": {
+        "type": { "const": "document" },
+        "date": { "$ref": "#/$defs/Date" },
+        "account": { "$ref": "#/$defs/Account" },
+        "filename": { "type": "string" },
+        "tags": { "$ref": "#/$defs/Tags" },
+        "links": { "$ref": "#/$defs/Links" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Price": {
+      "type": "object",
+      "required": ["type", "date", "currency", "amount"],
+      "properties": {
+        "type": { "const": "price" },
+        "date": { "$ref": "#/$defs/Date" },
+        "currency": { "$ref": "#/$defs/Currency" },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "Custom": {
+      "type": "object",
+      "required": ["type", "date", "name", "values"],
+      "properties": {
+        "type": { "const": "custom" },
+        "date": { "$ref": "#/$defs/Date" },
+        "name": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CustomValue" }
+        },
+        "meta": { "$ref": "#/$defs/Metadata" }
+      }
+    },
+    "CustomValue": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "$ref": "#/$defs/Date" },
+        { "$ref": "#/$defs/Amount" },
+        { "$ref": "#/$defs/Account" }
+      ]
+    },
+    "Amount": {
+      "type": "object",
+      "required": ["number", "currency"],
+      "properties": {
+        "number": { "$ref": "#/$defs/Decimal" },
+        "currency": { "$ref": "#/$defs/Currency" }
+      },
+      "description": "A quantity with currency denomination"
+    },
+    "CostSpec": {
+      "type": "object",
+      "description": "Cost specification for a posting",
+      "properties": {
+        "number_per": { "$ref": "#/$defs/Decimal" },
+        "number_total": { "$ref": "#/$defs/Decimal" },
+        "currency": { "$ref": "#/$defs/Currency" },
+        "date": { "$ref": "#/$defs/Date" },
+        "label": { "type": "string" },
+        "merge": { "type": "boolean" }
+      }
+    },
+    "Decimal": {
+      "type": "string",
+      "pattern": "^-?[0-9,]*(\\.[0-9]+)?$",
+      "description": "Arbitrary precision decimal as string to preserve precision"
+    },
+    "Date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}[-/][0-9]{2}[-/][0-9]{2}$",
+      "description": "Date in YYYY-MM-DD or YYYY/MM/DD format"
+    },
+    "Account": {
+      "type": "string",
+      "pattern": "^(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z0-9][A-Za-z0-9-]*)+$",
+      "description": "Colon-separated account path starting with root type"
+    },
+    "Currency": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9'._-]*$",
+      "description": "Currency or commodity identifier"
+    },
+    "TxnFlag": {
+      "type": "string",
+      "enum": ["*", "!", "txn", "P", "#"],
+      "description": "Transaction status flag"
+    },
+    "PostingFlag": {
+      "type": "string",
+      "enum": ["*", "!"],
+      "description": "Optional posting-level flag"
+    },
+    "BookingMethod": {
+      "type": "string",
+      "enum": ["STRICT", "FIFO", "LIFO", "HIFO", "AVERAGE", "NONE"],
+      "description": "Lot matching method for reductions"
+    },
+    "Tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^#[A-Za-z0-9_/-]+$"
+      },
+      "description": "Set of tags (including # prefix)"
+    },
+    "Links": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\^[A-Za-z0-9_/-]+$"
+      },
+      "description": "Set of links (including ^ prefix)"
+    },
+    "Metadata": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/MetaValue" },
+      "description": "Key-value metadata attached to directives/postings"
+    },
+    "MetaValue": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "$ref": "#/$defs/Date" },
+        { "$ref": "#/$defs/Amount" },
+        { "$ref": "#/$defs/Account" },
+        { "$ref": "#/$defs/Currency" }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "required": ["message"],
+      "properties": {
+        "source": {
+          "type": "object",
+          "properties": {
+            "filename": { "type": "string" },
+            "lineno": { "type": "integer" },
+            "column": { "type": "integer" }
+          }
+        },
+        "message": { "type": "string" },
+        "entry": { "$ref": "#/$defs/Directive" }
+      }
+    }
+  }
+}
