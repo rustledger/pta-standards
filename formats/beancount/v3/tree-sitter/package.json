@@ -1,0 +1,65 @@
+{
+  "name": "tree-sitter-beancount",
+  "version": "1.0.0",
+  "description": "Tree-sitter grammar for Beancount",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pta-standards/tree-sitter-beancount.git"
+  },
+  "license": "MIT",
+  "author": "PTA Standards",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "keywords": [
+    "parser",
+    "tree-sitter",
+    "beancount",
+    "accounting",
+    "plain-text-accounting"
+  ],
+  "files": [
+    "grammar.js",
+    "binding.gyp",
+    "prebuilds/**",
+    "bindings/node/*",
+    "queries/*",
+    "src/**"
+  ],
+  "dependencies": {
+    "node-addon-api": "^7.1.0",
+    "node-gyp-build": "^4.8.0"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.21.0"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.22.0",
+    "prebuildify": "^6.0.0"
+  },
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp rebuild",
+    "build-wasm": "tree-sitter build-wasm",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse",
+    "prebuildify": "prebuildify --napi --strip"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.beancount",
+      "file-types": [
+        "beancount",
+        "bean"
+      ],
+      "highlights": "queries/highlights.scm",
+      "injections": "queries/injections.scm",
+      "locals": "queries/locals.scm",
+      "folds": "queries/folds.scm",
+      "indents": "queries/indents.scm"
+    }
+  ]
+}
