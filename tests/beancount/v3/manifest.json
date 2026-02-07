@@ -1,0 +1,19 @@
+{
+  "$schema": "../../harness/manifest.schema.json",
+  "format": "beancount",
+  "version": "3",
+  "description": "Conformance test suite for Beancount v3",
+  "test_directories": [
+    "syntax/valid",
+    "syntax/invalid",
+    "validation",
+    "booking",
+    "bql",
+    "regression"
+  ],
+  "metadata": {
+    "created": "2026-02-07",
+    "spec_version": "draft",
+    "reference_implementation": "beancount 3.2.0"
+  }
+}

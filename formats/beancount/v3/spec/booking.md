@@ -104,7 +104,7 @@ Allows reductions without lot tracking. Creates negative positions if needed.
 
 ### AVERAGE
 
-Uses average cost basis. All lots are merged conceptually.
+Uses average cost basis. All lots are merged conceptually into a single position with average cost.
 
 ```beancount
 2024-01-01 open Assets:Stock AAPL "AVERAGE"
@@ -118,15 +118,21 @@ Uses average cost basis. All lots are merged conceptually.
   Assets:Cash
 ```
 
-### AVERAGE_ONLY
+The average cost is recomputed after each acquisition.
 
-Like AVERAGE, but lots are physically merged on acquisition.
+> **Note:** See [conformance/python-beancount.md](../conformance/python-beancount.md) for implementation status.
+
+### STRICT_WITH_SIZE
+
+Like STRICT, but also requires the reduction size to match exactly.
 
 ```beancount
-2024-01-01 open Assets:Stock AAPL "AVERAGE_ONLY"
+2024-01-01 open Assets:Stock AAPL "STRICT_WITH_SIZE"
 
-; After lot2, inventory shows:
-; 20 AAPL {155 USD}  ; Single merged lot
+; Must specify exact cost AND size must match lot
+2024-03-01 * "Sell"
+  Assets:Stock  -10 AAPL {150 USD}  ; Must sell entire lot
+  Assets:Cash
 ```
 
 ## Lot Matching
@@ -183,7 +189,7 @@ Assets:Stock  -5 AAPL {150 USD}  ; Oldest 150 USD lot
 
 ## Merge Cost (`*`)
 
-The merge cost operator combines all lots into average:
+The merge cost operator explicitly combines all lots into a single average-cost lot:
 
 ```beancount
 ; Before: lot1 (10 @ 150), lot2 (10 @ 160)
@@ -193,7 +199,9 @@ The merge cost operator combines all lots into average:
 ; After: single lot (20 @ 155)
 ```
 
-This is used with AVERAGE booking for explicit lot merging.
+This is used with AVERAGE booking for explicit lot merging, or to convert from per-lot tracking to average cost.
+
+> **Note:** See [conformance/python-beancount.md](../conformance/python-beancount.md) for implementation status.
 
 ## Lot Splitting
 
@@ -256,12 +264,16 @@ option "booking_method" "STRICT"  ; Default for all accounts
 
 ## Validation Errors
 
-| Error | Condition |
-|-------|-----------|
-| E4001 | No lot matches reduction specification |
-| E4002 | Insufficient units in matching lots |
-| E4003 | Ambiguous lot match in STRICT mode |
-| E4004 | Reduction would create negative inventory |
+The following conditions produce booking-related validation errors:
+
+| Condition | Description |
+|-----------|-------------|
+| No matching lot | Reduction specification doesn't match any existing lot |
+| Insufficient units | Not enough units available in matching lots |
+| Ambiguous match | Multiple lots match in STRICT mode |
+| Negative inventory | Reduction would create negative position (except NONE) |
+
+Booking errors are reported with descriptive messages explaining why the lot matching failed. See [conformance/python-beancount.md](../conformance/python-beancount.md) for error type details.
 
 ## Examples
 

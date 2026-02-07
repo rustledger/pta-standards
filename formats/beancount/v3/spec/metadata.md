@@ -195,17 +195,20 @@ All directives automatically receive:
 
 ## Duplicate Keys
 
-Duplicate metadata keys on the same directive produce a warning:
+> **UNDEFINED**: The behavior for duplicate metadata keys is pending clarification.
+> See: [Pending Issue - Duplicate Metadata](https://github.com/beancount/beancount/issues/TBD)
+
+Questions to resolve:
+- Should duplicate keys produce an error, warning, or be silently ignored?
+- If allowed, which value is retained (first or last)?
 
 ```beancount
 2024-01-15 * "Purchase"
   category: "office"
-  category: "supplies"    ; Warning: duplicate key
+  category: "supplies"    ; What should happen?
   Assets:Checking  -100 USD
   Expenses:Office
 ```
-
-Implementations typically use the last value.
 
 ## Metadata Inheritance
 
@@ -309,12 +312,10 @@ WHERE "receipt" IN meta
 
 ## Validation
 
-| Warning | Condition |
-|---------|-----------|
-| E6001 | Duplicate metadata key |
-| E6002 | Invalid metadata value type |
-
-Metadata validation is typically lenient—unknown keys are allowed.
+Metadata validation:
+- Unknown keys are allowed
+- Duplicate keys: see [Duplicate Keys](#duplicate-keys) (UNDEFINED)
+- Invalid value syntax produces an error
 
 ## Implementation Notes
 

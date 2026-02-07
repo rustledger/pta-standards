@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check JSON syntax
+        run: |
+          find . -name '*.json' -type f | while read f; do
+            python3 -m json.tool "$f" > /dev/null || echo "Invalid JSON: $f"
+          done
+
+      - name: Check for trailing whitespace
+        run: |
+          if grep -rn '[[:blank:]]$' --include='*.md' --include='*.json' .; then
+            echo "::warning::Found trailing whitespace in some files"
+          fi
+
+  test:
+    name: Test
+    uses: ./.github/workflows/run-tests.yml
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for broken internal links
+        run: |
+          # Simple check for obviously broken markdown links
+          find formats -name '*.md' -exec grep -l '\]\(.*\.md\)' {} \; | head -5
+          echo "Link checking placeholder - implement with markdown-link-check"

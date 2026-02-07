@@ -17,9 +17,9 @@ Account validation ensures the integrity of account lifecycles: accounts must be
 
 ## Validation Rules
 
-### E1001: Account Not Opened
+### Account Not Opened
 
-An account MUST be opened before any posting references it.
+An account MUST be opened before any posting references it. Using an unopened account produces a `ValidationError`.
 
 **Condition:** Posting references an account with no prior `open` directive.
 
@@ -27,7 +27,7 @@ An account MUST be opened before any posting references it.
 ```beancount
 ; ERROR: No open directive for Assets:Checking
 2024-01-15 * "Deposit"
-  Assets:Checking   100 USD    ; E1001
+  Assets:Checking   100 USD    ; ValidationError
   Income:Salary
 ```
 
@@ -40,51 +40,40 @@ An account MUST be opened before any posting references it.
   Income:Salary
 ```
 
-### E1002: Account Already Open
+### Account Already Open
 
-An account MUST NOT be opened twice without an intervening close.
+An account MUST NOT be opened twice without an intervening close. Opening an already-open account produces a `ValidationError`.
 
 **Condition:** `open` directive for an account that is already open.
 
 **Example:**
 ```beancount
 2020-01-01 open Assets:Checking USD
-2021-01-01 open Assets:Checking USD    ; E1002: Already open
+2021-01-01 open Assets:Checking USD    ; ValidationError: Already open
 ```
 
-**Fix:**
-```beancount
-2020-01-01 open Assets:Checking USD
-; Remove duplicate, or close first:
-; 2020-12-31 close Assets:Checking
-; 2021-01-01 open Assets:Checking USD
-```
+### Account Closed
 
-### E1003: Account Closed
+An account MUST NOT be used in postings AFTER its close date.
 
-An account MUST NOT be used in postings after its close date.
-
-**Condition:** Posting date is on or after the account's close date.
+> **UNDEFINED**: Whether posting ON the close date is allowed is pending clarification.
+> See: [Pending Issue - Close Date Semantics](https://github.com/beancount/beancount/issues/TBD)
 
 **Example:**
 ```beancount
 2020-01-01 open Assets:OldAccount USD
 2023-12-31 close Assets:OldAccount
 
+; Posting AFTER close date is always an error
 2024-01-15 * "Late transaction"
-  Assets:OldAccount   100 USD    ; E1003: Closed on 2023-12-31
+  Assets:OldAccount   100 USD    ; ERROR: Invalid reference to closed account
   Income:Salary
 ```
 
-**Fix:** Use a different account or adjust dates.
+### Account Close with Non-Zero Balance
 
-### E1004: Account Close Not Empty
-
-Closing an account with non-zero balance produces a warning.
-
-**Condition:** `close` directive when account has non-zero balance.
-
-**Severity:** Warning (configurable)
+> **UNDEFINED**: Whether closing an account with non-zero balance produces an error is pending clarification.
+> See: [Pending Issue - Close with Balance](https://github.com/beancount/beancount/issues/TBD)
 
 **Example:**
 ```beancount
@@ -94,37 +83,39 @@ Closing an account with non-zero balance produces a warning.
   Assets:Checking  100 USD
   Income:Gift
 
-2024-12-31 close Assets:Checking    ; E1004: Balance is 100 USD
+2024-12-31 close Assets:Checking    ; OK: No error even with 100 USD balance
 ```
 
-**Fix:**
+**Best Practice:** Zero the balance before closing for cleaner bookkeeping:
 ```beancount
 2024-12-30 * "Transfer out"
   Assets:Checking  -100 USD
   Assets:NewAccount
 
-2024-12-31 close Assets:Checking    ; OK: Balance is 0
+2024-12-31 close Assets:Checking    ; Balance is 0
 ```
 
-### E1005: Invalid Account Name
+**Note:** The `beancount.plugins.check_closing` plugin can be used to enforce zero balance at close.
 
-Account names MUST follow naming conventions.
+### Invalid Account Name
+
+Account names MUST follow naming conventions. Invalid names produce a `ParserError`.
 
 **Conditions:**
 - Does not start with valid root type
 - Contains invalid characters
-- Component doesn't start with capital letter
+- Component doesn't start with uppercase letter or digit
 
 **Examples:**
 ```beancount
 ; Invalid root type
-2024-01-01 open Savings:Emergency    ; E1005: "Savings" not valid
+2024-01-01 open Savings:Emergency    ; ParserError: "Savings" not valid root
 
 ; Lowercase component
-2024-01-01 open Assets:checking      ; E1005: Must be "Checking"
+2024-01-01 open Assets:checking      ; ParserError: Must start with uppercase
 
 ; Invalid characters
-2024-01-01 open Assets:My Account    ; E1005: Space not allowed
+2024-01-01 open Assets:My Account    ; ParserError: Space not allowed
 ```
 
 ## Account Name Rules
@@ -203,19 +194,16 @@ account_states: Dict[Account, AccountState]
 
 ### Reopening Accounts
 
-An account can be reopened after closing:
+**Note:** In Python beancount 3.x, accounts **cannot** be reopened after closing. A second `open` directive after a `close` produces a duplicate open error:
 
 ```beancount
 2020-01-01 open Assets:Checking USD
 2022-12-31 close Assets:Checking
 
-; Transactions between close and reopen are invalid
-
-2024-01-01 open Assets:Checking USD    ; OK: Reopen
-2024-01-15 * "Deposit"
-  Assets:Checking  100 USD             ; OK
-  Income:Gift
+2024-01-01 open Assets:Checking USD    ; ValidationError: Duplicate open
 ```
+
+If you need to reuse an account after closing, you must use a new account name.
 
 ### Same-Day Open and Use
 
@@ -231,14 +219,22 @@ Using an account on its open date is valid:
 
 ### Close Date Boundary
 
-The close date is exclusive—transactions ON the close date are invalid:
+> **UNDEFINED**: Whether posting ON the close date is allowed is pending clarification.
+
+Posting AFTER the close date is always an error:
 
 ```beancount
 2024-01-01 open Assets:Checking USD
 2024-06-30 close Assets:Checking
 
-2024-06-30 * "Final transaction"
-  Assets:Checking  100 USD    ; E1003: Close is 2024-06-30
+; What should happen for posting ON close date?
+2024-06-30 * "Same-day transaction"
+  Assets:Checking  100 USD    ; UNDEFINED behavior
+  Income:Gift
+
+; Posting AFTER close date is always an error
+2024-07-01 * "After close"
+  Assets:Checking  100 USD    ; ValidationError: Invalid reference to inactive account
   Income:Gift
 ```
 
@@ -255,31 +251,9 @@ Notes and documents MAY reference closed accounts:
 
 ## Configuration
 
-### Implicit Open
+**Note:** Python beancount 3.x does NOT support implicit account opening. All accounts must be explicitly opened before use.
 
-Some implementations allow implicit account opening:
-
-```beancount
-option "allow_implicit_open" "TRUE"
-
-; Account auto-opened on first use
-2024-01-15 * "Deposit"
-  Assets:Checking  100 USD    ; Implicitly opens Assets:Checking
-  Income:Salary
-```
-
-This is NOT recommended for production ledgers.
-
-### Strict Mode
-
-Require explicit currency constraints:
-
-```beancount
-option "strict" "TRUE"
-
-; Must specify currencies
-2024-01-01 open Assets:Checking USD,EUR    ; Required in strict mode
-```
+The `operating_currency` option can be set to specify the main reporting currency, but this does not affect account validation requirements.
 
 ## Implementation Notes
 

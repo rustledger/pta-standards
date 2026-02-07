@@ -60,27 +60,26 @@ A transaction balances if:
 
 ## Configuration
 
-### Global Tolerance
+### Per-Currency Default Tolerance
 
-Set default tolerance for all currencies:
-
-```beancount
-option "tolerance" "0.005"
-```
-
-### Per-Currency Tolerance
-
-Set tolerance for specific currencies:
+Set default tolerance for specific currencies when it cannot be inferred:
 
 ```beancount
-option "tolerance:USD" "0.005"
-option "tolerance:BTC" "0.00000001"
-option "tolerance:AAPL" "0.5"  ; Shares are whole numbers
+option "inferred_tolerance_default" "USD:0.005"
+option "inferred_tolerance_default" "BTC:0.00000001"
 ```
 
-### Inferred Tolerance
+### Tolerance Multiplier
 
-Enable/disable automatic tolerance inference:
+Adjust the multiplier used in tolerance calculation (default is 0.5):
+
+```beancount
+option "tolerance_multiplier" "0.5"
+```
+
+### Infer Tolerance from Cost
+
+Enable/disable automatic tolerance inference from cost currencies:
 
 ```beancount
 option "infer_tolerance_from_cost" "TRUE"
@@ -218,67 +217,50 @@ For percentage-based tolerance, use explicit configuration.
 
 ### Zero Tolerance
 
-Require exact balance:
+Require exact balance by using explicit tolerance on balance assertions:
 
 ```beancount
-option "tolerance:USD" "0"
-
-; Must balance exactly
-2024-01-15 * "Exact"
-  Assets:A    100 USD
-  Assets:B   -100 USD
+; Must match exactly
+2024-01-15 balance Assets:Checking  1000.00 ~ 0 USD
 ```
 
 ### High-Precision Currencies
 
-Cryptocurrency often needs high precision:
+Cryptocurrency often needs high precision defaults:
 
 ```beancount
-option "tolerance:BTC" "0.00000001"
-option "tolerance:ETH" "0.000000000000000001"  ; 18 decimals
+option "inferred_tolerance_default" "BTC:0.00000001"
+option "inferred_tolerance_default" "ETH:0.000000000000000001"
 ```
 
 ### Shares and Units
 
-Discrete units may need zero or 0.5 tolerance:
+For discrete units, set appropriate defaults:
 
 ```beancount
-option "tolerance:AAPL" "0"    ; Whole shares only
-option "tolerance:VACHR" "0.5"  ; Allow half hours
+option "inferred_tolerance_default" "AAPL:0.0001"
+option "inferred_tolerance_default" "VACHR:0.5"
 ```
 
 ## Validation Errors
 
-| Error | Condition |
-|-------|-----------|
-| E3001 | Residual exceeds tolerance |
-| E2001 | Balance assertion outside tolerance |
-| E2002 | Balance within auto tolerance but exceeds explicit |
+The following conditions produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Transaction residual exceeds tolerance | `ValidationError` ("Transaction does not balance") |
+| Balance assertion outside tolerance | `BalanceError` |
 
 ### Error Messages
 
+Transaction balance error:
 ```
-error: Transaction does not balance
-  --> ledger.beancount:15:1
-   |
-15 | 2024-01-15 * "Unbalanced"
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^ residual: 0.50 USD
-   |
-   = tolerance: 0.005 USD
-   = hint: residual exceeds tolerance by 0.495 USD
+ValidationError: Transaction does not balance: (0.50 USD)
 ```
 
+Balance assertion error:
 ```
-error: Balance assertion failed
-  --> ledger.beancount:25:1
-   |
-25 | 2024-01-16 balance Assets:Checking  1000.00 ~ 0.01 USD
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = expected: 1000.00 USD
-   = actual: 999.97 USD
-   = difference: 0.03 USD
-   = tolerance: 0.01 USD
+BalanceError: Balance failed for 'Assets:Checking': expected 1000.00 USD != accumulated 999.97 USD
 ```
 
 ## Implementation Notes

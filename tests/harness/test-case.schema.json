@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pta-standards.org/schemas/test-case.json",
+  "title": "PTA Standards Test Case",
+  "description": "Schema for individual conformance test cases",
+  "type": "object",
+  "required": ["id", "description", "input", "expected"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique test identifier (e.g., 'syntax-001', 'validation-open-001')",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this test verifies"
+    },
+    "spec_ref": {
+      "type": "string",
+      "description": "Reference to the specification section being tested"
+    },
+    "input": {
+      "type": "object",
+      "description": "Test input",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to beancount file (relative to test directory)"
+        },
+        "inline": {
+          "type": "string",
+          "description": "Inline beancount content (alternative to file)"
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "description": "Expected test outcome",
+      "properties": {
+        "parse": {
+          "type": "string",
+          "enum": ["success", "error"],
+          "description": "Whether parsing should succeed or fail"
+        },
+        "validate": {
+          "type": "string",
+          "enum": ["success", "error", "skip"],
+          "description": "Whether validation should succeed, fail, or be skipped"
+        },
+        "error_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected number of errors"
+        },
+        "error_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Expected error type names"
+        },
+        "error_contains": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Substrings that should appear in error messages"
+        },
+        "directives": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected number of parsed directives"
+        },
+        "accounts": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Expected account names"
+        },
+        "balance": {
+          "type": "object",
+          "description": "Expected balance for an account",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {"type": "string"}
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Tags for filtering tests (e.g., 'lexical', 'booking', 'fifo')"
+    },
+    "skip": {
+      "type": "boolean",
+      "description": "Whether to skip this test"
+    },
+    "skip_reason": {
+      "type": "string",
+      "description": "Reason for skipping (if skip is true)"
+    }
+  }
+}

@@ -146,19 +146,23 @@ DAY(date) → Integer
 
 ### QUARTER
 
-Extract quarter from date (1-4).
+Extract quarter from date.
 
 ```sql
-QUARTER(date) → Integer
+QUARTER(date) → String
 ```
+
+Returns format like "2024-Q1" (year and quarter).
 
 ### WEEKDAY
 
-Extract day of week (0=Monday, 6=Sunday).
+Extract day of week as abbreviated name.
 
 ```sql
-WEEKDAY(date) → Integer
+WEEKDAY(date) → String
 ```
+
+Returns "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", or "Sun".
 
 ## String Functions
 

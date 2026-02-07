@@ -1,0 +1,312 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "booking",
+  "description": "Booking method and cost specification tests",
+  "tests": [
+    {
+      "id": "booking-strict-exact-match",
+      "description": "STRICT booking with exact cost match succeeds",
+      "spec_ref": "booking.md#strict-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell\"\n  Assets:Stock -5 AAPL {150 USD}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "strict"]
+    },
+    {
+      "id": "booking-strict-ambiguous",
+      "description": "STRICT booking with ambiguous reduction produces error",
+      "spec_ref": "booking.md#strict-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["ambiguous"]
+      },
+      "tags": ["booking", "strict", "ambiguous"]
+    },
+    {
+      "id": "booking-fifo-order",
+      "description": "FIFO booking sells oldest lots first",
+      "spec_ref": "booking.md#fifo-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"FIFO\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1 at 150\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2 at 160\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell 5 - should match lot 1\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "fifo"]
+    },
+    {
+      "id": "booking-lifo-order",
+      "description": "LIFO booking sells newest lots first",
+      "spec_ref": "booking.md#lifo-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"LIFO\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1 at 150\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2 at 160\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell 5 - should match lot 2\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "lifo"]
+    },
+    {
+      "id": "booking-hifo-order",
+      "description": "HIFO booking sells highest cost lots first",
+      "spec_ref": "booking.md#hifo-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"HIFO\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1 at 150\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2 at 160\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-01-25 * \"Buy lot 3 at 155\"\n  Assets:Stock 10 AAPL {155 USD}\n  Assets:Cash -1550 USD\n\n2024-02-15 * \"Sell 5 - should match lot 2 (highest)\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "hifo"]
+    },
+    {
+      "id": "booking-none-new-lot",
+      "description": "NONE booking always creates new lot",
+      "spec_ref": "booking.md#none-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"NONE\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy at 150\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell with new lot\"\n  Assets:Stock -5 AAPL {155 USD}\n  Assets:Cash 775 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "none"]
+    },
+    {
+      "id": "booking-average-cost",
+      "description": "AVERAGE booking uses weighted average cost",
+      "spec_ref": "booking.md#average-cost",
+      "skip": true,
+      "skip_reason": "AVERAGE booking method not implemented in Python beancount 3.x",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"AVERAGE\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1 at 100\"\n  Assets:Stock 10 AAPL {100 USD}\n  Assets:Cash -1000 USD\n\n2024-01-20 * \"Buy lot 2 at 200\"\n  Assets:Stock 10 AAPL {200 USD}\n  Assets:Cash -2000 USD\n\n2024-02-15 * \"Sell at average (150)\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "average", "unimplemented"]
+    },
+    {
+      "id": "booking-default-strict",
+      "description": "Default booking method is STRICT when no method specified",
+      "spec_ref": "booking.md#default-booking",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy different cost\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous without booking method\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["ambiguous"]
+      },
+      "tags": ["booking", "default"]
+    },
+    {
+      "id": "cost-per-unit",
+      "description": "Cost specified as per-unit price",
+      "spec_ref": "costs.md#per-unit-cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "per-unit"]
+    },
+    {
+      "id": "cost-total",
+      "description": "Cost specified as total amount",
+      "spec_ref": "costs.md#total-cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {{1500 USD}}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "total"]
+    },
+    {
+      "id": "cost-with-date",
+      "description": "Cost specification with acquisition date",
+      "spec_ref": "costs.md#cost-date",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD, 2024-01-15}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "date"]
+    },
+    {
+      "id": "cost-with-label",
+      "description": "Cost specification with lot label",
+      "spec_ref": "costs.md#lot-label",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD, \"lot1\"}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "label"]
+    },
+    {
+      "id": "cost-match-by-label",
+      "description": "Match lot by label in STRICT booking",
+      "spec_ref": "booking.md#lot-matching",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD, \"lot1\"}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD, \"lot2\"}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell from lot 1 by label\"\n  Assets:Stock -5 AAPL {150 USD, \"lot1\"}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "label", "strict"]
+    },
+    {
+      "id": "cost-match-by-date",
+      "description": "Match lot by acquisition date in STRICT booking",
+      "spec_ref": "booking.md#lot-matching",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD, 2024-01-15}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {150 USD, 2024-01-20}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell from lot 1 by date\"\n  Assets:Stock -5 AAPL {150 USD, 2024-01-15}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "date", "strict"]
+    },
+    {
+      "id": "cost-empty-spec",
+      "description": "Empty cost spec {} uses automatic matching",
+      "spec_ref": "costs.md#empty-cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"FIFO\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell with empty spec\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "empty", "fifo"]
+    },
+    {
+      "id": "cost-asterisk-merge",
+      "description": "Asterisk * in cost merges all lots",
+      "spec_ref": "costs.md#cost-merge",
+      "skip": true,
+      "skip_reason": "Cost merging {*} not implemented in Python beancount 3.x",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell with merge\"\n  Assets:Stock -5 AAPL {*}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "merge", "unimplemented"]
+    },
+    {
+      "id": "reduction-exceeds-inventory",
+      "description": "Reduction exceeding inventory produces error",
+      "spec_ref": "booking.md#reduction-validation",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"FIFO\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell more than owned\"\n  Assets:Stock -15 AAPL {}\n  Assets:Cash 2250 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["not enough"]
+      },
+      "tags": ["booking", "reduction", "error"]
+    },
+    {
+      "id": "reduction-no-matching-lot",
+      "description": "Reduction with no matching lot produces error",
+      "spec_ref": "booking.md#lot-matching",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell at wrong cost\"\n  Assets:Stock -5 AAPL {200 USD}\n  Assets:Cash 1000 USD\n  Income:Gains"},
+      "expected": {
+        "parse": "success",
+        "validate": "error"
+      },
+      "tags": ["booking", "strict", "error"]
+    },
+    {
+      "id": "booking-method-case-sensitive",
+      "description": "Booking method must be uppercase",
+      "spec_ref": "booking.md#booking-method-syntax",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"fifo\""},
+      "expected": {
+        "parse": "error",
+        "error_contains": ["Invalid booking method"]
+      },
+      "tags": ["booking", "syntax"]
+    },
+    {
+      "id": "cost-no-currency",
+      "description": "Cost without explicit currency infers from transaction",
+      "spec_ref": "costs.md#cost-syntax",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "syntax"]
+    },
+    {
+      "id": "price-annotation",
+      "description": "Price annotation @ for market value",
+      "spec_ref": "costs.md#price-annotation",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell with price\"\n  Assets:Stock -10 AAPL {150 USD} @ 175 USD\n  Assets:Cash 1750 USD\n  Income:Gains -250 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "price"]
+    },
+    {
+      "id": "price-total-annotation",
+      "description": "Total price annotation @@ for market value",
+      "spec_ref": "costs.md#total-price",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-02-15 * \"Sell with total price\"\n  Assets:Stock -10 AAPL {150 USD} @@ 1750 USD\n  Assets:Cash 1750 USD\n  Income:Gains -250 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "price", "total"]
+    },
+    {
+      "id": "augmentation-same-lot",
+      "description": "Augmentation with matching cost adds to existing lot",
+      "spec_ref": "booking.md#augmentation",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy first\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy more at same cost\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "augmentation"]
+    },
+    {
+      "id": "augmentation-new-lot",
+      "description": "Augmentation with different cost creates new lot",
+      "spec_ref": "booking.md#augmentation",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy first\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy at different cost\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "augmentation"]
+    },
+    {
+      "id": "multi-commodity-inventory",
+      "description": "Account can hold multiple commodities",
+      "spec_ref": "booking.md#inventory",
+      "input": {"inline": "2024-01-01 open Assets:Portfolio AAPL,GOOGL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy AAPL\"\n  Assets:Portfolio 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy GOOGL\"\n  Assets:Portfolio 5 GOOGL {140 USD}\n  Assets:Cash -700 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["booking", "inventory", "multi-commodity"]
+    },
+    {
+      "id": "negative-cost-error",
+      "description": "Negative cost produces error",
+      "spec_ref": "costs.md#cost-validation",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {-150 USD}\n  Assets:Cash 1500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["Cost is negative"]
+      },
+      "tags": ["cost", "validation"]
+    },
+    {
+      "id": "zero-cost-valid",
+      "description": "Zero cost is valid",
+      "spec_ref": "costs.md#zero-cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Equity:Opening\n\n2024-01-15 * \"Grant\"\n  Assets:Stock 100 AAPL {0 USD}\n  Equity:Opening"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["cost", "zero"]
+    }
+  ]
+}

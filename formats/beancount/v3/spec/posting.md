@@ -103,23 +103,26 @@ See [prices.md](prices.md) for full price annotation documentation.
 
 ### Rules
 
-1. At most one posting per currency MAY omit its amount
-2. The omitted amount is computed to make the transaction balance
+> **UNDEFINED**: The exact elision rule is pending clarification.
+> See: [Pending Issue - Amount Elision Rule](https://github.com/beancount/beancount/issues/TBD)
 
-### Valid Examples
+**Option A (One per currency):**
+At most one posting per currency MAY omit its amount. Multiple currencies may each have one elided posting.
+
+**Option B (One total):**
+At most one posting total MAY omit its amount. That posting expands to cover all currencies.
+
+Regardless of which rule applies:
+- The omitted amount(s) are computed to make the transaction balance
+- The sum of all posting weights for each currency MUST equal zero
+
+### Examples
 
 ```beancount
-; One elided posting
+; Single currency - unambiguous
 2024-01-15 * "Simple"
   Assets:Checking   100 USD
-  Income:Salary               ; = -100 USD
-
-; Multiple currencies, one elision per currency
-2024-01-15 * "Multi-currency"
-  Assets:EUR        100 EUR
-  Assets:USD        110 USD
-  Income:Gift:EUR             ; = -100 EUR
-  Income:Gift:USD             ; = -110 USD
+  Income:Salary               ; Computed as -100 USD
 ```
 
 ### Invalid Examples
@@ -277,10 +280,12 @@ Posting order within a transaction:
 
 ## Validation Errors
 
-| Error | Condition |
-|-------|-----------|
-| E3001 | Transaction does not balance |
-| E3002 | Multiple postings missing amounts for same currency |
-| E1001 | Account not opened |
-| E1003 | Account closed before posting date |
-| E5002 | Currency not allowed in account |
+Posting validation produces errors in these conditions:
+
+| Condition | Error Type |
+|-----------|------------|
+| Transaction does not balance | `ValidationError` |
+| Multiple postings missing amounts for same currency | `ValidationError` |
+| Account not opened | `ValidationError` |
+| Account closed before posting date | `ValidationError` |
+| Currency not allowed in account | `ValidationError` |

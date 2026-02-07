@@ -1,5 +1,7 @@
 # PTA Standards
 
+[![Conformance Tests](https://github.com/pta-standards/pta-standards/actions/workflows/run-tests.yml/badge.svg)](https://github.com/pta-standards/pta-standards/actions/workflows/run-tests.yml)
+
 **Plain Text Accounting Standards**: Specifications for Beancount, Ledger, and hledger formats.
 
 > [!NOTE]
@@ -52,6 +54,12 @@ pta-standards/
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+<!-- CONFORMANCE-RESULTS-START -->
+## Conformance Test Results
+
+*Results updated nightly. See [conformance documentation](formats/beancount/v3/conformance/) for details.*
+<!-- CONFORMANCE-RESULTS-END -->
 
 ## Related Projects
 

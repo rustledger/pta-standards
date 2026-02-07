@@ -155,24 +155,23 @@ A balance assertion passes if:
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E2001 | Balance assertion failed |
-| E2002 | Balance within default tolerance but exceeds explicit tolerance |
-| E1001 | Account not opened |
+The following conditions produce validation errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Balance assertion failed | `BalanceError` |
+| Account not opened | `ValidationError` |
 
 ### Error Output
 
 ```
-error: Balance assertion failed
-  --> ledger.beancount:25:1
-   |
-25 | 2024-01-16 balance Assets:Checking  1000.00 USD
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 1000.00, got 950.00
-   |
-   = difference: -50.00 USD
-   = tolerance: 0.005 USD
+BalanceError: Balance failed for 'Assets:Checking': expected 1000.00 USD != accumulated 950.00 USD
 ```
+
+The error includes:
+- The account name
+- The expected balance
+- The actual (accumulated) balance
 
 ## Partial Balances
 

@@ -1,0 +1,15 @@
+; Ledger with metadata for BQL testing
+
+2024-01-01 open Assets:Checking USD
+2024-01-01 open Expenses:Food USD
+2024-01-01 open Expenses:Transport USD
+
+2024-01-15 * "Grocery shopping"
+  category: "groceries"
+  Expenses:Food  50 USD
+  Assets:Checking
+
+2024-01-20 * "Bus fare"
+  category: "commute"
+  Expenses:Transport  5 USD
+  Assets:Checking

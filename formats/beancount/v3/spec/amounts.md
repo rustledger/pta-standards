@@ -10,9 +10,8 @@ An amount is a decimal number paired with a currency. Amounts represent quantiti
 amount = number WHITESPACE currency
 
 number = sign? integer ("." fraction)?
-       | sign? "." fraction
 
-sign     = "-"
+sign     = "-" | "+"
 integer  = digit+ ("," digit+)*
 fraction = digit+
 digit    = [0-9]
@@ -25,17 +24,20 @@ currency = uppercase+ (currency_char)* uppercase?
 ### Number
 
 The numeric value, which may be:
-- Positive: `100`, `100.00`
+- Positive: `100`, `100.00`, `+100`
 - Negative: `-50`, `-50.00`
-- Decimal only: `.50`, `-.25`
 - With grouping: `1,234.56`, `1,234,567.89`
+
+Note: Leading decimals without integer part (`.50`) are NOT valid. Use `0.50` instead.
 
 ### Currency
 
 The commodity identifier:
-- All uppercase letters
-- 1-24 characters
-- May contain digits, apostrophe, period, underscore, dash
+- MUST start with uppercase letter (A-Z)
+- MUST end with uppercase letter or digit (A-Z, 0-9)
+- Middle characters MAY include: A-Z, 0-9, apostrophe, period, underscore, dash
+
+> **UNDEFINED**: Maximum length is not enforced. See [commodities.md](validation/commodities.md).
 
 ## Number Format
 
@@ -62,12 +64,12 @@ Grouping is purely cosmetic; `1,234.56` and `1234.56` are identical.
 
 ### Sign
 
-Only negative sign (`-`) is supported:
+Both positive (`+`) and negative (`-`) signs are supported:
 
 ```
-100      ; Positive
+100      ; Positive (implicit)
++50      ; Positive (explicit)
 -50      ; Negative
-+50      ; Invalid (explicit + not allowed)
 ```
 
 ### Leading/Trailing Zeros
@@ -77,7 +79,7 @@ Leading and trailing zeros are allowed:
 ```
 0100.00    ; = 100.00
 100.500    ; = 100.5
-.50        ; = 0.5
+0.50       ; Valid (integer part required)
 ```
 
 ### Precision
@@ -154,10 +156,11 @@ KRW       ; Korean Won
 
 ### Currency Rules
 
-1. Must start with uppercase letter
-2. Must be 1-24 characters
-3. May contain: A-Z, 0-9, ', ., _, -
-4. Should end with letter or digit
+1. MUST start with uppercase letter (A-Z)
+2. MUST end with uppercase letter or digit (A-Z, 0-9)
+3. MAY contain in middle: A-Z, 0-9, ', ., _, -
+4. Single-character currencies are valid (e.g., `V`)
+5. Maximum length is UNDEFINED (not enforced)
 
 ### Invalid Currencies
 
@@ -165,7 +168,7 @@ KRW       ; Korean Won
 usd       ; Lowercase not allowed
 $USD      ; Special characters at start
 123       ; Must start with letter
-ABCDEFGHIJKLMNOPQRSTUVWXYZ  ; Too long (>24)
+USD-      ; Cannot end with special character
 ```
 
 ## Amount Examples

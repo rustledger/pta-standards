@@ -1,0 +1,2 @@
+beancount>=3.0.0
+beanquery>=0.1.0

@@ -118,11 +118,13 @@ Transactions with price annotations create implicit prices:
 ; 2024-01-15 price AAPL  185.50 USD
 ```
 
-This can be controlled with an option:
+This requires loading the `implicit_prices` plugin:
 
 ```beancount
-option "infer_implicit_prices" "FALSE"  ; Disable implicit price generation
+plugin "beancount.plugins.implicit_prices"
 ```
+
+> **Note**: There is no `infer_implicit_prices` option. Implicit price generation is provided by a plugin, not a core option.
 
 ## Inverted Prices
 

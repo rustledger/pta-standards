@@ -1,0 +1,6 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "regression",
+  "description": "Regression tests for fixed bugs and edge cases",
+  "tests": []
+}

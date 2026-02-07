@@ -1,0 +1,184 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "syntax-invalid",
+  "description": "Invalid syntax that should fail parsing",
+  "tests": [
+    {
+      "id": "invalid-date-format",
+      "description": "Invalid date format",
+      "input": {"inline": "01-15-2024 open Assets:Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["lexical", "date"]
+    },
+    {
+      "id": "invalid-date-single-digit-month",
+      "description": "Single digit month is actually valid",
+      "input": {"inline": "2024-1-15 open Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["lexical", "date"]
+    },
+    {
+      "id": "invalid-leading-decimal",
+      "description": "Leading decimal without integer part",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A .50 USD\n  Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["lexical", "number"]
+    },
+    {
+      "id": "invalid-lowercase-account",
+      "description": "Account with lowercase root type",
+      "input": {"inline": "2024-01-01 open assets:Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "invalid-lowercase-component",
+      "description": "Account with lowercase component start",
+      "input": {"inline": "2024-01-01 open Assets:checking"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "invalid-account-space",
+      "description": "Account with space in name",
+      "input": {"inline": "2024-01-01 open Assets:My Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "invalid-account-root",
+      "description": "Invalid account root type",
+      "input": {"inline": "2024-01-01 open Savings:Emergency"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "invalid-currency-lowercase",
+      "description": "Lowercase currency",
+      "input": {"inline": "2024-01-01 open Assets:A usd"},
+      "expected": {"parse": "error"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "invalid-currency-special-start",
+      "description": "Currency starting with special character",
+      "input": {"inline": "2024-01-01 open Assets:A $USD"},
+      "expected": {"parse": "error"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "invalid-currency-digit-start",
+      "description": "Currency starting with digit",
+      "input": {"inline": "2024-01-01 open Assets:A 123"},
+      "expected": {"parse": "error"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "invalid-booking-method-lowercase",
+      "description": "Lowercase booking method",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"fifo\""},
+      "expected": {"parse": "error", "error_contains": ["Invalid booking method"]},
+      "tags": ["booking"]
+    },
+    {
+      "id": "invalid-unterminated-string",
+      "description": "Unterminated string literal",
+      "input": {"inline": "2024-01-01 * \"Unterminated\n  Assets:A 100 USD"},
+      "expected": {"parse": "error"},
+      "tags": ["lexical", "string"]
+    },
+    {
+      "id": "invalid-directive-unknown",
+      "description": "Unknown directive keyword",
+      "input": {"inline": "2024-01-01 create Assets:Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["directive"]
+    },
+    {
+      "id": "invalid-transaction-no-postings",
+      "description": "Transaction header without any postings",
+      "skip": true,
+      "skip_reason": "Empty transactions are UNDEFINED - pending spec clarification",
+      "input": {"inline": "2024-01-01 open Assets:A\n\n2024-01-15 * \"Empty\""},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "undefined"]
+    },
+    {
+      "id": "invalid-metadata-uppercase-key",
+      "description": "Metadata with uppercase key start",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n  Category: \"test\""},
+      "expected": {"parse": "error"},
+      "tags": ["metadata"]
+    },
+    {
+      "id": "invalid-metadata-digit-key",
+      "description": "Metadata key starting with digit",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n  123key: \"test\""},
+      "expected": {"parse": "error"},
+      "tags": ["metadata"]
+    },
+    {
+      "id": "invalid-tag-empty",
+      "description": "Empty tag",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Test\" #\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {"parse": "error"},
+      "tags": ["tags"]
+    },
+    {
+      "id": "invalid-link-empty",
+      "description": "Empty link",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Test\" ^\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {"parse": "error"},
+      "tags": ["links"]
+    },
+    {
+      "id": "invalid-utf8-bom",
+      "description": "File with UTF-8 BOM",
+      "input": {"inline": "\ufeff2024-01-01 open Assets:Checking"},
+      "expected": {"parse": "error", "error_contains": ["Invalid token"]},
+      "tags": ["lexical", "encoding"]
+    },
+    {
+      "id": "invalid-balance-no-amount",
+      "description": "Balance assertion without amount",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 balance Assets:Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["balance"]
+    },
+    {
+      "id": "invalid-pad-no-source",
+      "description": "Pad directive without source account",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n\n2024-01-01 pad Assets:Checking"},
+      "expected": {"parse": "error"},
+      "tags": ["pad"]
+    },
+    {
+      "id": "invalid-option-unknown",
+      "description": "Unknown option name",
+      "input": {"inline": "option \"unknown_option\" \"value\""},
+      "expected": {"parse": "error", "error_contains": ["Invalid option"]},
+      "tags": ["option"]
+    },
+    {
+      "id": "invalid-posting-indentation",
+      "description": "Posting without indentation",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Test\"\nAssets:A  100 USD\n  Assets:B -100 USD"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction", "indentation"]
+    },
+    {
+      "id": "invalid-cost-unclosed",
+      "description": "Unclosed cost specification",
+      "input": {"inline": "2024-01-01 open Assets:Stock\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 *\n  Assets:Stock 10 AAPL {150 USD\n  Assets:Cash -1500 USD"},
+      "expected": {"parse": "error"},
+      "tags": ["cost"]
+    },
+    {
+      "id": "invalid-expression-unclosed",
+      "description": "Unclosed expression",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A (100 + 50 USD\n  Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["expression"]
+    }
+  ]
+}

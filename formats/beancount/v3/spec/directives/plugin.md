@@ -198,17 +198,20 @@ plugin "plugin" "key1=value1 key2=value2"
 plugin "plugin" '{"threshold": 100, "accounts": ["Expenses:Food"]}'
 ```
 
-### Multi-line (via Option)
+### Multi-line (via String Literal)
+
+For complex configuration, use multi-line strings in the plugin directive itself:
 
 ```beancount
-option "plugin_config:my_plugin" "
+plugin "my_plugin" """
   threshold: 100
   accounts:
     - Expenses:Food
     - Expenses:Transport
-"
-plugin "my_plugin"
+"""
 ```
+
+> **Note**: There is no `option "plugin_config:..."` pattern. Plugin configuration must be passed as the second argument to the `plugin` directive.
 
 ## Plugin Categories
 

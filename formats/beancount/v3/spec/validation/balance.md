@@ -6,9 +6,9 @@ Balance validation ensures transactions balance (debits equal credits) and balan
 
 ## Transaction Balancing
 
-### Rule: E3001 - Transaction Not Balanced
+### Transaction Not Balanced
 
-Every transaction MUST balance: the sum of posting weights MUST equal zero for each currency.
+Every transaction MUST balance: the sum of posting weights MUST equal zero for each currency. Violations produce a `ValidationError`.
 
 **Weight Calculation:**
 
@@ -24,7 +24,7 @@ Every transaction MUST balance: the sum of posting weights MUST equal zero for e
 ```beancount
 2024-01-15 * "Unbalanced"
   Assets:Checking   100 USD
-  Expenses:Food      50 USD    ; E3001: Sum is 150 USD, not 0
+  Expenses:Food      50 USD    ; ValidationError: Sum is 150 USD, not 0
 ```
 
 **Example - Balanced:**
@@ -78,38 +78,38 @@ See [tolerances.md](../tolerances.md) for tolerance rules.
 
 ## Amount Interpolation
 
-### Rule: E3002 - Multiple Missing Amounts
+### Multiple Missing Amounts
 
+> **UNDEFINED**: The exact elision rule is pending clarification.
+> See: [Pending Issue - Amount Elision Rule](https://github.com/beancount/beancount/issues/TBD)
+
+**Option A (One per currency):**
 At most one posting per currency MAY omit its amount.
 
-**Valid:**
-```beancount
-2024-01-15 * "One missing"
-  Assets:Checking   100 USD
-  Income:Salary              ; Computed as -100 USD
-```
+**Option B (One total):**
+At most one posting total MAY omit its amount.
 
-**Invalid:**
+**Always Invalid:**
 ```beancount
-2024-01-15 * "Two missing"
+2024-01-15 * "Two missing for same currency"
   Assets:Checking   100 USD
-  Expenses:Food              ; E3002: Which gets how much?
-  Expenses:Coffee            ; E3002: Ambiguous
+  Expenses:Food              ; ERROR: ambiguous
+  Expenses:Coffee            ; Which gets how much?
 ```
 
 ### Interpolation Algorithm
 
-1. Group postings by currency (based on explicit amounts and costs)
+1. Group postings by currency
 2. For each currency, count postings with missing amounts
-3. If count > 1 for any currency: error E3002
-4. If count = 1: compute missing amount as negative of sum
-5. If count = 0: proceed to balance check
+3. If count > 1 for same currency: produce error
+4. Compute missing amounts to balance each currency
+5. Proceed to balance check
 
 ## Balance Assertions
 
-### Rule: E2001 - Balance Assertion Failed
+### Balance Assertion Failed
 
-Balance assertions verify account balances at a point in time.
+Balance assertions verify account balances at a point in time. Failures produce a `BalanceError`.
 
 **Timing:** Checked at the START of the assertion date (after all previous dates).
 
@@ -132,18 +132,18 @@ Balance assertions verify account balances at a point in time.
 **Failed Assertion:**
 ```beancount
 2024-01-16 balance Assets:Checking  200 USD
-; E2001: Expected 200, got 100 (difference: -100)
+; BalanceError: Expected 200, got 100 (difference: -100)
 ```
 
-### Rule: E2002 - Tolerance Exceeded
+### Tolerance Exceeded
 
-Balance assertion fails if difference exceeds explicit tolerance.
+Balance assertion fails if difference exceeds tolerance. The same `BalanceError` is produced.
 
 ```beancount
 2024-01-16 balance Assets:Checking  100.00 ~ 0.01 USD
 ; Actual: 99.98 USD
 ; Difference: 0.02 USD
-; E2002: Exceeds tolerance of 0.01
+; BalanceError: Exceeds tolerance of 0.01
 ```
 
 ### Currency Specificity
@@ -165,13 +165,13 @@ Balance assertions check one currency at a time:
 
 ## Pad Validation
 
-### Rule: E2003 - Pad Without Balance
+### Pad Without Balance
 
-A `pad` directive MUST have a subsequent `balance` assertion for the same account and currency.
+A `pad` directive MUST have a subsequent `balance` assertion for the same account and currency. Missing balance produces a `PadError`.
 
 ```beancount
 2024-01-01 pad Assets:Checking Equity:Opening
-; E2003: No balance assertion follows for Assets:Checking
+; PadError: No balance assertion follows for Assets:Checking
 ```
 
 **Valid:**
@@ -180,73 +180,63 @@ A `pad` directive MUST have a subsequent `balance` assertion for the same accoun
 2024-01-02 balance Assets:Checking  1000 USD    ; ✓
 ```
 
-### Rule: E2004 - Multiple Pads
+### Multiple Pads
 
-Only one `pad` may precede each `balance` for a given account/currency.
+Only one `pad` may precede each `balance` for a given account/currency. Multiple pads produce a `PadError`.
 
 ```beancount
 2024-01-01 pad Assets:Checking Equity:Opening
-2024-01-05 pad Assets:Checking Expenses:Unknown    ; E2004
+2024-01-05 pad Assets:Checking Expenses:Unknown    ; PadError
 2024-01-10 balance Assets:Checking  1000 USD
 ```
 
 ## Transaction Structure
 
-### Rule: E3003 - No Postings
+### No Postings
 
-Transactions MUST have at least one posting.
+> **UNDEFINED**: Whether transactions with no postings should produce an error is pending clarification.
+> See: [Pending Issue - Empty Transactions](https://github.com/beancount/beancount/issues/TBD)
 
 ```beancount
 2024-01-15 * "Empty transaction"
-; E3003: No postings
+; Should this be an error?
 ```
 
-### Rule: E3004 - Single Posting (Warning)
+### Single Posting
 
-Transactions with only one posting cannot balance in the normal sense.
+Transactions with only one non-zero posting cannot balance and produce a `ValidationError`:
 
 ```beancount
 2024-01-15 * "Single posting"
   Assets:Checking  100 USD
-; E3004 Warning: Single posting
+; ValidationError: Transaction does not balance: (100 USD)
 ```
-
-This is typically an error but may be valid for equity adjustments.
 
 ## Validation Order
 
 Balance validation occurs in phases:
 
 1. **Parse** - Build directive list
-2. **Interpolate** - Compute missing amounts (E3002)
-3. **Balance** - Check transaction sums (E3001, E3003, E3004)
-4. **Assert** - Check balance assertions (E2001, E2002)
-5. **Pad** - Validate pad/balance relationships (E2003, E2004)
+2. **Interpolate** - Compute missing amounts (`ValidationError` for ambiguous)
+3. **Balance** - Check transaction sums (`ValidationError` for imbalanced)
+4. **Assert** - Check balance assertions (`BalanceError`)
+5. **Pad** - Validate pad/balance relationships (`PadError`)
 
 ## Error Messages
 
-### E3001 Format
+### Transaction Balance Error
 ```
-error: Transaction does not balance
-  --> ledger.beancount:15:1
-   |
-15 | 2024-01-15 * "Purchase"
-   | ^^^^^^^^^^^^^^^^^^^^^^^ residual: 50 USD
-   |
-   = tolerance: 0.005 USD
+ValidationError: Transaction does not balance within tolerance:
+  residual: 50 USD
+  tolerance: 0.005 USD
 ```
 
-### E2001 Format
+### Balance Assertion Error
 ```
-error: Balance assertion failed
-  --> ledger.beancount:25:1
-   |
-25 | 2024-01-16 balance Assets:Checking  200 USD
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = expected: 200 USD
-   = actual: 100 USD
-   = difference: -100 USD
+BalanceError: Balance failed for 'Assets:Checking':
+  expected: 200 USD
+  actual: 100 USD
+  difference: -100 USD
 ```
 
 ## Implementation Notes

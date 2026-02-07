@@ -1,0 +1,16 @@
+; Multi-currency ledger for BQL testing
+
+2024-01-01 open Assets:USD USD
+2024-01-01 open Assets:EUR EUR
+2024-01-01 open Expenses:Travel
+2024-01-01 open Income:Salary
+
+2024-01-01 price EUR 1.10 USD
+
+2024-01-15 * "USD income"
+  Assets:USD  1000 USD
+  Income:Salary
+
+2024-01-20 * "EUR travel expense"
+  Expenses:Travel  100 EUR
+  Assets:EUR

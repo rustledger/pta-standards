@@ -15,7 +15,9 @@ close = date WHITESPACE "close" WHITESPACE account
 
 ### Date
 
-The date the account becomes inactive. Postings on or after this date will produce validation errors.
+The date the account becomes inactive.
+
+> **UNDEFINED**: Close date semantics (whether posting ON the close date is allowed) is pending clarification. See [issue-drafts/002-close-date-semantics.md](../../conformance/issue-drafts/002-close-date-semantics.md).
 
 ### Account
 
@@ -60,7 +62,7 @@ The account to close. MUST have been previously opened.
 
 ## Balance at Close
 
-By default, closing an account with a non-zero balance produces a warning:
+> **UNDEFINED**: Whether closing an account with non-zero balance should produce an error is pending clarification. See [issue-drafts/003-close-with-balance.md](../../conformance/issue-drafts/003-close-with-balance.md).
 
 ```beancount
 2024-01-01 open Assets:Checking USD
@@ -69,13 +71,13 @@ By default, closing an account with a non-zero balance produces a warning:
   Assets:Checking  100 USD
   Income:Gift
 
-; Warning: closing with 100 USD balance
+; What should happen when closing with 100 USD balance?
 2024-12-31 close Assets:Checking
 ```
 
-### Zeroing Before Close
+### Best Practice: Zero Before Close
 
-Best practice is to zero the account before closing:
+It is recommended to zero the account before closing for cleaner bookkeeping:
 
 ```beancount
 ; Transfer remaining balance
@@ -87,36 +89,25 @@ Best practice is to zero the account before closing:
 2024-12-31 close Assets:Checking
 ```
 
-### Configuration
-
-The warning behavior can be configured:
-
-```beancount
-; Treat non-zero close as error (strict mode)
-option "close_non_zero" "error"
-
-; Allow non-zero close silently
-option "close_non_zero" "ignore"
-```
-
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E1001 | Account was never opened |
-| E1003 | Posting after close date |
-| E1004 | Account has non-zero balance (warning by default) |
+The following conditions produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Account was never opened | `ValidationError` ("Unopened account ... is being closed") |
+| Posting after close date | `ValidationError` ("Invalid reference to inactive account") |
 
 ### Error Examples
 
 ```beancount
-; E1001: Close without open
+; Close without open - ValidationError
 2024-01-01 close Assets:NeverOpened
 
-; E1003: Posting after close
+; Posting after close - ValidationError
 2024-01-01 open Assets:Account
 2024-06-30 close Assets:Account
-2024-07-01 * "Late transaction"  ; ERROR
+2024-07-01 * "Late transaction"  ; ERROR: inactive account
   Assets:Account  100 USD
   Income:Salary
 ```
@@ -170,22 +161,21 @@ For accounts with cost basis tracking, all lots must be disposed:
 
 ## Reopening Accounts
 
-An account can be reopened after being closed:
+Accounts **cannot** be reopened after being closed. A second `open` directive for a closed account produces a duplicate open error:
 
 ```beancount
 2020-01-01 open Assets:Checking
 2022-12-31 close Assets:Checking
 
-; Reopen the same account
+; ERROR: Duplicate open directive
 2024-01-01 open Assets:Checking
 ```
 
-This creates a new lifecycle for the account. Transactions between the close and reopen are still invalid.
+To continue using an account after closure, use a new account name instead.
 
 ## Implementation Notes
 
 1. Track close date per account
 2. Validate all postings against close date
-3. Compute balance at close for warning
-4. Allow reopen (new open after close)
-5. Close date is exclusive (posting ON close date is invalid)
+3. Close date semantics (inclusive vs exclusive) is UNDEFINED - see issue drafts
+4. Balance at close behavior is UNDEFINED - see issue drafts

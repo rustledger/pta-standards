@@ -1,0 +1,14 @@
+; Simple ledger for BQL testing
+
+2024-01-01 open Assets:Checking USD
+2024-01-01 open Assets:Savings USD
+2024-01-01 open Expenses:Food USD
+2024-01-01 open Income:Salary USD
+
+2024-01-15 * "Salary deposit"
+  Assets:Checking  1000 USD
+  Income:Salary
+
+2024-01-20 * "Grocery shopping"
+  Expenses:Food  50 USD
+  Assets:Checking

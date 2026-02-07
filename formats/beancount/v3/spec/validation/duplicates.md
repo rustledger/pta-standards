@@ -1,5 +1,7 @@
 # Duplicate Detection
 
+> **IMPORTANT**: Python beancount 3.x does NOT have built-in duplicate detection. The options described below (`check_duplicates`, `duplicate_check`, etc.) do NOT exist in the reference implementation. This document describes potential approaches for implementations that wish to add this feature.
+
 ## Overview
 
 Duplicate detection identifies potentially redundant entries in the ledger, helping prevent double-entry of transactions from imports or manual entry.

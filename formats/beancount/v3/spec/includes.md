@@ -118,20 +118,18 @@ error: Circular include detected
 
 ### Top-Level Options Win
 
-Only options from the **main file** (entry point) apply:
+Most options from included files are ignored - only the **main file** (entry point) values apply:
 
 ```beancount
 ; main.beancount
 option "title" "Main Ledger"
-option "operating_currency" "USD"
 include "other.beancount"
 
 ; other.beancount
-option "title" "Other Ledger"      ; Ignored
-option "operating_currency" "EUR"  ; Ignored
+option "title" "Other Ledger"      ; Ignored - main file's value used
 ```
 
-Result: title = "Main Ledger", operating_currency = "USD"
+Result: title = "Main Ledger"
 
 ### Rationale
 
@@ -139,7 +137,7 @@ This prevents included files from unexpectedly changing global behavior.
 
 ### Exception: Additive Options
 
-Some options are additive across files:
+The `operating_currency` option is additive across files - values from all files accumulate:
 
 ```beancount
 ; main.beancount
@@ -147,10 +145,10 @@ option "operating_currency" "USD"
 include "other.beancount"
 
 ; other.beancount
-option "operating_currency" "EUR"  ; Added to list
+option "operating_currency" "EUR"  ; Added to list (NOT ignored!)
 ```
 
-The `operating_currency` option accumulates values.
+Result: operating_currency = ["USD", "EUR"]
 
 ## Plugin Scoping
 

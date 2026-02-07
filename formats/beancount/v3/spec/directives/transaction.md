@@ -112,7 +112,7 @@ Amounts support arithmetic expressions:
 
 ### Elided Amounts
 
-One posting per currency MAY omit its amount:
+> **UNDEFINED**: See [posting.md](../posting.md#amount-elision) for the pending elision rule clarification.
 
 ```beancount
 2024-01-15 * "Deposit"
@@ -120,7 +120,7 @@ One posting per currency MAY omit its amount:
   Income:Salary                  ; amount computed as -1000 USD
 ```
 
-Multiple elided amounts for the same currency is an error:
+Multiple elided postings for the same currency is always an error:
 
 ```beancount
 ; ERROR: Multiple missing amounts for USD
@@ -173,8 +173,8 @@ Assets:Stock  10 AAPL {150.00 USD, "lot1"}
 ; Full specification
 Assets:Stock  10 AAPL {150.00 USD, 2024-01-15, "lot1"}
 
-; Merge cost (average)
-Assets:Stock  10 AAPL {*}
+; Merge cost (average all lots)
+Assets:Stock  0 AAPL {*}
 ```
 
 See [costs.md](../costs.md) for detailed cost specification documentation.
@@ -247,14 +247,16 @@ Transaction-level metadata is indented once; posting-level metadata is indented 
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E3001 | Transaction does not balance |
-| E3002 | Multiple postings missing amounts for same currency |
-| E3003 | Transaction has no postings |
-| E3004 | Transaction has only one posting (warning) |
-| E1001 | Posting references account not opened |
-| E1003 | Posting references account after close |
+The following conditions produce validation errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Transaction does not balance | `ValidationError` |
+| Multiple postings missing amounts for same currency | `ValidationError` |
+| Posting references account not opened | `ValidationError` |
+| Posting references account after close | `ValidationError` |
+
+Note: See [validation/balance.md](../validation/balance.md#no-postings) for rules on empty and single-posting transactions.
 
 ## Implementation Notes
 

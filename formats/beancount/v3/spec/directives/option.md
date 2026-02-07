@@ -89,12 +89,14 @@ option "inferred_tolerance_default" "CHF:0.01"
 option "inferred_tolerance_default" "JPY:1"
 ```
 
-### inferred_tolerance_multiplier
+### tolerance_multiplier
 
 - **Type:** Decimal
 - **Default:** 0.5
 - **Repeatable:** No
 - **Description:** Multiplier applied to inferred tolerances.
+
+Note: Previously named `inferred_tolerance_multiplier` (deprecated).
 
 ### infer_tolerance_from_cost
 
@@ -111,7 +113,7 @@ option "inferred_tolerance_default" "JPY:1"
 
 - **Type:** String
 - **Default:** "STRICT"
-- **Values:** "STRICT", "FIFO", "LIFO", "AVERAGE", "NONE"
+- **Values:** "STRICT", "STRICT_WITH_SIZE", "FIFO", "LIFO", "HIFO", "AVERAGE", "NONE"
 - **Repeatable:** No
 - **Description:** Default booking method for all accounts. Can be overridden per-account in `open` directive.
 
@@ -184,21 +186,15 @@ option "conversion_currency" "NOTHING"
 
 ---
 
-## Legacy & Experimental
+## Deprecated/Removed Options
 
-### use_legacy_fixed_tolerances
+The following options existed in earlier versions but are no longer valid:
 
-- **Type:** Boolean
-- **Default:** TRUE
-- **Repeatable:** No
-- **Description:** Restore legacy fixed tolerance handling. When true, balance/pad use 0.015 and transactions use 0.005.
-
-### experiment_explicit_tolerances
-
-- **Type:** Boolean
-- **Default:** TRUE
-- **Repeatable:** No
-- **Description:** Enable explicit tolerance syntax on balance assertions: `<number> ~ <tolerance> <currency>`.
+| Option | Status |
+|--------|--------|
+| `experiment_explicit_tolerances` | Removed (now default behavior) |
+| `use_legacy_fixed_tolerances` | Removed |
+| `encoding` | Removed (UTF-8 only) |
 
 ---
 
@@ -237,6 +233,6 @@ These options are deprecated and SHOULD NOT be used in new files:
 
 ## Validation
 
-- Unknown option names generate warning (E7001)
-- Invalid values generate error (E7002)
-- Duplicate non-repeatable options generate warning (E7003)
+- Unknown option names produce `ParserError`
+- Invalid option values produce `ParserError`
+- Duplicate non-repeatable options: later values override earlier ones

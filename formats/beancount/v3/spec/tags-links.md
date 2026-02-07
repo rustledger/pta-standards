@@ -10,8 +10,10 @@ Tags and links provide lightweight categorization and cross-referencing for tran
 tag  = "#" identifier
 link = "^" identifier
 
-identifier = (letter | digit | "-" | "_" | "/")+
+identifier = (letter | digit | "-" | "_" | "/" | ".")+
 ```
+
+Note: Periods (`.`) are allowed in tag and link identifiers.
 
 ## Tags
 

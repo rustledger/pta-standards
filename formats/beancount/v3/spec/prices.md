@@ -64,20 +64,22 @@ The `@ 185 USD` records that AAPL was trading at $185 but doesn't affect balanci
 
 ## Implicit Price Generation
 
-Transactions with price annotations can generate implicit price entries:
+Transactions with price annotations can generate implicit price entries using the `implicit_prices` plugin:
 
 ```beancount
-option "infer_implicit_prices" "TRUE"
+plugin "beancount.plugins.implicit_prices"
 
 2024-01-15 * "Exchange"
   Assets:EUR  100 EUR @ 1.10 USD
   Assets:USD
 
-; Implicitly generates:
+; Plugin generates:
 ; 2024-01-15 price EUR 1.10 USD
 ```
 
 This populates the price database for later valuation.
+
+Note: There is no option for this - it requires loading the `beancount.plugins.implicit_prices` plugin.
 
 ## Currency Conversion
 

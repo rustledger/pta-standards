@@ -1,0 +1,317 @@
+name: Conformance Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/**'
+      - 'formats/**/spec/**'
+      - '.github/workflows/run-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/**'
+      - 'formats/**/spec/**'
+      - '.github/workflows/run-tests.yml'
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      update_readme:
+        description: 'Update README with results'
+        type: boolean
+        default: false
+
+jobs:
+  beancount-v3:
+    name: Beancount v3 (Python)
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.parse.outputs.total }}
+      passed: ${{ steps.parse.outputs.passed }}
+      failed: ${{ steps.parse.outputs.failed }}
+      skipped: ${{ steps.parse.outputs.skipped }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install beancount from main branch
+        run: |
+          pip install --upgrade pip
+          pip install git+https://github.com/beancount/beancount.git@master
+          pip install git+https://github.com/beancount/beanquery.git@master
+
+      - name: Get beancount version
+        id: version
+        run: |
+          VERSION=$(python -c "import beancount; print(beancount.__version__)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Beancount version: $VERSION"
+
+      - name: Run conformance tests
+        id: tests
+        run: |
+          cd tests/harness/runners/python
+          python runner.py --manifest ../../beancount/v3/manifest.json --format json > results.json
+        continue-on-error: true
+
+      - name: Parse test results
+        id: parse
+        run: |
+          cd tests/harness/runners/python
+          python -c "
+          import json
+          with open('results.json') as f:
+              data = json.load(f)
+          s = data['summary']
+          print(f\"total={s['total']}\")
+          print(f\"passed={s['passed']}\")
+          print(f\"failed={s['failed']}\")
+          print(f\"skipped={s['skipped']}\")
+          " >> $GITHUB_OUTPUT
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-beancount
+          path: tests/harness/runners/python/results.json
+
+      - name: Create summary
+        run: |
+          echo "## Python Beancount (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
+
+  rustledger:
+    name: Rustledger
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.parse.outputs.total }}
+      passed: ${{ steps.parse.outputs.passed }}
+      failed: ${{ steps.parse.outputs.failed }}
+      skipped: ${{ steps.parse.outputs.skipped }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout rustledger
+        uses: actions/checkout@v4
+        with:
+          repository: rustledger/rustledger
+          path: rustledger
+          ref: main
+
+      - name: Set up Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rustledger/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rustledger/Cargo.lock') }}
+
+      - name: Build rustledger
+        run: |
+          cd rustledger
+          cargo build --release
+
+      - name: Get rustledger version
+        id: version
+        run: |
+          VERSION=$(cd rustledger && cargo pkgid | cut -d# -f2 | cut -d@ -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Rustledger version: $VERSION"
+
+      - name: Set up Python for test runner
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run conformance tests
+        id: tests
+        run: |
+          cd tests/harness/runners/python
+          # Use rustledger binary instead of beancount
+          export RLEDGER_BIN="${GITHUB_WORKSPACE}/rustledger/target/release/rledger"
+          python runner.py --manifest ../../beancount/v3/manifest.json --format json --impl rustledger > results.json || true
+        continue-on-error: true
+
+      - name: Parse test results
+        id: parse
+        run: |
+          cd tests/harness/runners/python
+          if [ -f results.json ]; then
+            python -c "
+          import json
+          with open('results.json') as f:
+              data = json.load(f)
+          s = data['summary']
+          print(f\"total={s['total']}\")
+          print(f\"passed={s['passed']}\")
+          print(f\"failed={s['failed']}\")
+          print(f\"skipped={s['skipped']}\")
+          " >> $GITHUB_OUTPUT
+          else
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-rustledger
+          path: tests/harness/runners/python/results.json
+
+      - name: Create summary
+        run: |
+          echo "## Rustledger (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
+
+  update-readme:
+    name: Update README
+    needs: [beancount-v3, rustledger]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.update_readme == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update README with results
+        run: |
+          DATE=$(date -u +"%Y-%m-%d")
+
+          # Create the results table
+          cat > /tmp/results.md << 'EOF'
+          <!-- CONFORMANCE-RESULTS-START -->
+          ## Conformance Test Results
+
+          Last updated: DATEPLACEHOLDER
+
+          | Implementation | Version | Passed | Failed | Skipped | Status |
+          |---------------|---------|--------|--------|---------|--------|
+          | Python beancount | BEANCOUNT_VERSION | BEANCOUNT_PASSED | BEANCOUNT_FAILED | BEANCOUNT_SKIPPED | BEANCOUNT_STATUS |
+          | Rustledger | RUSTLEDGER_VERSION | RUSTLEDGER_PASSED | RUSTLEDGER_FAILED | RUSTLEDGER_SKIPPED | RUSTLEDGER_STATUS |
+
+          Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
+          <!-- CONFORMANCE-RESULTS-END -->
+          EOF
+
+          # Replace placeholders
+          sed -i "s/DATEPLACEHOLDER/$DATE/g" /tmp/results.md
+          sed -i "s/BEANCOUNT_VERSION/${{ needs.beancount-v3.outputs.version }}/g" /tmp/results.md
+          sed -i "s/BEANCOUNT_PASSED/${{ needs.beancount-v3.outputs.passed }}/g" /tmp/results.md
+          sed -i "s/BEANCOUNT_FAILED/${{ needs.beancount-v3.outputs.failed }}/g" /tmp/results.md
+          sed -i "s/BEANCOUNT_SKIPPED/${{ needs.beancount-v3.outputs.skipped }}/g" /tmp/results.md
+          sed -i "s/RUSTLEDGER_VERSION/${{ needs.rustledger.outputs.version }}/g" /tmp/results.md
+          sed -i "s/RUSTLEDGER_PASSED/${{ needs.rustledger.outputs.passed }}/g" /tmp/results.md
+          sed -i "s/RUSTLEDGER_FAILED/${{ needs.rustledger.outputs.failed }}/g" /tmp/results.md
+          sed -i "s/RUSTLEDGER_SKIPPED/${{ needs.rustledger.outputs.skipped }}/g" /tmp/results.md
+
+          # Determine status badges
+          if [ "${{ needs.beancount-v3.outputs.failed }}" = "0" ]; then
+            sed -i "s/BEANCOUNT_STATUS/:white_check_mark:/g" /tmp/results.md
+          else
+            sed -i "s/BEANCOUNT_STATUS/:x:/g" /tmp/results.md
+          fi
+
+          if [ "${{ needs.rustledger.outputs.failed }}" = "0" ]; then
+            sed -i "s/RUSTLEDGER_STATUS/:white_check_mark:/g" /tmp/results.md
+          else
+            sed -i "s/RUSTLEDGER_STATUS/:x:/g" /tmp/results.md
+          fi
+
+          # Update README.md
+          if grep -q "CONFORMANCE-RESULTS-START" README.md; then
+            # Replace existing section
+            sed -i '/<!-- CONFORMANCE-RESULTS-START -->/,/<!-- CONFORMANCE-RESULTS-END -->/d' README.md
+          fi
+
+          # Append results before the last line or at end
+          cat /tmp/results.md >> README.md
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --staged --quiet || git commit -m "chore: update conformance test results [skip ci]"
+          git push
+
+  validate-schemas:
+    name: Validate Test Schemas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate test files against schema
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          from pathlib import Path
+
+          schema_path = Path('tests/harness/test-case.schema.json')
+          with open(schema_path) as f:
+              schema = json.load(f)
+
+          test_files = list(Path('tests').rglob('tests.json'))
+          errors = []
+
+          for test_file in test_files:
+              with open(test_file) as f:
+                  try:
+                      data = json.load(f)
+                      for test in data.get('tests', []):
+                          try:
+                              jsonschema.validate(test, schema)
+                          except jsonschema.ValidationError as e:
+                              errors.append(f'{test_file}:{test.get(\"id\", \"unknown\")}: {e.message}')
+                  except json.JSONDecodeError as e:
+                      errors.append(f'{test_file}: Invalid JSON - {e}')
+
+          if errors:
+              print('Schema validation errors:')
+              for err in errors:
+                  print(f'  - {err}')
+              exit(1)
+          else:
+              print(f'Validated {len(test_files)} test files successfully')
+          "

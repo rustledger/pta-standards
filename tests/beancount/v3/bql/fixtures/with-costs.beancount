@@ -1,0 +1,13 @@
+; Ledger with cost basis for BQL testing
+
+2024-01-01 open Assets:Stock AAPL
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Income:Gains
+
+2024-01-15 * "Buy stock"
+  Assets:Stock  10 AAPL {150 USD}
+  Assets:Cash  -1500 USD
+
+2024-02-15 * "Buy more stock"
+  Assets:Stock  5 AAPL {160 USD}
+  Assets:Cash  -800 USD

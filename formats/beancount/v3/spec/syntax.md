@@ -63,7 +63,7 @@ Flags indicate transaction status:
 | `*` | Complete - "this looks correct" |
 | `!` | Incomplete - needs review, "this looks incorrect" |
 | `txn` | Equivalent to `*` (keyword form) |
-| `P` | Padding - auto-inserted by pad directive |
+| `P` | Padding - typically auto-inserted by pad directive (can also be used manually) |
 
 The `txn` keyword is optional; a flag alone suffices:
 
@@ -95,9 +95,10 @@ Every account MUST start with one of five root types:
 
 ### Component Rules
 
-- First word MUST be one of the five root types
-- Each component MUST begin with a capital letter
-- Subsequent characters MAY be letters, numbers, or dashes
+- First component MUST be one of the five root types
+- Each subsequent component MUST begin with an uppercase ASCII letter (A-Z) or digit (0-9)
+- Subsequent characters MAY be letters (including UTF-8), numbers, or dashes
+- UTF-8 characters are supported AFTER the first ASCII character
 - MUST NOT contain spaces or special characters other than dash
 
 **Examples:**
@@ -113,18 +114,28 @@ Income:Salary:2024
 
 Currency names are recognized by syntax:
 
-- All capital letters
-- 1-24 characters long
-- MUST start and end with capital letters or numbers
-- Middle characters: letters, numbers, apostrophes, periods, underscores, dashes
+- MUST start with an uppercase letter (A-Z)
+- MUST end with an uppercase letter or digit (A-Z, 0-9)
+- Middle characters MAY include: uppercase letters, digits, apostrophes ('), periods (.), underscores (_), dashes (-)
+- No enforced maximum length (docs mention 24 chars but not enforced)
+- Single-letter currencies are valid (e.g., `V`)
 
 **Examples:**
 ```
-USD     ; US Dollar
-EUR     ; Euro
-MSFT    ; Stock
-VACHR   ; Custom (vacation hours)
-BTC     ; Cryptocurrency
+USD       ; US Dollar
+EUR       ; Euro
+MSFT      ; Stock
+V         ; Single letter (valid)
+NT.TO     ; Toronto stock exchange
+BRK.B     ; Class B shares
+VACHR     ; Custom (vacation hours)
+```
+
+**Invalid examples:**
+```
+usd       ; Lowercase not allowed
+1USD      ; Cannot start with digit
+USD-      ; Cannot end with special character
 ```
 
 No pre-declaration required (though `commodity` directive is available).
@@ -171,10 +182,10 @@ Strings MAY span multiple lines.
 
 ## Tags
 
-Hash-prefixed identifiers for categorizing:
+Hash-prefixed identifiers for categorizing. Tags may contain letters, numbers, dashes, underscores, slashes, and periods.
 
 ```beancount
-2024-01-15 * "Flight" #berlin-trip #travel
+2024-01-15 * "Flight" #berlin-trip #travel #project/2024
   Expenses:Flights  -1230.27 USD
   Liabilities:CreditCard
 ```
@@ -207,14 +218,14 @@ popmeta location:
 
 ## Links
 
-Caret-prefixed identifiers connecting related transactions:
+Caret-prefixed identifiers connecting related transactions. Links may contain letters, numbers, dashes, underscores, slashes, and periods.
 
 ```beancount
-2024-02-05 * "Invoice" ^invoice-001
+2024-02-05 * "Invoice" ^invoice/2024/001
   Income:Clients  -8450.00 USD
   Assets:Receivable
 
-2024-02-20 * "Payment" ^invoice-001
+2024-02-20 * "Payment" ^invoice/2024/001
   Assets:Checking  8450.00 USD
   Assets:Receivable
 ```

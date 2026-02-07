@@ -17,8 +17,8 @@ Content-Type: text/plain; charset=utf-8
 ### BOM Handling
 
 The UTF-8 BOM (Byte Order Mark, `EF BB BF`) at the start of a file:
-- SHOULD be accepted without error
-- MUST be ignored (not treated as content)
+- Is NOT supported by the reference implementation (produces "Invalid token" error)
+- Files with BOM should have it stripped before processing
 - SHOULD NOT be written by formatters
 
 ### Unicode Normalization
@@ -32,13 +32,15 @@ Implementations SHOULD normalize Unicode to NFC (Canonical Composition) for:
 
 ### Line Endings
 
-All standard line endings are accepted:
+The following line endings are accepted:
 
-| Sequence | Name | Platform |
-|----------|------|----------|
-| `\n` | LF | Unix/Linux/macOS |
-| `\r\n` | CRLF | Windows |
-| `\r` | CR | Classic Mac (rare) |
+| Sequence | Name | Platform | Support |
+|----------|------|----------|---------|
+| `\n` | LF | Unix/Linux/macOS | Yes |
+| `\r\n` | CRLF | Windows | Yes |
+| `\r` | CR | Classic Mac (rare) | No |
+
+Note: CR-only line endings are NOT supported by the reference implementation.
 
 Implementations SHOULD normalize to `\n` internally.
 
@@ -143,24 +145,26 @@ This enables org-mode style formatting:
 
 ### Date
 
-ISO 8601 date format:
+ISO 8601-like date format:
 
 ```ebnf
 date = YYYY "-" MM "-" DD
      | YYYY "/" MM "/" DD
 
-YYYY = digit{4}
-MM   = digit{2}
-DD   = digit{2}
+YYYY = digit{4,}
+MM   = digit{1,2}
+DD   = digit{1,2}
 ```
 
 Examples:
 ```
 2024-01-15
 2024/01/15
+2024-1-1      ; Single digits allowed
 ```
 
 Both separators are equivalent. Dash (`-`) is preferred.
+Two-digit months and days are recommended for consistency.
 
 ### Account
 
@@ -170,11 +174,14 @@ Colon-separated components starting with root type:
 account = root_type (":" component)+
 
 root_type = "Assets" | "Liabilities" | "Equity" | "Income" | "Expenses"
-component = capital_start alphanumeric_dash*
+component = ascii_start (alphanumeric_dash | utf8_char)*
 
-capital_start    = [A-Z] | [0-9]
+ascii_start       = [A-Z] | [0-9]
 alphanumeric_dash = [A-Za-z0-9-]
+utf8_char         = <any UTF-8 character>
 ```
+
+Note: Each component MUST start with an ASCII uppercase letter or digit. UTF-8 characters are allowed AFTER the first ASCII character.
 
 Examples:
 ```
@@ -190,13 +197,20 @@ Income:Salary:2024
 Uppercase identifier:
 
 ```ebnf
-currency = uppercase_letter (currency_char)* uppercase_letter?
+currency = uppercase_letter uppercase_end (currency_char)*
 
 uppercase_letter = [A-Z]
 currency_char    = [A-Z0-9'._-]
+uppercase_end    = [A-Z0-9]
 ```
 
-Length: 1-24 characters
+Rules:
+- MUST be at least 2 characters long
+- MUST start with an uppercase letter (A-Z)
+- MUST end with an uppercase letter or digit (A-Z, 0-9)
+- Middle characters may include: letters, digits, apostrophe, period, underscore, dash
+
+See [commodities.md](validation/commodities.md) for maximum length limits (UNDEFINED).
 
 Examples:
 ```
@@ -215,9 +229,8 @@ Decimal number with optional sign and grouping:
 
 ```ebnf
 number = sign? digits ("." digits)?
-       | sign? "." digits
 
-sign   = "-"
+sign   = "-" | "+"
 digits = digit+ ("," digit+)*
 digit  = [0-9]
 ```
@@ -227,10 +240,12 @@ Examples:
 100
 100.00
 -50.25
++100.00
 1,234.56
 1,234,567.89
-.50
 ```
+
+Note: Leading decimal without integer part (`.50`) is NOT valid; use `0.50` instead.
 
 Grouping separator (`,`) is optional and ignored.
 
@@ -244,8 +259,10 @@ string = '"' string_char* '"'
 string_char = [^"\\]
             | '\\' escape_char
 
-escape_char = '"' | '\\' | 'n' | 't' | 'r'
+escape_char = '"' | '\\'
 ```
+
+Note: Only `\"` (escaped double quote) and `\\` (escaped backslash) are recognized escape sequences.
 
 Strings MAY span multiple lines:
 
@@ -262,9 +279,8 @@ Escape sequences:
 |----------|-----------|
 | `\"` | Double quote |
 | `\\` | Backslash |
-| `\n` | Newline |
-| `\t` | Tab |
-| `\r` | Carriage return |
+
+Note: Other common escape sequences (`\n`, `\t`, `\r`) are NOT processed. They are kept literally as backslash followed by the character.
 
 ### Tag
 
@@ -273,7 +289,7 @@ Hash-prefixed identifier:
 ```ebnf
 tag = "#" tag_char+
 
-tag_char = [A-Za-z0-9-_/]
+tag_char = [A-Za-z0-9-_/.]
 ```
 
 Examples:
@@ -282,6 +298,7 @@ Examples:
 #berlin-trip
 #2024/q1
 #tax_deductible
+#project.v1
 ```
 
 ### Link
@@ -291,7 +308,7 @@ Caret-prefixed identifier:
 ```ebnf
 link = "^" link_char+
 
-link_char = [A-Za-z0-9-_/]
+link_char = [A-Za-z0-9-_/.]
 ```
 
 Examples:
@@ -299,6 +316,7 @@ Examples:
 ^invoice-001
 ^project/2024
 ^ref_12345
+^v1.0.0
 ```
 
 ### Metadata Key

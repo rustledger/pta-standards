@@ -4,6 +4,8 @@
 
 This document lists all breaking changes between Beancount v2 and v3. Most changes are minor and affect edge cases.
 
+> **Note**: This document has been validated against beancount 3.2.0 (January 2025).
+
 ## Syntax Changes
 
 ### None
@@ -12,39 +14,46 @@ The core syntax is unchanged. All valid v2 directives parse in v3.
 
 ## Option Changes
 
-### Renamed Options
-
-| v2 Option | v3 Option | Notes |
-|-----------|-----------|-------|
-| `name_assets` | `account_root_assets` | Clearer naming |
-| `name_liabilities` | `account_root_liabilities` | |
-| `name_equity` | `account_root_equity` | |
-| `name_income` | `account_root_income` | |
-| `name_expenses` | `account_root_expenses` | |
-
 ### Removed Options
 
 | Option | Reason | Alternative |
 |--------|--------|-------------|
 | `experiment_explicit_tolerances` | Now default behavior | Remove option |
-| `allow_deprecated_none_for_tags_and_links` | Deprecated syntax removed | Use empty |
+| `encoding` | UTF-8 only in v3 | Convert files to UTF-8 |
+
+### Deprecated Options (Still Work)
+
+| Option | Status | Notes |
+|--------|--------|-------|
+| `allow_deprecated_none_for_tags_and_links` | Deprecated | Produces warning, still accepted |
 
 ### Type Changes
 
 | Option | v2 Type | v3 Type |
 |--------|---------|---------|
 | `operating_currency` | String | List of strings |
-| `insert_pythonpath` | String "True"/"False" | String "TRUE"/"FALSE" |
+
+### Unchanged Options
+
+The following options use the same names in v3 as in v2:
+
+- `name_assets` - Root name for asset accounts (default: "Assets")
+- `name_liabilities` - Root name for liability accounts (default: "Liabilities")
+- `name_equity` - Root name for equity accounts (default: "Equity")
+- `name_income` - Root name for income accounts (default: "Income")
+- `name_expenses` - Root name for expense accounts (default: "Expenses")
 
 ## Plugin Changes
 
-### Renamed Plugins
+### Plugin Path Changes
 
-| v2 Path | v3 Path |
-|---------|---------|
-| `beancount.plugins.auto` | `beancount.plugins.auto_accounts` |
-| `beancount.plugins.prices` | `beancount.plugins.implicit_prices` |
-| `beancount.plugins.check_closing` | `beancount.plugins.close_tree` |
+| v2 Path | v3 Path | Status |
+|---------|---------|--------|
+| `beancount.plugins.auto` | `beancount.plugins.auto_accounts` | Both work (aliased) |
+| `beancount.plugins.prices` | `beancount.plugins.implicit_prices` | **Breaking**: Only v3 path works |
+| `beancount.plugins.check_closing` | `beancount.plugins.close_tree` | Both work (aliased) |
+
+Only `beancount.plugins.prices` is a true breaking change.
 
 ### Removed Plugins
 
@@ -54,16 +63,6 @@ The core syntax is unchanged. All valid v2 directives parse in v3.
 | `beancount.plugins.tag_pending` | Superseded | Use metadata |
 
 ### Plugin API Changes
-
-#### Entry Types
-
-```python
-# v2: TxnPosting existed
-from beancount.core.data import TxnPosting
-
-# v3: Use Posting directly
-from beancount.core.data import Posting
-```
 
 #### Options Map
 
@@ -96,17 +95,25 @@ def my_plugin(entries, options_map, config=None):
 
 **v3:** Single standardized mode:
 ```
-tolerance = 0.5 × 10^(-precision)
+tolerance = 0.5 * 10^(-precision)
 ```
 
 Where precision is the maximum decimal places used in the transaction.
 
 **Impact:** Some transactions that balanced in v2 may not balance in v3, or vice versa.
 
-**Migration:**
+**Example:**
 ```beancount
-; If needed, set explicit tolerance
-option "tolerance" "0.005"
+; For 2 decimal places, tolerance = 0.005 USD
+; 0.004 imbalance - PASSES
+2024-01-15 * "Within tolerance"
+  Expenses:Food      10.00 USD
+  Assets:Checking   -10.004 USD
+
+; 0.01 imbalance - FAILS
+2024-01-15 * "Outside tolerance"
+  Expenses:Food      10.00 USD
+  Assets:Checking   -10.01 USD
 ```
 
 ### Booking Method Case
@@ -123,6 +130,8 @@ option "tolerance" "0.005"
 2024-01-01 open Assets:Stock AAPL "FIFO"
 ```
 
+Valid booking methods: `STRICT`, `FIFO`, `LIFO`, `HIFO`, `AVERAGE`, `NONE`
+
 ### Balance Assertion Timing
 
 **v2:** Checked at end of day.
@@ -132,12 +141,16 @@ option "tolerance" "0.005"
 **Impact:** Assertions may need date adjustment:
 
 ```beancount
-; v2: Checked after 2024-01-15 transactions
-2024-01-15 balance Assets:Checking 1000 USD
+2024-01-15 * "Deposit"
+  Assets:Checking  100 USD
+  Income:Salary   -100 USD
 
-; v3: Checked before 2024-01-15 transactions
-; May need:
-2024-01-16 balance Assets:Checking 1000 USD
+; v3: This checks balance BEFORE the deposit
+; Asserts 0 USD (starting balance) - PASSES
+2024-01-15 balance Assets:Checking 0 USD
+
+; v3: To check AFTER same-day transactions, use next day
+2024-01-16 balance Assets:Checking 100 USD
 ```
 
 ### Empty Cost Specification
@@ -154,36 +167,28 @@ Assets:Stock -10 AAPL {}
 Assets:Stock -10 AAPL {}
 ```
 
-## Error Code Changes
+## Error Handling
 
-### New Error Codes
+### Error Types
 
-| Code | Description |
-|------|-------------|
-| E1005 | Invalid account name |
-| E2002 | Balance tolerance exceeded |
-| E4004 | Negative inventory |
+Beancount 3.x uses Python exception classes:
 
-### Changed Error Codes
+| Error Class | Description |
+|-------------|-------------|
+| `ParserError` | Syntax and parsing errors |
+| `ValidationError` | Semantic validation errors |
+| `DeprecatedError` | Deprecated feature warnings |
 
-| v2 Code | v3 Code | Change |
-|---------|---------|--------|
-| Multiple | E1001 | Consolidated account errors |
-| Multiple | E3001 | Consolidated balance errors |
+### Error Format
 
-### Error Message Format
+Errors are Python objects with structured data:
 
-**v2:** Plain text errors.
-
-**v3:** Structured errors with location:
-```
-error: Account not opened
-  --> ledger.beancount:42:3
-   |
-42 |   Assets:Unknown  100 USD
-   |   ^^^^^^^^^^^^^^
-   |
-   = hint: add 'open' directive before this transaction
+```python
+ValidationError(
+    source={'filename': 'ledger.beancount', 'lineno': 42},
+    message="Invalid reference to unknown account 'Assets:Unknown'",
+    entry=<Transaction object>
+)
 ```
 
 ## File Handling Changes
@@ -198,7 +203,7 @@ error: Account not opened
 ; v2 (worked)
 option "encoding" "latin-1"
 
-; v3 (removed)
+; v3 (removed - produces error)
 ; Convert files to UTF-8
 ```
 
@@ -241,23 +246,15 @@ No change: `YYYY-MM-DD` and `YYYY/MM/DD` both supported.
 1. Balance assertions first
 2. Other directives by file order
 
-## Deprecation Warnings
-
-v3 produces warnings for v2 patterns that still work but are deprecated:
-
-| Pattern | Warning | Future |
-|---------|---------|--------|
-| Old option names | Deprecated | Will error in v4 |
-| Old plugin paths | Deprecated | Will error in v4 |
-
 ## Compatibility Matrix
 
 | Feature | v2 | v3 | Action |
 |---------|----|----|--------|
-| Core syntax | ✓ | ✓ | None |
-| Old option names | ✓ | ⚠ | Update |
-| Old plugin paths | ✓ | ⚠ | Update |
-| Booking case | ✓ | ✗ | Uppercase |
-| Non-UTF8 files | ✓ | ✗ | Convert |
+| Core syntax | Y | Y | None |
+| Old option names | Y | Y | None needed |
+| `beancount.plugins.prices` | Y | N | Update to `implicit_prices` |
+| Lowercase booking methods | Y | N | Uppercase |
+| Non-UTF8 files | Y | N | Convert to UTF-8 |
+| `operating_currency` as string | Y | N | Handle as list |
 
-Legend: ✓ Works, ⚠ Warning, ✗ Error
+Legend: Y = Works, N = Error

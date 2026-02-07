@@ -1,0 +1,352 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "syntax-valid",
+  "description": "Valid syntax that should parse successfully",
+  "tests": [
+    {
+      "id": "empty-file",
+      "description": "Empty file is valid",
+      "input": {"inline": ""},
+      "expected": {"parse": "success", "directives": 0},
+      "tags": ["minimal"]
+    },
+    {
+      "id": "comment-only",
+      "description": "File with only comments",
+      "input": {"inline": "; This is a comment\n; Another comment"},
+      "expected": {"parse": "success", "directives": 0},
+      "tags": ["comments"]
+    },
+    {
+      "id": "open-minimal",
+      "description": "Minimal open directive",
+      "input": {"inline": "2024-01-01 open Assets:Checking"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["open", "directives"]
+    },
+    {
+      "id": "open-with-currency",
+      "description": "Open with currency constraint",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["open", "currency"]
+    },
+    {
+      "id": "open-multi-currency",
+      "description": "Open with multiple currencies",
+      "input": {"inline": "2024-01-01 open Assets:Brokerage USD,EUR,AAPL"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["open", "currency"]
+    },
+    {
+      "id": "open-with-booking",
+      "description": "Open with booking method",
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"FIFO\""},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["open", "booking"]
+    },
+    {
+      "id": "close-minimal",
+      "description": "Minimal close directive",
+      "input": {"inline": "2024-01-01 open Assets:Old\n2024-12-31 close Assets:Old"},
+      "expected": {"parse": "success", "directives": 2},
+      "tags": ["close", "directives"]
+    },
+    {
+      "id": "transaction-minimal",
+      "description": "Minimal transaction with two postings",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Test\"\n  Assets:A  100 USD\n  Assets:B -100 USD"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["transaction", "minimal"]
+    },
+    {
+      "id": "transaction-complete-flag",
+      "description": "Transaction with * flag",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Complete transaction\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "flag"]
+    },
+    {
+      "id": "transaction-incomplete-flag",
+      "description": "Transaction with ! flag",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 ! \"Incomplete transaction\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "flag"]
+    },
+    {
+      "id": "transaction-txn-keyword",
+      "description": "Transaction with txn keyword",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 txn \"Using txn keyword\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "flag"]
+    },
+    {
+      "id": "transaction-payee-narration",
+      "description": "Transaction with payee and narration",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Payee Name\" \"Description here\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "payee"]
+    },
+    {
+      "id": "transaction-tags",
+      "description": "Transaction with tags",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Tagged\" #travel #business\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "tags"]
+    },
+    {
+      "id": "transaction-links",
+      "description": "Transaction with links",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Linked\" ^invoice-123 ^ref-456\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "links"]
+    },
+    {
+      "id": "transaction-elided-amount",
+      "description": "Transaction with one elided amount",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Elided\"\n  Assets:A  -100 USD\n  Expenses:B"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["transaction", "elision"]
+    },
+    {
+      "id": "amount-positive",
+      "description": "Positive amount with + sign",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A  +100 USD\n  Assets:B -100 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "sign"]
+    },
+    {
+      "id": "amount-grouping",
+      "description": "Amount with thousand separators",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A  1,234,567.89 USD\n  Assets:B -1,234,567.89 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "grouping"]
+    },
+    {
+      "id": "amount-expression",
+      "description": "Amount with arithmetic expression",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A  (100 + 50) USD\n  Assets:B -(100 + 50) USD"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "expression"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion directive",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n\n2024-01-15 balance Assets:Checking 0 USD"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["balance", "directives"]
+    },
+    {
+      "id": "balance-with-tolerance",
+      "description": "Balance assertion with explicit tolerance",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n\n2024-01-15 balance Assets:Checking 0.00 ~ 0.01 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["balance", "tolerance"]
+    },
+    {
+      "id": "pad-directive",
+      "description": "Pad directive",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Equity:Opening USD\n\n2024-01-01 pad Assets:Checking Equity:Opening\n2024-01-02 balance Assets:Checking 1000 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["pad", "directives"]
+    },
+    {
+      "id": "commodity-directive",
+      "description": "Commodity declaration",
+      "input": {"inline": "2024-01-01 commodity USD"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["commodity", "directives"]
+    },
+    {
+      "id": "commodity-with-metadata",
+      "description": "Commodity with metadata",
+      "input": {"inline": "2024-01-01 commodity AAPL\n  name: \"Apple Inc.\"\n  asset-class: \"stock\""},
+      "expected": {"parse": "success"},
+      "tags": ["commodity", "metadata"]
+    },
+    {
+      "id": "price-directive",
+      "description": "Price directive",
+      "input": {"inline": "2024-01-15 price AAPL 185.50 USD"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["price", "directives"]
+    },
+    {
+      "id": "event-directive",
+      "description": "Event directive",
+      "input": {"inline": "2024-01-15 event \"location\" \"New York\""},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["event", "directives"]
+    },
+    {
+      "id": "note-directive",
+      "description": "Note directive",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 note Assets:Checking \"Account opened online\""},
+      "expected": {"parse": "success"},
+      "tags": ["note", "directives"]
+    },
+    {
+      "id": "document-directive",
+      "description": "Document directive",
+      "skip": true,
+      "skip_reason": "Document validation checks file existence during load - requires test fixture file",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 document Assets:Checking \"statement.pdf\""},
+      "expected": {"parse": "success"},
+      "tags": ["document", "directives"]
+    },
+    {
+      "id": "query-directive",
+      "description": "Query directive",
+      "input": {"inline": "2024-01-15 query \"balance-check\" \"SELECT account, sum(position) GROUP BY account\""},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["query", "directives"]
+    },
+    {
+      "id": "custom-directive",
+      "description": "Custom directive",
+      "input": {"inline": "2024-01-15 custom \"budget\" Expenses:Food 500 USD"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["custom", "directives"]
+    },
+    {
+      "id": "option-title",
+      "description": "Option directive",
+      "input": {"inline": "option \"title\" \"My Ledger\""},
+      "expected": {"parse": "success", "directives": 0},
+      "tags": ["option", "directives"]
+    },
+    {
+      "id": "option-operating-currency",
+      "description": "Operating currency option",
+      "input": {"inline": "option \"operating_currency\" \"USD\""},
+      "expected": {"parse": "success"},
+      "tags": ["option"]
+    },
+    {
+      "id": "plugin-directive",
+      "description": "Plugin directive",
+      "input": {"inline": "plugin \"beancount.plugins.auto_accounts\""},
+      "expected": {"parse": "success", "directives": 0},
+      "tags": ["plugin", "directives"]
+    },
+    {
+      "id": "cost-per-unit",
+      "description": "Posting with per-unit cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 *\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["cost", "booking"]
+    },
+    {
+      "id": "cost-total",
+      "description": "Posting with total cost",
+      "input": {"inline": "2024-01-01 open Assets:Stock\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 *\n  Assets:Stock 10 AAPL {{1500 USD}}\n  Assets:Cash -1500 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["cost", "booking"]
+    },
+    {
+      "id": "cost-with-date",
+      "description": "Cost with acquisition date",
+      "input": {"inline": "2024-01-01 open Assets:Stock\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 *\n  Assets:Stock 10 AAPL {150 USD, 2024-01-15}\n  Assets:Cash -1500 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["cost", "booking"]
+    },
+    {
+      "id": "cost-with-label",
+      "description": "Cost with lot label",
+      "input": {"inline": "2024-01-01 open Assets:Stock\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 *\n  Assets:Stock 10 AAPL {150 USD, \"lot1\"}\n  Assets:Cash -1500 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["cost", "booking"]
+    },
+    {
+      "id": "price-annotation",
+      "description": "Posting with price annotation",
+      "input": {"inline": "2024-01-01 open Assets:EUR\n2024-01-01 open Assets:USD\n\n2024-01-15 *\n  Assets:EUR 100 EUR @ 1.10 USD\n  Assets:USD -110 USD"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["price", "conversion"]
+    },
+    {
+      "id": "price-total-annotation",
+      "description": "Posting with total price annotation",
+      "input": {"inline": "2024-01-01 open Assets:EUR\n2024-01-01 open Assets:USD\n\n2024-01-15 *\n  Assets:EUR 100 EUR @@ 110 USD\n  Assets:USD -110 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["price", "conversion"]
+    },
+    {
+      "id": "metadata-directive",
+      "description": "Directive with metadata",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n  institution: \"Bank of America\"\n  account-number: \"1234\""},
+      "expected": {"parse": "success"},
+      "tags": ["metadata"]
+    },
+    {
+      "id": "metadata-posting",
+      "description": "Posting with metadata",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 *\n  Assets:A 100 USD\n    note: \"test\"\n  Assets:B -100 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["metadata", "posting"]
+    },
+    {
+      "id": "pushtag-poptag",
+      "description": "Tag stack directives",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\npushtag #project\n\n2024-01-15 * \"Tagged\"\n  Assets:A -100 USD\n  Expenses:B\n\npoptag #project"},
+      "expected": {"parse": "success"},
+      "tags": ["tags", "stack"]
+    },
+    {
+      "id": "pushmeta-popmeta",
+      "description": "Metadata stack directives",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\npushmeta location: \"NYC\"\n\n2024-01-15 * \"With meta\"\n  Assets:A -100 USD\n  Expenses:B\n\npopmeta location:"},
+      "expected": {"parse": "success"},
+      "tags": ["metadata", "stack"]
+    },
+    {
+      "id": "string-escaped-quote",
+      "description": "String with escaped quote",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Test \\\"quoted\\\" text\"\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["lexical", "string"]
+    },
+    {
+      "id": "string-escaped-backslash",
+      "description": "String with escaped backslash",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Path: C:\\\\Users\\\\\"\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["lexical", "string"]
+    },
+    {
+      "id": "date-slash-format",
+      "description": "Date with slash separator",
+      "input": {"inline": "2024/01/01 open Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["lexical", "date"]
+    },
+    {
+      "id": "account-with-digit",
+      "description": "Account component starting with digit",
+      "input": {"inline": "2024-01-01 open Assets:401k"},
+      "expected": {"parse": "success"},
+      "tags": ["account"]
+    },
+    {
+      "id": "currency-two-char",
+      "description": "Two character currency (minimum length)",
+      "input": {"inline": "2024-01-01 open Assets:A AU\n\n2024-01-15 balance Assets:A 0 AU"},
+      "expected": {"parse": "success"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "currency-with-dot",
+      "description": "Currency with dot (e.g., stock ticker)",
+      "input": {"inline": "2024-01-01 open Assets:Stock BRK.B"},
+      "expected": {"parse": "success"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "tag-with-period",
+      "description": "Tag containing period",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Test\" #project.v1\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["tags"]
+    }
+  ]
+}

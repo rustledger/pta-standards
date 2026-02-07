@@ -145,9 +145,11 @@ Notes require the account to exist:
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E1001 | Account not opened |
+The following conditions produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Account not opened | `ValidationError` |
 
 Note: Unlike postings, notes MAY be added to closed accounts for historical documentation.
 

@@ -64,12 +64,14 @@ Optional string specifying how lot matching works for reductions:
 | Method | Description |
 |--------|-------------|
 | `STRICT` | Require exact lot specification (default) |
+| `STRICT_WITH_SIZE` | Like STRICT but also requires matching size |
 | `FIFO` | First-in, first-out |
 | `LIFO` | Last-in, first-out |
 | `HIFO` | Highest cost first |
 | `NONE` | Allow any reduction (no lot tracking) |
 | `AVERAGE` | Use average cost basis |
-| `AVERAGE_ONLY` | Average cost, merge on acquisition |
+
+Booking methods MUST be uppercase. Lowercase methods (e.g., `"fifo"`) are rejected.
 
 See [booking.md](../booking.md) for detailed booking method documentation.
 
@@ -124,8 +126,9 @@ Every account MUST start with one of five root types:
 ### Component Rules
 
 - Components are separated by colons (`:`)
-- Each component MUST begin with a capital letter
-- Subsequent characters may be letters, numbers, or hyphens
+- Each component MUST begin with an uppercase ASCII letter (A-Z) or digit (0-9)
+- Subsequent characters may be letters (including UTF-8), numbers, or hyphens
+- UTF-8 characters are allowed ONLY after the first ASCII character
 - Components MUST NOT contain spaces
 
 ### Valid Examples
@@ -150,21 +153,24 @@ Savings:Account           ; invalid root type
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E1002 | Account already opened (duplicate open) |
-| E1005 | Invalid account name |
-| E5002 | Posting uses currency not in constraint list |
+The following conditions produce validation errors:
 
-## Implicit Opens
+| Condition | Error Type |
+|-----------|------------|
+| Account already opened (duplicate open) | `ValidationError` |
+| Invalid account name | `ParserError` |
+| Posting uses currency not in constraint list | `ValidationError` |
+| Invalid booking method | `ParserError` |
 
-Some implementations support implicit account opening (creating accounts on first use). This is controlled by the option:
+## Auto Accounts Plugin
+
+Implicit account opening (creating accounts on first use) is supported via a plugin:
 
 ```beancount
-option "allow_implicit_open" "TRUE"
+plugin "beancount.plugins.auto_accounts"
 ```
 
-When enabled, accounts are automatically opened on their first use. This is NOT recommended for production ledgers.
+When enabled, accounts are automatically opened on their first use. This is NOT recommended for production ledgers as it bypasses the validation that ensures all accounts are explicitly declared.
 
 ## Relationship to Close
 

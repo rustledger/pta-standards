@@ -20,9 +20,10 @@ The date the commodity is declared. Typically the date it first appears in the l
 ### Currency
 
 The commodity symbol following currency naming rules:
-- All uppercase letters
-- 1-24 characters
-- May contain letters, digits, apostrophe, period, underscore, dash
+- MUST start with uppercase letter (A-Z)
+- MUST end with uppercase letter or digit (A-Z, 0-9)
+- Middle characters may include: uppercase letters, digits, apostrophe, period, underscore, dash
+- No enforced maximum length (docs mention 24 chars but not enforced)
 
 ## Examples
 
@@ -106,56 +107,41 @@ AG      ; Silver
 ### Invalid Names
 
 ```
-usd     ; lowercase not allowed
+usd     ; lowercase not allowed (must start with uppercase)
 US D    ; spaces not allowed
-$USD    ; special characters at start
-123     ; must start with letter
-ABCDEFGHIJKLMNOPQRSTUVWXYZ  ; too long (>24 chars)
-```
-
-## Strict Mode
-
-When strict mode is enabled, all currencies must be declared:
-
-```beancount
-option "strict" "TRUE"
-
-2024-01-01 commodity USD
-2024-01-01 commodity EUR
-
-2024-01-15 * "Valid"
-  Assets:Cash  100 USD    ; OK - USD declared
-  Expenses:Food
-
-2024-01-16 * "Invalid"
-  Assets:Cash  100 GBP    ; ERROR - GBP not declared
-  Expenses:Food
+$USD    ; special characters at start not allowed
+123     ; must start with letter, not digit
+USD-    ; cannot end with special character (must end with A-Z or 0-9)
 ```
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E5001 | Currency not declared (strict mode only) |
+Undeclared currencies are allowed without error. The `commodity` directive is optional and primarily used for attaching metadata to currencies.
 
-In non-strict mode (default), undeclared currencies are allowed but may generate warnings.
+Note: There is NO "strict" option in beancount that requires currency declaration. Plugins may implement stricter currency declaration requirements if needed.
 
 ## Multiple Declarations
 
-Multiple declarations of the same commodity merge their metadata:
+Multiple declarations of the same commodity produce a validation error:
 
 ```beancount
 ; Initial declaration
 2024-01-01 commodity AAPL
   name: "Apple Inc."
 
-; Later addition of metadata
+; ERROR: Duplicate commodity directives for 'AAPL'
 2024-06-01 commodity AAPL
+  split: "4:1"
+```
+
+To add metadata, include all metadata on the single declaration:
+
+```beancount
+2024-01-01 commodity AAPL
+  name: "Apple Inc."
   split: "4:1"
   split-date: 2020-08-31
 ```
-
-The later declaration adds to (or overrides) the earlier metadata.
 
 ## Use Cases
 
@@ -198,8 +184,7 @@ The later declaration adds to (or overrides) the earlier metadata.
 
 ## Implementation Notes
 
-1. Commodity declarations are optional in default mode
+1. Commodity declarations are optional
 2. Store metadata for later retrieval
-3. Merge metadata from multiple declarations
-4. In strict mode, validate all currency uses
-5. Date is informational (doesn't affect validation)
+3. Reject duplicate commodity declarations with error
+4. Date is informational (doesn't affect validation)

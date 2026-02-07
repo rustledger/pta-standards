@@ -1,0 +1,17 @@
+; Ledger with tags for BQL testing
+
+2024-01-01 open Assets:Checking USD
+2024-01-01 open Expenses:Food USD
+2024-01-01 open Expenses:Hotel USD
+
+2024-01-15 * "Restaurant" #trip #food
+  Expenses:Food  50 USD
+  Assets:Checking
+
+2024-01-16 * "Hotel stay" #trip
+  Expenses:Hotel  150 USD
+  Assets:Checking
+
+2024-01-20 * "Regular grocery"
+  Expenses:Food  30 USD
+  Assets:Checking

@@ -127,21 +127,17 @@ Included files are merged into the main file:
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E9001 | Include file not found |
-| E9002 | Circular include detected |
+The following conditions produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Include file not found | `LoadError` ("File glob ... does not match any files") |
+| Circular include detected | `LoadError` |
 
 ### File Not Found
 
 ```
-error: Include file not found
-  --> main.beancount:5:1
-   |
- 5 | include "missing.beancount"
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ file does not exist
-   |
-   = path: /home/user/finances/missing.beancount
+LoadError: File glob "missing.beancount" does not match any files
 ```
 
 ### Circular Include
@@ -188,16 +184,7 @@ See [security/includes/path-traversal.md](../../../../../security/includes/path-
 
 ### Symlink Handling
 
-By default, symlinks are not followed:
-
-```beancount
-option "follow_symlinks" "false"  ; Default
-
-; If data.beancount is a symlink, this fails
-include "data.beancount"
-```
-
-See [security/includes/symlinks.md](../../../../../security/includes/symlinks.md).
+The behavior regarding symlinks is implementation-dependent. The Python beancount reference implementation follows symlinks by default.
 
 ## Best Practices
 
@@ -277,13 +264,19 @@ Some implementations may support globs as an extension.
 Not directly supported. Use plugins or external tools for conditional logic:
 
 ```beancount
-; Standard approach: include everything
-include "production.beancount"
-include "development.beancount"
+; Standard approach: include different files for different environments
+; Use separate main files that include the appropriate environment-specific files:
 
-; Plugin filters based on option
-option "environment" "production"
+; main-production.beancount:
+include "common.beancount"
+include "production.beancount"
+
+; main-development.beancount:
+include "common.beancount"
+include "development.beancount"
 ```
+
+> **Note**: There is no `environment` option in beancount. Use separate entry-point files or conditional includes via custom plugins.
 
 ## Implementation Notes
 

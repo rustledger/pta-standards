@@ -1,0 +1,17 @@
+; Ledger with links for BQL testing
+
+2024-01-01 open Assets:Checking USD
+2024-01-01 open Assets:Receivable USD
+2024-01-01 open Income:Consulting USD
+
+2024-01-15 * "Invoice #1234" ^invoice-1234
+  Assets:Receivable  1000 USD
+  Income:Consulting
+
+2024-01-25 * "Payment for invoice #1234" ^invoice-1234
+  Assets:Checking  1000 USD
+  Assets:Receivable
+
+2024-02-01 * "Invoice #1235" ^invoice-1235
+  Assets:Receivable  500 USD
+  Income:Consulting

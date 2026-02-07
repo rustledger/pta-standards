@@ -139,32 +139,21 @@ documents/
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E8001 | Document file not found |
-| E1001 | Account not opened |
+The following conditions may produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Account not opened | `ValidationError` |
 
 ### File Existence Check
 
-By default, implementations warn if the file doesn't exist:
+Document file existence is checked at load time. Missing files produce a `DocumentError`:
 
 ```
-warning: Document file not found
-  --> ledger.beancount:15:1
-   |
-15 | 2024-01-15 document Assets:Checking "missing.pdf"
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ file does not exist
-   |
-   = path: /home/user/finances/missing.pdf
+DocumentError: File does not exist: "/path/to/missing.pdf"
 ```
 
-This can be configured:
-
-```beancount
-option "document_check" "error"    ; Treat missing files as errors
-option "document_check" "warning"  ; Warn only (default)
-option "document_check" "ignore"   ; No checking
-```
+This check is automatic and cannot be disabled via options. All referenced document files should exist.
 
 ## Common Document Types
 

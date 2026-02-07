@@ -6,42 +6,13 @@ Commodity validation ensures currencies and commodities are used consistently, o
 
 ## Validation Rules
 
-### E5001: Currency Not Declared
+### Currency Not Declared
 
-In strict mode, all currencies MUST be declared with a `commodity` directive.
+**Note:** Python beancount 3.x does NOT require explicit `commodity` declarations. Currencies are implicitly recognized when used. The `commodity` directive is optional and primarily used for adding metadata.
 
-**Condition:** Currency used without prior `commodity` directive (when strict mode enabled).
+### Currency Constraint Violation
 
-**Severity:** Warning (Error in strict mode)
-
-**Example:**
-```beancount
-option "strict" "TRUE"
-
-2024-01-01 commodity USD
-2024-01-01 commodity EUR
-
-2024-01-15 * "Purchase"
-  Assets:Checking  -100 GBP    ; E5001: GBP not declared
-  Expenses:Food
-```
-
-**Fix:**
-```beancount
-option "strict" "TRUE"
-
-2024-01-01 commodity USD
-2024-01-01 commodity EUR
-2024-01-01 commodity GBP       ; Add declaration
-
-2024-01-15 * "Purchase"
-  Assets:Checking  -100 GBP    ; OK
-  Expenses:Food
-```
-
-### E5002: Currency Constraint Violation
-
-Postings MUST only use currencies allowed by the account's `open` directive.
+Postings MUST only use currencies allowed by the account's `open` directive. Violations produce a `ValidationError`.
 
 **Condition:** Posting uses currency not in account's constraint list.
 
@@ -50,7 +21,7 @@ Postings MUST only use currencies allowed by the account's `open` directive.
 2024-01-01 open Assets:USDOnly USD
 
 2024-01-15 * "Invalid currency"
-  Assets:USDOnly   100 EUR    ; E5002: Account only allows USD
+  Assets:USDOnly   100 EUR    ; ValidationError: Account only allows USD
   Income:Gift
 ```
 
@@ -102,7 +73,7 @@ For each posting:
 
 ; Invalid - EUR not in constraint list
 2024-01-15 * "Fail"
-  Assets:Checking  100 EUR    ; E5002
+  Assets:Checking  100 EUR    ; ValidationError
   Income:Gift
 
 ; No constraint - anything allowed
@@ -113,38 +84,16 @@ For each posting:
   Assets:Cash
 ```
 
-## Strict Mode
+## Operating Currency
 
-### Enabling Strict Mode
-
-```beancount
-option "strict" "TRUE"
-```
-
-Or:
-
-```beancount
-option "operating_currency" "USD"  ; Enables strict for USD
-```
-
-### Strict Mode Behavior
-
-| Check | Default Mode | Strict Mode |
-|-------|--------------|-------------|
-| Undeclared currency | Allowed | Warning/Error |
-| Account constraints | Enforced | Enforced |
-| Operating currency | Optional | Required |
-
-### Operating Currency
-
-The primary currency for reporting:
+The `operating_currency` option specifies the primary currency for reporting:
 
 ```beancount
 option "operating_currency" "USD"
 option "operating_currency" "EUR"  ; Can have multiple
 ```
 
-Operating currencies MUST be declared in strict mode.
+This option is additive—each declaration adds to the list. It affects reporting but does NOT enable any "strict mode" for commodity validation.
 
 ## Commodity Declaration
 
@@ -186,14 +135,17 @@ Commodities should be declared before first use:
 ### Format Rules
 
 ```ebnf
-currency = uppercase (currency_char)* uppercase?
+currency = uppercase (currency_char)* uppercase_end?
 uppercase = [A-Z]
 currency_char = [A-Z0-9'._-]
+uppercase_end = [A-Z0-9]
 ```
 
-### Length
+- MUST start with uppercase letter (A-Z)
+- MUST end with uppercase letter or digit (A-Z, 0-9)
 
-1-24 characters.
+> **UNDEFINED**: Whether there is a maximum currency name length is pending clarification.
+> See: [Pending Issue - Currency Length](https://github.com/beancount/beancount/issues/TBD)
 
 ### Valid Names
 
@@ -211,9 +163,9 @@ BRK.B
 ### Invalid Names
 
 ```
-usd           ; Lowercase
+usd           ; Lowercase not allowed
 $USD          ; Special character at start
-ABCDEFGHIJKLMNOPQRSTUVWXYZ  ; Too long (>24)
+USD-          ; Cannot end with special character
 ```
 
 ## Common Validation Scenarios
@@ -233,7 +185,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ  ; Too long (>24)
   Assets:Brokerage  -1500 USD            ; OK
 
 2024-01-16 * "Buy Google"
-  Assets:Brokerage  5 GOOGL {140 USD}    ; E5002: GOOGL not allowed
+  Assets:Brokerage  5 GOOGL {140 USD}    ; ValidationError: GOOGL not allowed
   Assets:Brokerage  -700 USD
 ```
 
@@ -251,21 +203,20 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ  ; Too long (>24)
   Assets:Checking
 
 2024-03-25 * "ATM in Tokyo"
-  Assets:Travel  10000 JPY    ; E5002: JPY not allowed
+  Assets:Travel  10000 JPY    ; ValidationError: JPY not allowed
   Assets:Checking
 ```
 
 ### Crypto Portfolio
 
 ```beancount
-option "strict" "TRUE"
-
 2024-01-01 commodity USD
 2024-01-01 commodity BTC
 2024-01-01 commodity ETH
 2024-01-01 commodity SOL
 
-2024-01-01 open Assets:Crypto USD,BTC,ETH,SOL
+2024-01-01 open Assets:Crypto BTC,ETH,SOL
+2024-01-01 open Assets:Fiat USD
 
 2024-01-15 * "Buy"
   Assets:Crypto  0.5 BTC {42000 USD}
@@ -273,48 +224,28 @@ option "strict" "TRUE"
   Assets:Fiat   -47000 USD
 ```
 
+Note: Currency constraints are enforced per-account via the `open` directive, not via a global "strict" mode option.
+
 ## Error Messages
 
-### E5001 Format
+### Currency Constraint Error
 ```
-warning: Currency not declared
-  --> ledger.beancount:15:20
-   |
-15 |   Assets:Checking  100 GBP
-   |                        ^^^ currency "GBP" is not declared
-   |
-   = hint: add '2024-01-01 commodity GBP'
-```
-
-### E5002 Format
-```
-error: Currency not allowed in account
-  --> ledger.beancount:15:20
-   |
-15 |   Assets:USDOnly  100 EUR
-   |                       ^^^ "EUR" not allowed
-   |
-   = account: Assets:USDOnly
-   = allowed: USD
+ValidationError: Currency EUR is not allowed in account Assets:USDOnly
+  allowed currencies: USD
 ```
 
 ## Configuration Options
 
 ```beancount
-; Enable strict mode
-option "strict" "TRUE"
-
-; Set operating currency(ies)
+; Set operating currency(ies) for reporting
 option "operating_currency" "USD"
-
-; Infer currencies from file (experimental)
-option "infer_commodities" "TRUE"
 ```
+
+**Note:** Options like `"strict"` and `"infer_commodities"` do not exist in Python beancount 3.x.
 
 ## Implementation Notes
 
-1. Build set of declared commodities from `commodity` directives
+1. Build set of declared commodities from `commodity` directives (optional, for metadata)
 2. Extract currency constraints from `open` directives
 3. For each posting, validate currency against account constraints
-4. In strict mode, also validate against declared commodities
-5. Report constraint violations with account and allowed list
+4. Report constraint violations with account and allowed list

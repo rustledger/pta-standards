@@ -1,0 +1,266 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "validation",
+  "description": "Semantic validation tests",
+  "tests": [
+    {
+      "id": "account-not-opened",
+      "description": "Posting to unopened account produces error",
+      "spec_ref": "validation/accounts.md#account-not-opened",
+      "input": {"inline": "2024-01-15 * \"Test\"\n  Assets:Unknown 100 USD\n  Expenses:Test"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_count": 2
+      },
+      "tags": ["account", "open"]
+    },
+    {
+      "id": "account-opened-valid",
+      "description": "Posting to opened account succeeds",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Expenses:Food\n\n2024-01-15 * \"Test\"\n  Assets:Checking -100 USD\n  Expenses:Food"},
+      "expected": {
+        "parse": "success",
+        "validate": "success",
+        "error_count": 0
+      },
+      "tags": ["account", "open"]
+    },
+    {
+      "id": "account-duplicate-open",
+      "description": "Opening an already open account produces error",
+      "spec_ref": "validation/accounts.md#account-already-open",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-06-01 open Assets:Checking USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_count": 1
+      },
+      "tags": ["account", "open", "duplicate"]
+    },
+    {
+      "id": "account-closed-posting-after",
+      "description": "Posting after close date produces error",
+      "spec_ref": "validation/accounts.md#account-closed",
+      "input": {"inline": "2024-01-01 open Assets:Old USD\n2024-06-30 close Assets:Old\n\n2024-07-15 * \"After close\"\n  Assets:Old 100 USD\n  Income:Gift"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["inactive account"]
+      },
+      "tags": ["account", "close"]
+    },
+    {
+      "id": "account-closed-posting-same-day",
+      "description": "Posting on close date - UNDEFINED behavior",
+      "spec_ref": "validation/accounts.md#close-date-boundary",
+      "skip": true,
+      "skip_reason": "Close date semantics are UNDEFINED - pending spec clarification",
+      "input": {"inline": "2024-01-01 open Assets:Old USD\n2024-06-30 close Assets:Old\n\n2024-06-30 * \"Same day as close\"\n  Assets:Old 100 USD\n  Income:Gift"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["account", "close", "undefined"]
+    },
+    {
+      "id": "account-close-not-opened",
+      "description": "Closing an unopened account produces error",
+      "input": {"inline": "2024-01-01 close Assets:NeverOpened"},
+      "expected": {
+        "parse": "success",
+        "validate": "error"
+      },
+      "tags": ["account", "close"]
+    },
+    {
+      "id": "transaction-balanced",
+      "description": "Balanced transaction succeeds",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Balanced\"\n  Assets:A  100 USD\n  Assets:B -100 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success",
+        "error_count": 0
+      },
+      "tags": ["transaction", "balance"]
+    },
+    {
+      "id": "transaction-unbalanced",
+      "description": "Unbalanced transaction produces error",
+      "spec_ref": "validation/balance.md#transaction-not-balanced",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Unbalanced\"\n  Assets:A  100 USD\n  Assets:B  -50 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["does not balance"]
+      },
+      "tags": ["transaction", "balance"]
+    },
+    {
+      "id": "transaction-tolerance-within",
+      "description": "Transaction with small residual within tolerance succeeds",
+      "spec_ref": "tolerances.md",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Within tolerance\"\n  Assets:A  100.00 USD\n  Assets:B -100.004 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["transaction", "tolerance"]
+    },
+    {
+      "id": "transaction-tolerance-exceeds",
+      "description": "Transaction with residual exceeding tolerance produces error",
+      "spec_ref": "tolerances.md",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Exceeds tolerance\"\n  Assets:A  100.00 USD\n  Assets:B -100.01 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["does not balance"]
+      },
+      "tags": ["transaction", "tolerance"]
+    },
+    {
+      "id": "transaction-multi-currency-balanced",
+      "description": "Multi-currency transaction with all currencies balanced",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Multi-currency\"\n  Assets:A  100 USD\n  Assets:A   50 EUR\n  Assets:B -100 USD\n  Assets:B  -50 EUR"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["transaction", "multi-currency"]
+    },
+    {
+      "id": "transaction-elision-valid",
+      "description": "Single elided posting is valid",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Elided\"\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["transaction", "elision"]
+    },
+    {
+      "id": "transaction-elision-multi-same-currency",
+      "description": "Multiple elided postings for same currency produces error",
+      "spec_ref": "validation/balance.md#multiple-missing-amounts",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n2024-01-01 open Expenses:C\n\n2024-01-15 * \"Ambiguous\"\n  Assets:A -100 USD\n  Expenses:B\n  Expenses:C"},
+      "expected": {
+        "parse": "success",
+        "validate": "error"
+      },
+      "tags": ["transaction", "elision"]
+    },
+    {
+      "id": "currency-constraint-valid",
+      "description": "Posting with allowed currency succeeds",
+      "spec_ref": "validation/commodities.md#currency-constraint-violation",
+      "input": {"inline": "2024-01-01 open Assets:A USD\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"Valid currency\"\n  Assets:A -100 USD\n  Expenses:B"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["currency", "constraint"]
+    },
+    {
+      "id": "currency-constraint-violation",
+      "description": "Posting with disallowed currency produces error",
+      "spec_ref": "validation/commodities.md#currency-constraint-violation",
+      "input": {"inline": "2024-01-01 open Assets:USDOnly USD\n2024-01-01 open Income:Gift\n\n2024-01-15 * \"Wrong currency\"\n  Assets:USDOnly 100 EUR\n  Income:Gift"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["Invalid currency"]
+      },
+      "tags": ["currency", "constraint"]
+    },
+    {
+      "id": "balance-assertion-pass",
+      "description": "Balance assertion that matches actual balance passes",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Income:Salary\n\n2024-01-15 * \"Deposit\"\n  Assets:Checking 1000 USD\n  Income:Salary\n\n2024-01-16 balance Assets:Checking 1000 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success",
+        "error_count": 0
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "balance-assertion-fail",
+      "description": "Balance assertion that differs from actual balance fails",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Income:Salary\n\n2024-01-15 * \"Deposit\"\n  Assets:Checking 1000 USD\n  Income:Salary\n\n2024-01-16 balance Assets:Checking 500 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["Balance failed"]
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "balance-assertion-zero-tolerance",
+      "description": "Balance assertion with zero tolerance requires exact match",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Income:Salary\n\n2024-01-15 * \"Deposit\"\n  Assets:Checking 1000.001 USD\n  Income:Salary\n\n2024-01-16 balance Assets:Checking 1000.00 ~ 0 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error"
+      },
+      "tags": ["balance", "tolerance"]
+    },
+    {
+      "id": "pad-generates-transaction",
+      "description": "Pad generates balancing transaction when balance differs",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Equity:Opening USD\n\n2024-01-01 pad Assets:Checking Equity:Opening\n2024-01-02 balance Assets:Checking 1000 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["pad"]
+    },
+    {
+      "id": "pad-unused-error",
+      "description": "Pad with no difference produces error",
+      "spec_ref": "directives/pad.md#pad-always-requires-balance-difference",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Equity:Opening USD\n2024-01-01 open Income:Salary\n\n2024-01-15 * \"Deposit\"\n  Assets:Checking 1000 USD\n  Income:Salary\n\n2024-01-01 pad Assets:Checking Equity:Opening\n2024-01-16 balance Assets:Checking 1000 USD"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["Unused Pad"]
+      },
+      "tags": ["pad"]
+    },
+    {
+      "id": "pad-without-balance",
+      "description": "Pad without subsequent balance assertion produces error",
+      "input": {"inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Equity:Opening USD\n\n2024-01-01 pad Assets:Checking Equity:Opening"},
+      "expected": {
+        "parse": "success",
+        "validate": "error",
+        "error_contains": ["Unused Pad"]
+      },
+      "tags": ["pad"]
+    },
+    {
+      "id": "metadata-duplicate-key",
+      "description": "Duplicate metadata key - UNDEFINED behavior",
+      "spec_ref": "metadata.md#duplicate-keys",
+      "skip": true,
+      "skip_reason": "Duplicate metadata behavior is UNDEFINED - pending spec clarification",
+      "input": {"inline": "2024-01-01 open Assets:A\n  key: \"value1\"\n  key: \"value2\""},
+      "expected": {
+        "parse": "error"
+      },
+      "tags": ["metadata", "undefined"]
+    },
+    {
+      "id": "include-cycle-detection",
+      "description": "Circular include is detected",
+      "skip": true,
+      "skip_reason": "Requires external file setup",
+      "input": {"file": "fixtures/cycle-a.beancount"},
+      "expected": {
+        "parse": "error",
+        "error_contains": ["Circular"]
+      },
+      "tags": ["include", "cycle"]
+    }
+  ]
+}

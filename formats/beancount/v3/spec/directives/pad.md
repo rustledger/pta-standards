@@ -118,22 +118,24 @@ The pad directive works per-currency. The balance assertion determines which cur
 
 ## Validation
 
-| Error | Condition |
-|-------|-----------|
-| E2003 | Pad without subsequent balance assertion |
-| E2004 | Multiple pads for same account/currency before one balance |
-| E1001 | Target or pad account not opened |
+The following conditions produce errors:
+
+| Condition | Error Type |
+|-----------|------------|
+| Pad without subsequent balance assertion | `PadError` ("Unused Pad entry") |
+| Multiple pads for same account/currency before one balance | `PadError` |
+| Target or pad account not opened | `ValidationError` |
 
 ### Error Examples
 
 ```beancount
-; E2003: Pad without balance
+; PadError: Pad without balance
 2024-01-01 pad Assets:Checking Equity:Opening
 ; No balance assertion follows!
 
-; E2004: Multiple pads
+; PadError: Multiple pads before one balance
 2024-01-01 pad Assets:Checking Equity:Opening
-2024-01-05 pad Assets:Checking Equity:Opening  ; ERROR
+2024-01-05 pad Assets:Checking Equity:Opening  ; ERROR: Unused Pad entry
 2024-01-10 balance Assets:Checking  1000 USD
 ```
 
@@ -156,22 +158,25 @@ Only one `pad` directive can precede each `balance` assertion for a given accoun
 2024-01-15 balance Assets:Checking  1000 USD
 ```
 
-### No Effect Without Difference
+### Pad Always Requires Balance Difference
 
-If the account already has the asserted balance, no padding transaction is generated:
+A pad directive that doesn't result in any padding (because the balance already matches) produces a `PadError`:
 
 ```beancount
 2024-01-01 open Assets:Checking USD
+2024-01-01 open Equity:Opening USD
 
 2024-01-15 * "Exact deposit"
   Assets:Checking  1000 USD
-  Income:Salary
+  Equity:Opening
 
 2024-01-01 pad Assets:Checking Equity:Opening
 2024-01-16 balance Assets:Checking  1000 USD
 
-; No padding transaction generated - balance already matches
+; PadError: Unused Pad entry (balance already matches, pad not needed)
 ```
+
+Only use `pad` when you expect a balance difference to be filled. If the balance already matches, omit the pad directive.
 
 ## Typical Pad Accounts
 

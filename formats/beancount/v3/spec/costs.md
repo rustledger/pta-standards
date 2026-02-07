@@ -90,7 +90,7 @@ Assets:Stock  -5 AAPL {"lot-A"}
 
 ### Merge Cost `*`
 
-Merges all lots into a single average-cost lot:
+Merges all lots of a commodity into a single average-cost lot:
 
 ```beancount
 ; Before: lot1 (10 @ 150), lot2 (10 @ 160)
@@ -98,7 +98,11 @@ Assets:Stock  0 AAPL {*}
 ; After: single lot (20 @ 155)
 ```
 
-Used with AVERAGE booking method.
+The average cost is computed as: `total_cost / total_units`
+
+Used with AVERAGE booking method for explicit lot merging.
+
+> **Note:** See [conformance/python-beancount.md](../conformance/python-beancount.md) for implementation status.
 
 ## Component Order
 
@@ -280,14 +284,18 @@ Cost basis determines capital gains:
   ; Per-unit cost: 1234.56 / 7 = 176.3657... USD
 ```
 
-## Validation Errors
+## Booking Errors
 
-| Error | Condition |
-|-------|-----------|
-| E4001 | No lot matches reduction specification |
-| E4002 | Insufficient units in matching lots |
-| E4003 | Ambiguous lot match in STRICT mode |
-| E4004 | Reduction would create negative inventory |
+The following conditions produce errors during lot matching:
+
+| Condition | Description |
+|-----------|-------------|
+| No matching lot | Reduction specification doesn't match any existing lot |
+| Insufficient units | Not enough units available in matching lots |
+| Ambiguous match | Multiple lots match in STRICT booking mode |
+| Negative inventory | Reduction would create negative position (except NONE booking) |
+
+See [conformance/python-beancount.md](../conformance/python-beancount.md) for error type details.
 
 ## Implementation Notes
 

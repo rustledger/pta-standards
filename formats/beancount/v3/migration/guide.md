@@ -36,73 +36,29 @@ Note any errors or warnings.
 
 ### Step 2: Update Deprecated Syntax
 
-#### Option Names
+**Note:** The v2 to v3 transition in Python beancount is largely backward compatible. Most option names and plugin paths remained the same.
 
-Some option names have changed:
+#### Key Changes
 
-| v2 Option | v3 Option |
-|-----------|-----------|
-| `name_assets` | `account_root_assets` |
-| `name_liabilities` | `account_root_liabilities` |
-| `name_equity` | `account_root_equity` |
-| `name_income` | `account_root_income` |
-| `name_expenses` | `account_root_expenses` |
-
-**Before (v2):**
-```beancount
-option "name_assets" "Actifs"
-```
-
-**After (v3):**
-```beancount
-option "account_root_assets" "Actifs"
-```
-
-#### Plugin Module Paths
-
-Some built-in plugin paths have changed:
-
-| v2 Path | v3 Path |
-|---------|---------|
-| `beancount.plugins.auto` | `beancount.plugins.auto_accounts` |
-| `beancount.plugins.prices` | `beancount.plugins.implicit_prices` |
-
-**Before (v2):**
-```beancount
-plugin "beancount.plugins.auto"
-```
-
-**After (v3):**
-```beancount
-plugin "beancount.plugins.auto_accounts"
-```
+1. **Query tool**: `bean-query` is now a separate package (`beanquery`)
+2. **Booking methods**: Must be uppercase (`"FIFO"` not `"fifo"`)
+3. **Boolean options**: Must be uppercase (`"TRUE"` not `"true"`)
 
 ### Step 3: Update Custom Plugins
 
 If you have custom plugins, update them for v3 API changes:
 
-#### Entry Type Changes
-
-```python
-# v2
-from beancount.core.data import TxnPosting
-
-# v3
-from beancount.core.data import Posting  # TxnPosting removed
-```
-
 #### Options Map
 
-```python
-# v2
-def plugin_fn(entries, options_map):
-    currency = options_map['operating_currency']  # String
+The `operating_currency` option returns a list:
 
-# v3
+```python
 def plugin_fn(entries, options_map):
-    currencies = options_map['operating_currency']  # List
+    currencies = options_map['operating_currency']  # List of strings
     currency = currencies[0] if currencies else 'USD'
 ```
+
+**Note:** `TxnPosting` still exists in v3—it was not removed as some documentation suggested.
 
 ### Step 4: Verify Results
 
@@ -122,72 +78,19 @@ bean-query ledger.beancount "SELECT sum(position) WHERE account ~ 'Assets'"
 
 ## Automated Migration
 
-### Migration Script
+**Note:** There is no official `bean-migrate` tool. Migration from v2 to v3 is typically done by:
 
-Use the migration tool:
+1. Running `bean-check` to identify any parsing errors
+2. Manually fixing any issues (usually just uppercase booking methods/booleans)
+3. Verifying results match v2 output
 
-```bash
-bean-migrate v2-to-v3 ledger.beancount > ledger-v3.beancount
-```
-
-The script:
-1. Updates deprecated option names
-2. Updates plugin paths
-3. Fixes known syntax differences
-4. Reports issues requiring manual attention
-
-### Dry Run
-
-Preview changes without modifying:
-
-```bash
-bean-migrate v2-to-v3 --dry-run ledger.beancount
-```
+Most v2 ledgers work without modification in v3.
 
 ## Common Issues
 
-### Issue: Implicit Plugin Loading
+### Issue: Booking Method Case
 
-**v2 Behavior:** Some plugins loaded automatically.
-
-**v3 Behavior:** All plugins must be explicit.
-
-**Fix:**
-```beancount
-; Add explicit plugin declarations
-plugin "beancount.plugins.auto_accounts"
-plugin "beancount.plugins.implicit_prices"
-```
-
-### Issue: Option Value Types
-
-**v2:** Some options accepted strings.
-
-**v3:** Stricter type checking.
-
-**Example:**
-```beancount
-; v2 (worked)
-option "insert_pythonpath" "True"
-
-; v3 (required)
-option "insert_pythonpath" "TRUE"
-```
-
-### Issue: Tolerance Defaults
-
-**v2:** Different default tolerance calculation.
-
-**v3:** Standardized tolerance (0.5 × 10^-precision).
-
-**Fix:** Add explicit tolerances if needed:
-```beancount
-option "tolerance" "0.01"
-```
-
-### Issue: Booking Method Names
-
-**v2:** Mixed case accepted.
+**v2:** Mixed case may have worked.
 
 **v3:** Uppercase required.
 
@@ -199,6 +102,37 @@ option "tolerance" "0.01"
 **After:**
 ```beancount
 2024-01-01 open Assets:Stock AAPL "FIFO"
+```
+
+### Issue: Boolean Option Case
+
+**v2:** Mixed case may have worked.
+
+**v3:** Uppercase required.
+
+**Before:**
+```beancount
+option "insert_pythonpath" "True"
+```
+
+**After:**
+```beancount
+option "insert_pythonpath" "TRUE"
+```
+
+### Issue: Query Tool Change
+
+In v3, the query functionality is in a separate package:
+
+**v2:**
+```bash
+bean-query ledger.beancount "SELECT ..."
+```
+
+**v3:**
+```bash
+pip install beanquery
+bean-query ledger.beancount "SELECT ..."
 ```
 
 ## Testing Migration
@@ -236,13 +170,13 @@ diff v2-balances.txt v3-balances.txt
 Keep your v2 files until migration is verified:
 
 ```bash
-# Backup
+# Backup before making any changes
 cp ledger.beancount ledger-v2-backup.beancount
 
-# Migrate
-bean-migrate v2-to-v3 ledger.beancount > ledger.beancount
+# Make edits to fix any issues
+# ...
 
-# If issues, rollback
+# If issues, restore from backup
 cp ledger-v2-backup.beancount ledger.beancount
 ```
 
