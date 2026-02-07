@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-spec.org/interchange/journal.schema.json",
+  "title": "PTA Interchange Format",
+  "description": "Universal interchange format for plain text accounting data",
+  "type": "object",
+  "required": ["version", "directives"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "source_format": {
+      "type": "string",
+      "enum": ["beancount", "ledger", "hledger", "unknown"]
+    },
+    "options": {
+      "$ref": "#/$defs/options"
+    },
+    "commodities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/commodity" }
+    },
+    "accounts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/account" }
+    },
+    "directives": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/directive" }
+    },
+    "extensions": {
+      "$ref": "#/$defs/extensions"
+    }
+  },
+  "$defs": {
+    "options": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "operating_currency": { "type": "string" }
+      }
+    },
+    "commodity": {
+      "type": "object",
+      "required": ["symbol"],
+      "properties": {
+        "symbol": { "type": "string" },
+        "name": { "type": "string" },
+        "precision": { "type": "integer", "minimum": 0 },
+        "format": {
+          "type": "object",
+          "properties": {
+            "symbol_position": { "enum": ["prefix", "suffix"] },
+            "thousands_separator": { "type": "string" },
+            "decimal_separator": { "type": "string" }
+          }
+        }
+      }
+    },
+    "account": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "enum": ["asset", "liability", "equity", "income", "expense", "unknown"]
+        },
+        "opened": { "$ref": "#/$defs/date" },
+        "closed": { "$ref": "#/$defs/date" },
+        "currencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "directive": {
+      "oneOf": [
+        { "$ref": "#/$defs/transaction" },
+        { "$ref": "#/$defs/balance" },
+        { "$ref": "#/$defs/price" },
+        { "$ref": "#/$defs/note" },
+        { "$ref": "#/$defs/pad" }
+      ]
+    },
+    "transaction": {
+      "type": "object",
+      "required": ["type", "date", "postings"],
+      "properties": {
+        "type": { "const": "transaction" },
+        "date": { "$ref": "#/$defs/date" },
+        "flag": { "enum": ["*", "!", "txn", null] },
+        "payee": { "type": "string" },
+        "narration": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "links": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "metadata": { "$ref": "#/$defs/metadata" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/posting" },
+          "minItems": 1
+        }
+      }
+    },
+    "posting": {
+      "type": "object",
+      "required": ["account"],
+      "properties": {
+        "account": { "type": "string" },
+        "amount": { "$ref": "#/$defs/amount" },
+        "cost": { "$ref": "#/$defs/cost" },
+        "price": { "$ref": "#/$defs/price_annotation" },
+        "flag": { "enum": ["*", "!", null] },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "amount": {
+      "type": ["object", "null"],
+      "required": ["number", "currency"],
+      "properties": {
+        "number": {
+          "type": "string",
+          "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+        },
+        "currency": { "type": "string" }
+      }
+    },
+    "cost": {
+      "type": ["object", "null"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/amount" },
+        "date": { "$ref": "#/$defs/date" },
+        "label": { "type": "string" }
+      }
+    },
+    "price_annotation": {
+      "type": ["object", "null"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/amount" },
+        "total": { "type": "boolean" }
+      }
+    },
+    "balance": {
+      "type": "object",
+      "required": ["type", "date", "account", "amount"],
+      "properties": {
+        "type": { "const": "balance" },
+        "date": { "$ref": "#/$defs/date" },
+        "account": { "type": "string" },
+        "amount": { "$ref": "#/$defs/amount" }
+      }
+    },
+    "price": {
+      "type": "object",
+      "required": ["type", "date", "commodity", "amount"],
+      "properties": {
+        "type": { "const": "price" },
+        "date": { "$ref": "#/$defs/date" },
+        "commodity": { "type": "string" },
+        "amount": { "$ref": "#/$defs/amount" }
+      }
+    },
+    "note": {
+      "type": "object",
+      "required": ["type", "date", "account", "comment"],
+      "properties": {
+        "type": { "const": "note" },
+        "date": { "$ref": "#/$defs/date" },
+        "account": { "type": "string" },
+        "comment": { "type": "string" }
+      }
+    },
+    "pad": {
+      "type": "object",
+      "required": ["type", "date", "account", "source_account"],
+      "properties": {
+        "type": { "const": "pad" },
+        "date": { "$ref": "#/$defs/date" },
+        "account": { "type": "string" },
+        "source_account": { "type": "string" }
+      }
+    },
+    "date": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "$ref": "#/$defs/date" },
+          { "$ref": "#/$defs/amount" }
+        ]
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "beancount": { "$ref": "#/$defs/beancount_ext" },
+        "ledger": { "$ref": "#/$defs/ledger_ext" },
+        "hledger": { "$ref": "#/$defs/hledger_ext" }
+      }
+    },
+    "beancount_ext": {
+      "type": "object",
+      "properties": {
+        "documents": { "type": "array" },
+        "events": { "type": "array" },
+        "queries": { "type": "array" },
+        "customs": { "type": "array" }
+      }
+    },
+    "ledger_ext": {
+      "type": "object",
+      "properties": {
+        "virtual_postings": { "type": "array" },
+        "automated_transactions": { "type": "array" },
+        "periodic_transactions": { "type": "array" }
+      }
+    },
+    "hledger_ext": {
+      "type": "object",
+      "properties": {
+        "forecasts": { "type": "array" },
+        "timedot_entries": { "type": "array" }
+      }
+    }
+  }
+}

@@ -1,0 +1,302 @@
+# Beancount to Ledger Edge Cases
+
+This document covers edge cases and special handling requirements for Beancount to Ledger conversion.
+
+## Date Handling
+
+### Balance Assertion Timing
+
+Beancount checks balances at the **start** of the day. Ledger checks **after** the posting.
+
+**Problem:**
+```beancount
+2024-01-15 * "Transaction"
+  Assets:Checking  -100.00 USD
+  Expenses:Food
+
+2024-01-15 balance Assets:Checking 900.00 USD
+```
+
+In Beancount, the balance is checked before the transaction. In Ledger, it would be checked after.
+
+**Solution:** Move balance assertion to previous day:
+```ledger
+2024/01/14 * Balance assertion
+  Assets:Checking  $0 = $900.00
+
+2024/01/15 * Transaction
+  Assets:Checking  $-100.00
+  Expenses:Food
+```
+
+## Currency Handling
+
+### Multiple Currencies in Posting
+
+**Beancount:**
+```beancount
+2024-01-15 * "Exchange"
+  Assets:USD  -100.00 USD
+  Assets:EUR  85.00 EUR @ 1.1765 USD
+```
+
+**Ledger:**
+```ledger
+2024/01/15 * Exchange
+  Assets:USD  $-100.00
+  Assets:EUR  85.00 EUR @ $1.1765
+```
+
+### Currency Symbols
+
+Beancount uses uppercase commodity codes. Ledger supports symbols.
+
+| Beancount | Ledger Options |
+|-----------|----------------|
+| `USD` | `$`, `USD`, `US$` |
+| `EUR` | `€`, `EUR` |
+| `GBP` | `£`, `GBP` |
+
+Decision: Use Beancount codes unless symbol mapping configured.
+
+## Lot Handling
+
+### Lot with Date
+
+**Beancount:**
+```beancount
+Assets:Brokerage  -10 AAPL {185.00 USD, 2023-06-15}
+```
+
+**Ledger:**
+```ledger
+Assets:Brokerage  -10 AAPL {$185.00} [2023/06/15]
+```
+
+### Lot with Label
+
+**Beancount:**
+```beancount
+Assets:Brokerage  10 AAPL {185.00 USD, "lot1"}
+```
+
+**Ledger:**
+```ledger
+Assets:Brokerage  10 AAPL {$185.00}
+  ; lot: lot1
+```
+
+### Booking Methods
+
+Beancount booking methods (`FIFO`, `LIFO`, `NONE`, etc.) are account-level settings that affect lot selection. Ledger handles this at query time.
+
+**Beancount:**
+```beancount
+2020-01-01 open Assets:Brokerage AAPL
+  booking: "FIFO"
+```
+
+**Ledger:**
+```ledger
+account Assets:Brokerage
+  ; booking: FIFO (informational only)
+```
+
+The actual FIFO behavior must be handled by Ledger's `--lot-dates` and related options.
+
+## Metadata Edge Cases
+
+### Quotes in Values
+
+**Beancount:**
+```beancount
+2024-01-15 * "Store"
+  description: "Said \"hello\" to clerk"
+  Assets:Checking  -10.00 USD
+```
+
+**Ledger:**
+```ledger
+2024/01/15 * Store
+  ; description: Said "hello" to clerk
+  Assets:Checking  $-10.00
+```
+
+### Multi-line Metadata
+
+Beancount doesn't support multi-line values directly. If a tool generates them:
+
+**Ledger:**
+```ledger
+2024/01/15 * Store
+  ; note: Line one
+  ; note: Line two
+  Assets:Checking  $-10.00
+```
+
+## Payee/Narration Edge Cases
+
+### Empty Payee
+
+**Beancount:**
+```beancount
+2024-01-15 * "Just a narration"
+  Assets:Checking  -10.00 USD
+```
+
+**Ledger:**
+```ledger
+2024/01/15 * Just a narration
+  Assets:Checking  $-10.00
+```
+
+### Payee with Pipe Character
+
+**Beancount:**
+```beancount
+2024-01-15 * "Company | Division" "Description"
+  Assets:Checking  -10.00 USD
+```
+
+**Ledger:** Escape or replace the pipe:
+```ledger
+2024/01/15 * Company - Division | Description
+  Assets:Checking  $-10.00
+```
+
+## Account Name Edge Cases
+
+### Non-ASCII Characters
+
+**Beancount:**
+```beancount
+2020-01-01 open Expenses:Café USD
+```
+
+**Ledger:**
+```ledger
+account Expenses:Café
+  ; UTF-8 supported in Ledger
+```
+
+### Spaces in Names
+
+Both formats support spaces, but Ledger requires two spaces before amounts:
+
+```ledger
+2024/01/15 * Store
+  Expenses:Office Supplies  $10.00
+  Assets:Checking
+```
+
+## Tolerance and Precision
+
+### Beancount Tolerance
+
+Beancount uses account-specific tolerance for balance checking. Ledger doesn't have this concept.
+
+**Beancount:**
+```beancount
+option "inferred_tolerance_default" "USD:0.005"
+```
+
+**Ledger:** No equivalent. May need to adjust balance assertions manually.
+
+### Precision Loss
+
+If Beancount uses more decimal places than Ledger's display precision:
+
+```beancount
+Assets:Account  100.123456789 USD
+```
+
+Ledger will preserve the precision internally but may display rounded.
+
+## Include Path Handling
+
+### Relative Paths
+
+**Beancount:**
+```beancount
+include "subdir/accounts.beancount"
+```
+
+**Ledger:**
+```ledger
+include subdir/accounts.ledger
+```
+
+### Absolute Paths
+
+May need adjustment based on target system.
+
+### Glob Patterns
+
+Beancount supports glob patterns; Ledger does not.
+
+**Beancount:**
+```beancount
+include "accounts/*.beancount"
+```
+
+**Ledger:** Must expand to individual includes:
+```ledger
+include accounts/personal.ledger
+include accounts/business.ledger
+```
+
+## Plugin-Generated Content
+
+### Unrealized Gains
+
+The `beancount.plugins.unrealized` plugin generates transactions. These must be included in the Ledger output.
+
+### Implicit Transactions
+
+Plugins may generate:
+- Padding transactions
+- Depreciation entries
+- Fee calculations
+
+All generated transactions should be converted with a marker comment:
+
+```ledger
+2024/01/15 * Unrealized gain
+  ; Generated by beancount plugin: unrealized
+  Assets:Brokerage  1000.00 AAPL {$10.00}
+  Income:Unrealized
+```
+
+## Error Handling
+
+### Unbalanced Transactions
+
+If a Beancount transaction is unbalanced (error state), convert it with a warning:
+
+```ledger
+2024/01/15 * Unbalanced transaction
+  ; WARNING: This transaction was unbalanced in Beancount
+  Assets:Checking  $-100.00
+  ; Missing posting
+```
+
+### Invalid Dates
+
+Reject transactions with invalid dates.
+
+### Missing Accounts
+
+Accounts referenced but never opened should generate `account` directives:
+
+```ledger
+; WARNING: Account never opened in Beancount
+account Assets:Unknown
+```
+
+## Recommendations
+
+1. **Run plugins first** - Convert post-plugin output
+2. **Preserve precision** - Don't truncate decimal places
+3. **Add comments** - Mark converted/adjusted elements
+4. **Generate warnings** - Log non-convertible features
+5. **Validate output** - Run `ledger balance` on result

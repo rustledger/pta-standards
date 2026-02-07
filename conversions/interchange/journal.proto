@@ -1,0 +1,249 @@
+// PTA Interchange Format - Protocol Buffers Definition
+// Version: 1.0
+
+syntax = "proto3";
+
+package pta.interchange;
+
+option java_package = "org.ptaspec.interchange";
+option go_package = "github.com/pta-spec/interchange";
+
+// Top-level journal container
+message Journal {
+  string version = 1;
+  SourceFormat source_format = 2;
+  Options options = 3;
+  repeated Commodity commodities = 4;
+  repeated Account accounts = 5;
+  repeated Directive directives = 6;
+  Extensions extensions = 7;
+}
+
+enum SourceFormat {
+  SOURCE_FORMAT_UNKNOWN = 0;
+  SOURCE_FORMAT_BEANCOUNT = 1;
+  SOURCE_FORMAT_LEDGER = 2;
+  SOURCE_FORMAT_HLEDGER = 3;
+}
+
+message Options {
+  string title = 1;
+  string operating_currency = 2;
+  map<string, string> custom = 3;
+}
+
+// Commodity/currency definition
+message Commodity {
+  string symbol = 1;
+  string name = 2;
+  int32 precision = 3;
+  CommodityFormat format = 4;
+}
+
+message CommodityFormat {
+  SymbolPosition symbol_position = 1;
+  string thousands_separator = 2;
+  string decimal_separator = 3;
+}
+
+enum SymbolPosition {
+  SYMBOL_POSITION_PREFIX = 0;
+  SYMBOL_POSITION_SUFFIX = 1;
+}
+
+// Account definition
+message Account {
+  string name = 1;
+  AccountType type = 2;
+  string opened = 3;  // ISO 8601 date
+  string closed = 4;  // ISO 8601 date
+  repeated string currencies = 5;
+  map<string, string> metadata = 6;
+}
+
+enum AccountType {
+  ACCOUNT_TYPE_UNKNOWN = 0;
+  ACCOUNT_TYPE_ASSET = 1;
+  ACCOUNT_TYPE_LIABILITY = 2;
+  ACCOUNT_TYPE_EQUITY = 3;
+  ACCOUNT_TYPE_INCOME = 4;
+  ACCOUNT_TYPE_EXPENSE = 5;
+}
+
+// Union type for directives
+message Directive {
+  oneof directive {
+    Transaction transaction = 1;
+    Balance balance = 2;
+    Price price = 3;
+    Note note = 4;
+    Pad pad = 5;
+  }
+}
+
+// Transaction
+message Transaction {
+  string date = 1;  // ISO 8601 date
+  Flag flag = 2;
+  string payee = 3;
+  string narration = 4;
+  repeated string tags = 5;
+  repeated string links = 6;
+  map<string, MetadataValue> metadata = 7;
+  repeated Posting postings = 8;
+}
+
+enum Flag {
+  FLAG_UNSPECIFIED = 0;
+  FLAG_COMPLETE = 1;     // *
+  FLAG_INCOMPLETE = 2;   // !
+}
+
+// Posting within a transaction
+message Posting {
+  string account = 1;
+  Amount amount = 2;
+  Cost cost = 3;
+  PriceAnnotation price = 4;
+  Flag flag = 5;
+  map<string, MetadataValue> metadata = 6;
+}
+
+// Decimal amount with currency
+message Amount {
+  string number = 1;  // Decimal as string for precision
+  string currency = 2;
+}
+
+// Cost basis for lot tracking
+message Cost {
+  Amount amount = 1;
+  string date = 2;    // ISO 8601 date
+  string label = 3;
+}
+
+// Price at time of transaction
+message PriceAnnotation {
+  Amount amount = 1;
+  bool total = 2;  // @@ vs @
+}
+
+// Balance assertion
+message Balance {
+  string date = 1;
+  string account = 2;
+  Amount amount = 3;
+}
+
+// Price directive
+message Price {
+  string date = 1;
+  string commodity = 2;
+  Amount amount = 3;
+}
+
+// Note directive
+message Note {
+  string date = 1;
+  string account = 2;
+  string comment = 3;
+}
+
+// Pad directive (Beancount-specific)
+message Pad {
+  string date = 1;
+  string account = 2;
+  string source_account = 3;
+}
+
+// Flexible metadata value
+message MetadataValue {
+  oneof value {
+    string string_value = 1;
+    double number_value = 2;
+    bool bool_value = 3;
+    string date_value = 4;
+    Amount amount_value = 5;
+  }
+}
+
+// Format-specific extensions
+message Extensions {
+  BeancountExtensions beancount = 1;
+  LedgerExtensions ledger = 2;
+  HledgerExtensions hledger = 3;
+}
+
+message BeancountExtensions {
+  repeated Document documents = 1;
+  repeated Event events = 2;
+  repeated Query queries = 3;
+  repeated Custom customs = 4;
+}
+
+message Document {
+  string date = 1;
+  string account = 2;
+  string path = 3;
+}
+
+message Event {
+  string date = 1;
+  string type = 2;
+  string value = 3;
+}
+
+message Query {
+  string date = 1;
+  string name = 2;
+  string query_string = 3;
+}
+
+message Custom {
+  string date = 1;
+  string type = 2;
+  repeated string values = 3;
+}
+
+message LedgerExtensions {
+  repeated VirtualPosting virtual_postings = 1;
+  repeated AutomatedTransaction automated_transactions = 2;
+  repeated PeriodicTransaction periodic_transactions = 3;
+}
+
+message VirtualPosting {
+  int32 transaction_index = 1;
+  int32 posting_index = 2;
+  VirtualType type = 3;
+}
+
+enum VirtualType {
+  VIRTUAL_TYPE_UNBALANCED = 0;  // ()
+  VIRTUAL_TYPE_BALANCED = 1;     // []
+}
+
+message AutomatedTransaction {
+  string pattern = 1;
+  repeated Posting postings = 2;
+}
+
+message PeriodicTransaction {
+  string period = 1;
+  repeated Posting postings = 2;
+}
+
+message HledgerExtensions {
+  repeated Forecast forecasts = 1;
+  repeated TimedotEntry timedot_entries = 2;
+}
+
+message Forecast {
+  string date = 1;
+  Transaction transaction = 2;
+}
+
+message TimedotEntry {
+  string date = 1;
+  string account = 2;
+  string duration = 3;
+}

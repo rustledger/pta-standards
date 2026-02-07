@@ -1,0 +1,875 @@
+1016	open	bean-format: fix currency column detection in the presence of multiline narrations
+1015	closed	build: use pypi distributed flex/bison
+1013	open	change required_daily_prices date range to include one day ranges
+1012	open	`bean-price --update` fails to fetch prices for current day
+1011	open	feat: add default `None` for Posting optional attributes
+1009	closed	[fix] treeify: Allow accounts with components starting with a number
+1008	closed	py314: re-enable refcount tests, adjusting for optimisations
+1007	closed	pyproject: add dependency groups for easy uv setup
+1006	closed	build abi3 wheels for unix platform
+1005	closed	feat: add `--json` flag to show errors as json
+1004	open	Interpolated currencies are missed when inferring tolerances
+1003	open	ci: setup trusted publishing
+1002	closed	pipx install requires also bison
+1001	closed	tolerance_multiplier does not work in included file
+1000	closed	ci: upgrade cibuildwheel for python3.14
+999	closed	fix: printer should insert space between tags and links
+998	closed	ci: re-enable pre-commit
+997	closed	ci: run pre-commit hooks in lint ci instead of latest ruff
+996	closed	ci: enable python 3.14
+995	closed	drop python3.9
+994	closed	`bean-example` tests break when end date is New Year's Day
+993	closed	Happy New Year!
+992	open	Calculation of PnL for trading with cash currency different from quote currency
+991	closed	Fix typos in format.py
+990	open	Document that option 'documents' must be included in main file
+989	open	Also in v3, documents from a directory option does not work as expected from an include
+988	closed	Should Transaction._replace() be a public function?
+987	open	[BUGFIX] Value function should return cost basis for positions without a price
+986	open	Parser bug: arithmetic expression is incorrectly parsed as a date
+985	open	Bug Report: Incomplete Escape Rules in `misc_utils.escape_string` Function
+984	closed	Lexer `test_bad_date` breaks on Python 3.14 due to CPython's updated `ValueError` message.
+982	open	`bean-format` not aligning parenthesized balance assertion with `-w` and `-W`
+981	open	`bean-format` does not support flagged transactions
+980	open	lifetimes: Fix duplicate Friday records when closing positions on Friday
+979	closed	Fix date arguments for bean-example
+978	closed	Fix parser.printer Balance tolerance condition
+976	closed	Updating Readme.rst
+974	closed	Plans for 3.2.0 Release Date?
+973	closed	bean-check returning invalid token to the example output
+970	open	Fix 968 display context update from
+969	closed	Enable mypy for beancount scripts
+968	closed	A DisplayContext adjusted with set_fixed_precision cannot be applied with update_from
+967	closed	Fix typing on Transaction.flag
+966	closed	GitHub.
+965	closed	"No position matches" error when buying shares
+963	closed	close_tree plugin does not seem to close accounts
+962	open	Zero-value automatic postings being pruned
+961	open	Allow more different characters in the account name
+959	open	Please clean-up the github page root
+958	open	Create a devcontainer
+957	closed	Update branch
+953	closed	cumulation error bug
+952	closed	Support total prices in parsing and printing.
+950	open	Allow grouping root accounts
+949	closed	How to generate a report in v3?
+948	open	Improved documentation
+947	closed	refactor: iter_children
+945	closed	bean-check sometimes fails when using @@ with "Transaction does not balance"
+944	closed	Resolves #943: Updated bean-format to enable multi-file in-place formatting
+943	closed	Add in place option to bean-format
+940	open	Enable AVERAGE cost booking
+937	open	Update account.py
+936	closed	Selling Home as a commodity doesn't calculate sale at new sales price
+935	open	Fix CURRENCY_RE to align with rules in lexer.l
+934	closed	fix: create_simple_posting_with_cost produces 0001-01-01 as date
+933	closed	`os.walk` does not follow symlinks collecting document filenames.
+932	closed	[doc] API still marked as experimental after v3 release
+931	closed	allow balance postings on non-leaf accounts
+929	closed	add back DefaultDictWithKey for beangulp compatibility
+928	closed	build: Fix ugly hack to support building extension module in-place
+926	closed	build: make meson build_ext target optional
+925	closed	build: bump requires-python to py39
+924	closed	Update python-requires in pyproject.toml
+923	closed	Use `Optional[T]` instead of `T | None` for Python 3.9 compatibility
+922	open	Use of `type | None` typing annotation is not supported in Python 3.9
+920	closed	printer: Restore output format
+919	closed	Installing on Windows Fais with "Need python for x86, but found x86_64"
+918	closed	style: remove trailing whitespace from source code and format ourput
+917	closed	Python 3.13 Wheels
+916	closed	tests: fix deprecated use of positional count arg to re.subn
+915	closed	Fix typings which broke beanquery
+914	closed	chore: remove unnessary ruff target-version
+913	closed	minor style fix
+912	closed	drop py<3.9
+911	closed	minor type fix
+910	closed	enable mypy
+909	closed	refactor: remove unused old code
+908	closed	minor type fix
+907	closed	refactor: cleanup some unused old code
+906	closed	refactor: cleanup some unused old code
+905	closed	Further types
+904	closed	refactor: improve typing
+903	closed	refactor: improve typing
+902	closed	style: enable ruff isort rule
+901	closed	build: add a build_ext meson target for old-style developers
+900	closed	refactor: make our subclass of namedtuple have attributes types
+899	closed	refactor: cleanup some really old code
+898	closed	refactor: rewrite NamedTuple with class inheritance
+897	closed	Fix typo in docstring.
+895	closed	typings: improve; add py.typed marker
+894	closed	Transaction not exported by beancount/api.py
+893	closed	Enforce commodities to be declared
+892	closed	Rename TODO to Setup TODO
+891	open	parser: Port the scanner generation from Flex to RE/flex
+890	closed	mentioning the per-unit as well as the total cost doubles the posting cost
+889	open	Augmentation with absolute cost is not accepted
+888	closed	How to Record Crypto Fee Income with Cost Basis
+887	closed	sorting postings raises AttributeError: posting_sortkey() does not really support Postings
+886	closed	make sure open file in binary mode or encoding specified text mode
+885	closed	tests: fix script tests on win32
+884	open	fix!: escape filename in document filename
+883	closed	add `*.pyd` to gitignore
+882	closed	tests: fix beancount/loader_test.py on win32
+881	closed	remove unused snoop
+880	closed	remove date_utils
+879	closed	match pre-commit hooks version and lock schema-store
+878	closed	fix beancount/{utils,core,ops,projects,tools} tests on win32
+877	closed	replace `chdir` with thread-safe root_dir aware glob search  
+876	closed	Fix parser tests on Windows
+875	closed	printer_test.py::TestEntryPrinter::test_Transaction fails on Windows on the  Entry with escaped symbols
+874	closed	printer_test.py::TestEntryPrinter::test_Document fails on Windows
+873	closed	build: Search win_flex and win_bison as alternatives for flex and bison
+872	closed	build: Fix compilation on platforms that do not have libm
+871	closed	document can't handle backslash in filename
+870	closed	fix parser test on windows and improve DX for windows users
+869	open	feat: add a rust parser
+867	closed	Validate options accepting root or leaf account names
+865	closed	Some more cleanups
+864	closed	fix: beancount generated example with zero transation
+863	closed	bean-example generate transation with 0 amount and failed bean-check
+862	closed	style: add pre-commit hooks
+861	closed	[WIP]: rust parser
+860	closed	Modernizations
+859	closed	Remove redundant `w` from version 1 description
+858	closed	bean-web: bug in yearly balance sheet report
+857	closed	pip install on mac seems to be missing dependancies. 
+856	closed	Support account alias like ledger
+855	closed	add a bean-report stub script
+854	closed	bean-example --date-birth YYYY-MM-DD > sample.beancount   gives error
+853	closed	wrong auto-balance calculation when one leg is omitted
+852	open	Sort entries by time field in metadata
+845	closed	run queries in my own python script with beancount 3.0.0 ?
+844	closed	setup.py
+843	closed	Bypass all passwords
+841	open	Generalize balance_by_account() with key fn
+840	closed	Propagate cost basis through "transfer" transactions
+839	closed	Install test modules in the Python wheel
+838	closed	Bug fix: keep entries when doing beancount.ops.balance check
+837	closed	oauth2client has been deprecated for several years
+836	closed	Revert "Bug fix: keep entries when doing beancount.ops.balance check"
+835	closed	Bug fix: keep entries when doing beancount.ops.balance check
+834	closed	Bug fix: keep entries when doing beancount.ops.balance check
+833	closed	cleanup config for old python version
+832	closed	Regarding the installation issue of bean-report
+830	closed	Scam website or real one?
+829	open	Next Version / Rewrite
+828	open	Incorrect sum of postings with different precision?
+827	closed	charts
+826	closed	Make Transaction tags and links' type FrozenSet
+825	closed	Change Posting.units type to Optional[Amount]
+824	closed	Bump requests from 2.31.0 to 2.32.0 in /requirements
+823	closed	Feature request: Include Week and yearly Quarter number in BQL
+822	closed	Feature request: Tag accounts directly
+821	closed	Fix typo
+820	open	Booking order with intraday bookings
+819	closed	bean-query GETPRICE not working
+818	closed	Bump idna from 3.4 to 3.7 in /requirements
+817	closed	Status of the "improved inventory booking" project?
+816	closed	docs: fix module docstring
+815	open	Fix implicit price date from cost
+814	closed	Reducing an asset and a liability
+813	open	Possible bug: build_price_map incorrectly resolves the conflict with inverse price pairs on the same date
+812	open	Feature request: large language model prompt library
+811	closed	Optionally write a source for entry in printer.print_entries and printer.print_entry v2
+810	closed	Optionally write a source for entry in printer.print_entries and printer.print_entry
+808	closed	Ymonth returns date instead of year,month
+807	closed	New functionality suggestion: Optionally write a source for entry in  printer.print_entries
+806	closed	Fix build breakage
+805	closed	option "account_rounding" "Equity:RoundingError" does not work for one transaction
+804	closed	Missing plugins
+802	open	Possible 'pad' issue when used in chain ?
+801	closed	bean-identify, bean-extract commands do not work with beancount file
+800	closed	Convert float arguments to string first before calling Decimal
+799	closed	Correct order of beancount.ops.pad in loader
+798	closed	BQL: convert function does the convertion at the current date, not at the date of the transaction
+797	open	Closed accounts show in `balances` report
+796	closed	Update framedocs.py
+795	open	support rounding postings with arithmetic
+794	closed	Commdity directive support for T-Bills (CUSIP)
+792	closed	Commodity starting with number char
+791	open	Make file type logic work with both magic libraries
+790	closed	setup: Fix typo for extras_require
+789	closed	setup: Move pytest and pdfminer2 to extra_requires test
+788	closed	Please remove pdfminer2 dependency
+786	closed	Accounts with Unicode chars don't work well with bean-web
+785	closed	parser: Remove line count limit from strings
+784	closed	Bump urllib3 from 1.26.16 to 1.26.18 in /requirements
+782	closed	Prepare 2.3.6 release
+781	closed	Bump urllib3 from 1.26.16 to 1.26.17 in /requirements
+780	closed	parser: Allow single uppercase character flags without quote prefix
+779	closed	Update CI job to build and upload release artifacts
+778	closed	new new v2 version for py311 windows pypi wheel
+777	closed	remove merge conflict artefacts
+775	closed	Use the regex module for Unicode character class aware regular expr
+774	closed	Remove unused utility code and clarify dependency on python-dateutil
+773	closed	Fix meson.build
+772	closed	Packaging modernization
+771	closed	Attempting to install beancount from source results in an incomplete install of the 3.0.0.dev version
+769	closed	AttributeError: module 'scrape' has no attribute 'scrape'
+768	closed	Ensure there is (empty) metadata on postings when generating pad transaction #767
+767	closed	Pad directive fails to add metadata to postings. Causes beanquery any_meta() to assert in queries.
+765	closed	Adds a hermetic setup for python 3.10
+764	closed	Accounting equation violation
+760	closed	Discussions
+759	closed	Error "Could not build wheels for beancount" occurred when installing beancount
+758	closed	v2: use new `NamedTuple` syntax
+757	closed	"Invalid Cookie" when scraping prices from Yahoo
+756	closed	Fix option_map -> options_map typo in loader docstrings
+755	closed	How to convert beancount file to parquet schema for visualization?
+754	closed	exception in any query using get_account_sort_key  when localizing account names
+753	closed	I'll use Ledger instead. I know some Python and thought it might have been fun to get involved. Thanks anyway.
+752	closed	PyPi install errors : testresources, pip3.8
+751	closed	Add a new 'close_tree' plugin to close entire trees by closing the pa…
+750	closed	Document directives scanner only accepts A–Z, a–z, ß, æ, ø directory names
+748	closed	Step-by-step tutorial needed: How to compute CGT tax?
+747	closed	CSV importer regular expressions only match content and not filename
+746	closed	Tailor CI configuration
+745	closed	Fix a build failure in SystemError on all but macOS
+744	closed	Transaction with Cost with currency only not working in output to file
+743	closed	What is the official guidance on indentation in Beancount's syntax?
+742	closed	Pad gets incorrect difference with forecast plugin
+741	open	"syntax error, unexpected ASTERISK" on a comment line with just asterisk
+740	closed	Fix onecommodity plugin
+739	open	`csv.Sniffer().has_header()` is called when not needed and returns the wrong result
+738	closed	Support PyPy
+737	closed	undefined symbol: PyExceptionClass_Name when running on Pypy
+736	closed	Add a bazel module to bazel-central-registry for beancount3
+735	closed	bean-web shows a different Balance Sheet and Trial Balance 
+734	open	decimal.InvalidOperation without inferred_tolerance_default
+733	open	account names support utf-8 characters?
+732	open	beancount-asset-transfer-plugin bug
+731	open	Feature Request: Commodity Conversion Directive
+730	closed	Don't set quotechar in csv register_dialect
+729	closed	bean-doctor: Fix parse subcommand
+728	closed	ci(v2): add python 3.10 and remove 3.6
+727	open	Links to custom plugin and extract_sheets in Shared Expenses are broken
+726	closed	printer: do not sort metadata key upon printing
+725	open	Keeping price conversion syntax when using `bean-report`
+724	closed	beancount app crash when i click 'quick add' button in home page
+722	closed	Add HIFO booking method
+723	open	beancount assumes commodity from previous transaction to same account
+721	closed	elide position string if it was interpolated
+719	open	Iterated padding fails
+718	open	first-month argument for bean-report
+717	closed	Show booked date in holdings report in bean-web
+716	open	Incorrect number of `fractional_max` in `dcontext` in Beancount 2.3.5
+715	closed	format: add support for parenthesized expressions
+714	closed	`bean-format` does not support arithmetic expressions in balance assertions
+712	open	bean-price formatting issue in 2.3.5
+711	closed	failed build master branch on macOS (bazel m1)
+710	open	Allow balance assertions against root accounts [feature]
+709	closed	ci: Fix workflow to upload wheels to PyPI
+708	closed	ci: Fix workflow to upload wheels to PyPI
+707	closed	ci: Fix workflow to upload wheels to PyPI
+706	open	Add CJK character set "Lu_and_CJK" to beancount/utils/regexp_utils.py.
+705	closed	Feat chinese account
+704	closed	Source package for 2.3.5 is broken and fails to install
+703	closed	bean-check: Fix auto plugins feature
+702	closed	query: Remove
+701	closed	bean-sql: Remove
+700	open	core: Remove requirement for filename and lineno metadata entries
+699	closed	Fix auto_accounts plugin docstring
+697	closed	Different "event" name suggestion
+696	closed	bean-extract fails to import transaction depending on arbitrary fields
+695	closed	[Bug]: `file.head` happed to break at half or a full byte
+694	closed	Fix syntax errors on Windows due to missing ssize_t
+693	open	Should `pad` sort before `balance` directives?
+692	closed	bean-query: decimal(str, [int]) - convert str to decimal, round(decimal, int)
+691	open	tag in multiple file?
+690	open	Feed existing entries to importer in regression tests
+689	closed	bean-format: accept multiple files at once
+688	closed	Enable addition and subtraction on two Amounts.
+687	open	Make parse_file retain original file order
+686	closed	Bug: Flags on individual legs of a transaction are not honored by queries
+685	closed	Fix transaction alignment in parser (ValueError: '=' alignment not allowed in string format specifier)
+684	closed	perf: Don't do many copies without need
+683	closed	Compilation error when building v3
+682	closed	Idea: SHA1 hash for linking transactions
+681	closed	tests: Fix random test failures in core/number_test.py
+680	closed	ci: Add Python 3.10 to the testing and wheel compilation matrix
+679	closed	Fix syntax errors on Windows due to missing ssize_t
+678	closed	Display Context (dcontext) option does not format known currencies when transactions are not directly declared in the main beancount file
+677	open	Multiple price definitions in commodity to be used by bean-price?
+676	closed	？
+675	closed	option long_string_maxlines doesn't work
+674	closed	Fix docs for ABS() in bean-query
+673	closed	Copy/paste error in documentation for ABS bean-query function
+672	closed	Let bean-identify catch UnicodeDecodeError
+671	closed	Handle edge case
+670	closed	Test files are deleted before they can be opened.
+669	closed	Remove User-Agent sent to yahoo finance chart api.
+668	closed	Remove User-Agent sent to yahoo finance api.
+667	closed	bean-price failed to fetch prices from yahoo
+666	open	bean-price return value rounded depending on unrelated ledger data
+665	closed	printer: Fix printing transaction when postings have empty weight
+664	closed	Fix meta handling of check_closing plugin
+663	closed	many of doc links are broker in importing_external_data
+662	closed	Amount units cannot be None
+661	closed	Should `bean-sql` be removed in v3?
+660	open	Implement the inlcude directive as a literal include
+659	closed	parser: Stop pretending we support encodings other than UTF-8
+657	open	parser: Implement an #include directive
+656	closed	Assorted cleanups
+655	closed	Reduce dependencies
+654	closed	Move `upload-to-sheets` somewhere else and slim down dependencies
+653	open	Different behavior when using "include"
+652	closed	Aggregate the state of DisplayContext across parsed files
+651	closed	Did `ingest` disappear ?
+650	open	Surprising sort behaviour for inventories
+649	open	Is there a reason why parse.parse_file() sorts entries by date?
+648	closed	query: Fix meta() BQL function when used in the FROM clause
+647	closed	bean-example: Fix one more corner case of iterator exhaustion
+646	closed	cache: Fix head() decoding
+645	closed	[v2] cache.head decode error sometimes when using with csv.Importer
+644	closed	bean-example: Fix one more corner case of iterator exhaustion
+643	closed	use env marker in `install_require`
+642	closed	bean-example date range floor
+641	closed	Is there a get_balance function in beancount?
+640	closed	Settlement Date
+639	closed	Bump v2 to next minor version.
+638	closed	Remove moved examples from examples/README.md
+637	closed	Cannot use full stop / period in commodity name as part of "commodity" or "price" directives
+635	closed	printer: Ignore all metadata fields whose key starts with "__"
+634	closed	 Build of v2.3.3 fails because of google-auth dependency
+633	open	The sellgains plugin does not handle commodity conversions
+632	closed	setup: Use -std=gnu99 when compiling Python extension
+631	closed	bean-example: Deal with exausted iterators
+630	closed	Pylint
+629	closed	bean-example: Deal with exausted iterators
+628	closed	bean-example error 
+627	closed	Beancount project donations?
+625	closed	setup: fix gcc error
+624	closed	Update setup.py
+623	closed	Assorted cleanups
+622	closed	Installation link dead
+621	closed	Ingest framework rework
+620	closed	bean-extract, bean-file, bean-identify: Remove deprecated scripts
+619	closed	Trivial fixes
+618	closed	beancount.utils.misc_utils.log_time doesn't append newline at the end.
+617	closed	ci: Move pylint to its own CI job
+616	closed	Use Click library for command line parsing
+615	open	Infer number_per and number_total simultaneously in costspec #598
+614	open	Add syntax for automatically transferring lots at cost (crypto users).
+613	closed	validation: allow reopening closed accounts
+612	open	Meson
+611	closed	Allow reopening an account ?
+610	closed	cparser: std::filesystem is not experimental anymore in c++17
+609	closed	Cannot add transaction with missing currency in plugin
+608	closed	Fix typo in beancount.ingrest.regression
+607	closed	Test: doesn't work with non-standard python path
+606	closed	Test: Support alternative csv/sh mimetypes
+605	closed	typing: booking key is optional
+604	closed	Can I make a balance assertion about market value?
+603	closed	cannot install in Ubuntu 16.04
+602	open	Handle self-reductions
+601	closed	"Calculating Portfolio Returns" scripts doesn't exist
+600	closed	add UPPER() and LOWER() to BQL
+599	open	docs: guidance for plugin writers on `__automatic__` meta usage
+598	open	Too many missing numbers on valid FIFO transaction should resolve.
+597	open	Different depreciation rules for the same item.
+596	closed	Documents from a directory Option does not work as expected from an include
+595	closed	Provide SSL context on request.urlopen()
+594	open	Multiple values for a metadata.
+593	open	Support DR and CR abbreviations
+592	closed	Add google_auth_oauthlib to requirements to fix CI
+591	closed	Implement AVERAGE booking and lot merging via {*}
+590	closed	Recording future liabilities.
+589	closed	Improve matching of lots with computed cost basis.
+588	closed	Why doesn't this plugin error give a stack trace?
+587	closed	docs: add a new plugin beancount_share
+586	open	v3: Support Programmatically Rewriting Ledger
+585	closed	parser: Apply the missiing close() fix to lex_iter() function too
+584	closed	Limit quantization on pathological cases
+583	closed	Fix pylint error
+582	open	Stricter parser
+581	closed	Parser: port lexer from Flex to RE/flex
+580	closed	Parser: more cleanup
+579	closed	plugin "beancount.plugins.unrealized" does not finish calculating unrealized gains if prices are missing
+578	closed	Add alwayslink = 1 to the decimal library.
+577	closed	Combine parser C sources and headers into a single Bazel rule.
+576	closed	parser: Print balance tolerances
+575	closed	Condition py_extension linker flag --export-dynamic-symbol on compiling for Linux.
+574	closed	Initialize decimal_type to NULL.
+573	open	Bazel does not compile on Mac OS
+572	closed	Limit format alignment to directives and postings
+570	closed	get_commodity_map removal breaks code
+569	closed	core.data: create data classes directly with NamedTuple
+568	open	Limit width out output
+567	open	Postings should inherit metadata from account (optionally ?)
+566	closed	hash_entry produced equal hashes for different transactions
+565	closed	Use the same python binary to run testimport.py
+564	open	Feature request for v3: Lot transfers
+562	closed	refactor: use py3.6 typing syntax to define directive
+561	closed	parser: Fix make ctest
+560	closed	Minor Makefile fix
+559	closed	ci: Add Bazel build to the Github Actions CI jobs
+558	closed	parser: Move functions defined in tokens.h to own compilation unit
+557	closed	setup, ci: Explicitly drop support for Python 3.5
+556	closed	Tests fail with Python 3.5
+555	closed	ci: Run tests as Github Actions
+554	closed	parser: Fix #include guard name
+553	closed	Lexer cleanup
+551	closed	Convert remaining BitBucket links to Github in docs
+550	open	A lot of unittests tests fail under Windows due to usage of NamedTemporaryFile
+549	closed	Lexer cleanup
+548	closed	Release version 2.3.2
+547	closed	Unicode in directories
+546	closed	extract a dict importer to table importer fronm CSV.importer
+545	closed	parser: More MSVC compiler fixes
+544	closed	add a windows deps to enable python-magic
+543	closed	parser: Fix compilation with MSVC
+542	closed	Adopt pipenv/poetry to make build reproducible 
+541	closed	Categorization issue with plugin
+540	closed	Github project description issue
+539	closed	fix beancount/scripts/setup_test.py::TestSetup::test_sdist_includes_c_files
+538	closed	Fix Windows build.
+537	closed	build wheel in github actions
+536	closed	2.3.1 compile error on windows
+535	closed	Optimization of the construction of Decimal objects and assorted cleanups
+534	closed	Improve the CSV exporter's chances of surviving an emoji-filled input file
+533	closed	Amount constructor to support string for number arg
+532	closed	Amount does not take string as specified in docstring
+531	closed	recursive hashing uses meta of fields when exclude_meta=True
+530	closed	setup: Do not require python-magic on Windows
+529	closed	catch OSError on import of python-magic
+528	closed	query: fix dtype for date()
+527	closed	Allow `bean-doctor linked` to specify filename:lineno like `bean-doctor context`
+526	closed	parser: Rework line number tracking
+525	closed	parser: Work around MSVC bug
+524	closed	add github action to test on windows
+523	closed	python-magic needs libmagic on Windows
+522	closed	Latest release does not compile on Windows (on AppVeyor at least).
+521	closed	Indented entries are allowed where they should not
+520	closed	parser: Test indentation handling
+519	closed	lexer: Fix subtle bug
+518	closed	Assorted cleanups
+517	closed	Modify lexer to allow single letter currencies (patch from #192)
+516	open	Handling of flags in the lexer
+515	closed	lexer: Fix subtle bug
+514	closed	Cast float to string before casting to Decimal
+513	closed	Add a valid XHTML file type
+512	closed	Use on mobile?
+511	closed	makefile: Tiny cleanup
+510	open	Sometimes entry.meta or posting.meta is None
+509	closed	Posting order not preserved
+508	closed	plugins unique_prices will cause empty output
+507	closed	Adding US Thrift Savings plan as a price source.
+506	closed	Remove some abandoned code
+505	closed	Implement construction of lexer tokens semantic values in compiled code
+504	closed	Input file encoding confusion
+503	closed	docs are hard to reference and find
+502	closed	CI fix
+501	closed	CI debugging
+499	closed	Removed rounding in Coinbase price fetcher
+498	closed	Preparatory work to move construction of the tokens semantic values to compiled code
+497	closed	Rename BUILD to BUILD.bazel
+496	closed	makefile: Do not clobber the Bazel build definition on make clean
+495	closed	Enabled historical price fetching for Coinbase
+494	closed	Current conversions seem to be wrongly put in Conversions:Previous
+493	closed	CSV importer: don't set empty tags and links
+492	closed	Reentrant parser cleanup
+491	closed	Reentrant parser fixes
+490	open	Grouping character in numerical values parsing
+489	closed	Reentrant parser part 2
+488	closed	Pr135 ppmarciniak fixnetworth
+487	closed	Fix typo
+486	open	Revisit what is allowed in string literals
+485	closed	Reentrant parser preparatory work
+484	closed	Reentrant parser part 1
+483	closed	Enhance csv categorizer
+482	open	Are lots without cost allowed? Interpolation problem with lot without cost
+481	open	Booking FIFO errorneously fills in the commodity cost currency with the commodity itself
+480	closed	parser: Read input data from Python file objects
+479	closed	Cost wrong when using FIFO method?
+478	closed	Require bison 3.6?
+477	open	Suggest to adding options to sum certain types of accounts for tag_pending plugin
+476	closed	Transfers equity between accounts and cost basis
+475	closed	Move instantation of lexer token values to compiled code
+474	closed	QUESTION: How to partially divert expenses as described in cookbook?
+473	closed	parser: Allow to specify commodities precision
+472	closed	parser: Drop options['commodities']
+471	closed	Parser rework
+470	closed	Modernize setup.py and get rid of the cdecimal import fallback
+469	closed	Is the cdecimal hack still needed?
+468	closed	ingest: Silence pylint error
+467	closed	tools: Skip sheet_upload_test if oauth2client is not available
+466	closed	beancount.el: Rework imenu support and add tests
+465	closed	beancount.el: Rework imenu support and add tests
+464	closed	Invalid reference to inactive account
+463	open	Forecast plugin shows dates from the past
+462	closed	Support Spaces in Account Names
+461	closed	Fix two test suite failures
+460	closed	Fix formatting issues of some docstrings
+459	closed	Make a new release and submit it to PyPI
+458	closed	Incorporate hook mechanism from smart importer
+457	closed	Cache file is corrupted / Can't pickle... attribute lookup failed
+456	closed	Add optional locale to parse numbers.
+454	closed	D function be able to parse comma number
+453	closed	Total cost is missing from the syntax documentation
+452	closed	Fix error message in IEX price source
+451	closed	Add requirements file for development and CI
+450	closed	Fix lint error
+449	open	beancount cache should take modification date of plugins into account
+446	open	0.005 rounded down instead of up
+445	closed	gitignore: remove leftover hg syntax directive
+444	closed	ignore generated flex/bison output
+443	open	Adding integer in metadata leads to traceback
+442	closed	Fix typos
+440	open	Implement plugin for adding fee-related expenses to P/L
+439	closed	bean-query: make run custom accept query name prefixes
+438	closed	How to use one commodity in each account?
+437	closed	Catch ValueError exception in fix_payees
+436	closed	Fix indentation of docstring
+435	closed	Allow custom prefixes in EntryPrinter and format_entry
+434	closed	README: point to both read-only doc and google docs
+433	closed	Fix test suite and update Travis config
+432	closed	Fix function being tested
+431	closed	Allow picking display of accounts in-units/at-cost/at-market-value
+430	open	Support tagging accounts to be displayed at historical cost always
+429	closed	Migration plan after bitbucket drops mercurial support on July 1, 2020?
+425	closed	parse_file crashes with segfault in Fava (MacOS)
+424	open	forecast plugin bug when date of transaction is at the end of a month
+423	closed	Support utf-8 account name
+420	closed	Make metadata into an OrderedDict
+418	open	guess_file_type raises error instead of None if python-magic is not installed.
+417	open	Allow negative prices
+414	closed	unicode decode error of bean-format
+413	closed	Version 2.2.3 is not published on PyPI
+412	closed	Update documentation for Emacs as minor mode (was: Where is the minor mode for emacs?)
+411	open	Balance directive allows $0.01 discrepancy
+410	closed	Tests fail with Python 3.8
+408	closed	FAVA fails after manjaro update
+407	closed	Indentation of postings and metadata in transaction entry
+406	closed	Cannot distinguish between tag and string
+405	closed	Editable Google docs
+403	closed	Unable to create pull request
+402	closed	unrealized_gains broken in 2.0b13
+401	closed	min(balance) prints empty column
+400	closed	bean-format splits ledger payee
+399	open	bean-check should accept input from STDIN
+398	open	Support logograms (like CJK characters) as account names.
+397	open	Beancount should detect UTF-16/32 encoded input files from the BOM and exit gracefully (Was: example.beancount crashes process in parser.parse_file)
+396	closed	Allow "balance" check directives against non-leaf accounts
+393	closed	Use ISO 8601 date format for ledger export
+392	open	Throw an error when ignored options are used in imported files (was: Booking method not applied when used in included file)
+391	closed	Duplicate price directives causes plugins.unrealized to create double  " U " entries
+389	open	forecast plugin enhancement
+388	open	Are unknown lines ignored or do they produce erros
+387	closed	Treeify does not work with account names that start with a number
+386	closed	beancount returns with exit code 0 even on error
+385	closed	docstring for stable_hash_namedtuple() strange
+384	closed	Rounding errors when specifying full price via @@ command
+382	open	FR: basis-adjusting postings
+381	open	Missing trailing zero causes wrong amount to be inferred/interpolated
+379	closed	parser allows narration split over multiple lines
+378	closed	Empty metadata value leads to bean-check traceback
+377	open	account_types.is_root_account() needs update for UTF-8
+376	closed	account.has_component() does not return boolean
+373	closed	Make commodity directives required
+371	open	sellgains should handle or ignore losses
+370	open	Export user-defined metadata explicitly
+369	closed	Syntax documents out of sync
+368	open	bean-doctor context accepts lineno which doesn't exist
+367	closed	bean-doctor context shows nothing for errors
+366	open	{ # NNN XXX } syntax not working in some cases: Too many missing numbers for currency group
+364	closed	Cost basis Fold (#) is broken or unintuitive for short sales
+363	open	pad directive should propagate tags
+362	closed	pad fails, takes amount from unrelated account into account
+361	closed	COST() ignores inferred_tolerance_default
+360	closed	invalid beancount file: ValueError: '=' alignment not allowed in string format specifier
+359	closed	Custom root account names and includes
+357	closed	Cannot run booking_full.book on transactions created with data.create_simple_posting
+355	closed	Infinite loop in find_repository_root() with missing files
+354	closed	Lot reduction fails on positive entry
+349	open	docs: not clear how to run stored query
+348	closed	Commodity transaction fails with "Failed to categorize posting"
+346	closed	Minor fix in installation instructions
+343	closed	pylint error in beancount.core.data
+341	closed	test_utils.find_repository_root() doesn't work with release tarball
+340	open	Formalize the concept of a secondary sort key, to support time or custom ordering
+339	open	Reduction should take whole transaction into account
+338	open	Should reduction match on amount?
+337	open	Bring back account_rounding support
+336	closed	No tag for 2.1.3, can't download `.tar.gz`
+334	closed	prefix matching when running custom queries
+332	open	Add date + time parsing to parser and grammar
+331	closed	devel version string isn't supported
+326	open	Add a new function "create_simple_posting_with_price" in core/data.py
+325	open	Add support for inclusion of encrypted files
+324	open	When matching against a single lot, infer the currency
+323	closed	Printer doesn't escape metadata strings
+322	closed	RuntimeError in running bean-example
+321	open	Comments on non-transaction directives give "unexpected COMMENT, expecting KEY"
+319	closed	beancount tip python version considered older than pypi version
+318	open	Implement trading accounts as a plugin (if possible)
+317	open	Initialize included files with some options from the top-level file
+316	closed	"Open On" in bean-query does not work with multiple "WHERE" clauses
+315	open	Remove costly copy (potentially - review)
+314	open	Process plugins from include files other than the top-level file
+313	open	Create links on Note, Document and Balance directives
+312	closed	bean-query returns None instead of zero for numbers
+311	closed	Problem when installing via pip on Windows or compiling from source
+309	closed	Install via pip3 fails if hg not installed.
+307	closed	not possile to complie beancount parser
+306	open	Make account optional on Document directive.
+305	open	Test account bases with UTF8
+304	closed	setup.py is broken if hg returns a date with timezone
+303	open	Make all error messages fit 80 chars
+302	closed	beancount.el does not fontify account names with single letter components
+301	closed	Cannot use number as first letter in component of account name
+299	closed	"beancount.query" is a dead link
+298	closed	"document" directive allows for tags and links, but printer.py ignores those
+296	closed	beancount/examples/README out of date
+295	closed	Flags: differentiate between no flag (txn) and *
+294	closed	Is the parser thread-safe?
+292	open	bean-report networth does not show all operating currencies
+291	closed	__init__() got an unexpected keyword argument 'encoding'
+290	closed	2nd level account name may no longer start with digits
+289	closed	Add option to find beancount version
+287	closed	oanda and yahoo sources fail with caching
+286	closed	Is it possible to exclude unnecessary deps?
+284	open	bean-web and bean-bake fails if spaces in event type
+282	open	Pipe not a comment?
+281	closed	Query "id" column does not identify transactions uniquely
+279	open	Support IPython notebook
+278	open	Document the total cost syntax
+277	open	Don't throw an error if  a Document directive is duplicated
+276	open	links and tags for all directives would be useful (revamp grammar, simplify)
+274	open	allow single document option to span multiple per-year directories
+273	closed	Trailing whitespace when printing with price
+272	open	D string format l10n
+271	open	option "render_commas" internationalisation
+270	open	bean-doctor context renders precision not like PRINT
+269	closed	Enable a CI solution; try Atlassian's Pipelines
+268	open	'pushtag' does not work with include
+266	closed	test beancount.plugins.forecast_test.TestExampleForecast fails
+265	closed	tests beancount.prices.sources.oanda_test.TestOandaGetHistorical fail because of timezone
+264	closed	test test_bake_archive__known fails when zip is not installed
+263	closed	test test_read_encrypted_file fails when $GNUPGHOME is not set
+262	closed	bean-doctor says version is insufficient even though it's not (versions compared as strings)
+261	open	Make it possible (via metadata?) to report context around transactions with errors.
+260	open	bql: CURRENCY_META and getitem() undocumented
+259	open	bean-web doesn't fail on non-existing file
+258	open	Create a marker directive
+256	closed	Reduction gets confused: A doesn't exist but it complains about B
+255	closed	Prices are not transitive
+254	open	CONVERT() to one of several currencies
+253	open	bean-report commodities doesn't report commodities
+252	closed	beancount uses BASE/QUOTE inconsistently (regarding whitespace)
+251	open	Allow reading from stdin
+250	open	improve error message for costs without an amount
+249	closed	error messages involving postings should start counting at 1instead of 0
+248	open	Support virtual costs (virtual prices)
+247	open	Please print position in error messages
+246	closed	Transaction does not balance with @@: -0.000000000000000000000001
+245	closed	Why is account name starting with a digit invalid?
+244	closed	improve error msg with wrong date: syntax error, unexpected NUMBER
+241	closed	Please allow wildcards in file include statements
+240	closed	Should meta data with key "tags" be rejected?
+239	closed	Allow queries to end with ; in bean-query (help from;)
+238	open	CONVERT() silently accepts invalid commodity
+235	open	price statements affect display context
+234	open	cost leads to too much precision being shown in cost commodity
+233	closed	Please support GPG version 2
+232	closed	bean-report ledger price statements slightly misaligned with quoted commodities
+231	closed	Failing unittest: TestFileType.test_xml
+230	open	cost of inventory needs to take tolerance rounding into account
+229	closed	Trading with Beancount: AVC example wrong (regarding conmission)
+228	open	Trading with Beancount doesn't know that lot tags exist now
+227	closed	Narration incorrect in example in Trading with Beancount
+226	open	Document precision & tolerances lists removed option default_tolerance.
+225	closed	Inventory queries in Query document don't work
+224	open	bean-format: allow specifying just the currency column
+223	closed	Cost of the same currency
+222	open	Re-opening NamedTemporaryFile is not valid on Windows
+221	open	Hardcoded '/' in tests leads to widespread test failure on Windows
+220	closed	bean-query fails importing readline on native Windows
+219	closed	extract does not sort entries anymore
+218	closed	Ignore division by zero in queries
+217	closed	Cannot invoke top-level scripts unqualified in native Windows install
+216	closed	Two accounts involving one conversion reported at cost
+215	closed	Library of importers, for different filetypes and sources
+214	closed	Add top-level directory to sys.path.
+213	closed	Implement average cost booking
+212	closed	query: improve error message for invalid syntax
+211	closed	ingest/importers/regexp.py tests failing
+209	closed	beancount.el should not (require 'ido)
+208	closed	cost_to_str does not print total-cost-only CostSpecs
+205	closed	amounts smaller than 1E-6 are incorrectly handled (scientific notation instead of decimal)
+204	open	Add international support for rendering commas
+203	closed	Google and Yahoo price sources no longer work
+201	open	Alternative compact balance/price syntax
+199	closed	bean-report hledger/ledger puts link/tag comments before payee/description
+198	closed	bean-extract ignores output file arguments, redirects everything to stdout
+197	closed	Doc update: install from source with pip
+196	closed	Warning "PRICE() is deprecated; use GETPRICE() instead" even if I'm using the correct function
+195	closed	Documentation: price entries are no longer automatically synthesized
+194	open	Use of "@@" syntax (was: Use of float numbers in Amount)
+192	closed	Make it possible to use single letter as commodity name
+191	closed	beancount.core.Inventory should be a dict when Costs have dates
+190	closed	Use of implicit_prices and operating_currency together leads to incorrect calculations of net worth
+189	closed	beancount error in Arch
+188	closed	ignore .idea and beancount.egg-info folders
+186	closed	Cost & price currency should be coerced to be equal
+184	closed	Inventory averaging can results in division by zero
+182	closed	Eliding an amount with total price raises TypeError
+180	open	Make options work within files
+179	closed	Scientific notation showing up in reports; Transactions balancing errors with very small remainder
+178	closed	bean-report accounts traceback when no account opened
+177	closed	Traceback from bean-doctor checkdeps with filemagic
+176	open	Link one document to multiple accounts in one directive
+175	open	Support multiple accounts in one balance statement
+173	closed	Tweak to work with Windows 10 + VisualStudio 2015 + Python 3.6
+171	open	Add an option to allow the user to override the displayed / rendered precision
+170	open	Try inferring currency from the contents of ante-inventory
+169	open	bean-doctor context: Consider always creating some transaction object even when there are errors.
+168	open	FIFO without a cost currency appears to fail due to incorrect currency inference
+167	open	Reductions without a cost basis should fail against a balance in the same currency with a cost basis
+166	open	Inconsistent rendering of decimal numbers
+165	open	Bug in interpolation
+164	closed	infer_tolerance_from_cost broken
+163	open	Allow reducing positions just added in the same transaction (was: Position tracking regression)
+162	closed	Include src/elisp/beancount.el in package
+161	open	Unicode support
+160	closed	Is it possible to combine the "balance" column with aggregate functions?
+159	closed	Windows Cygwin Install Issue - Insufficient Python version; you need v3.5 or higher.
+158	closed	OFX/QFX files with with all tags on one line are not imported
+157	closed	bean-web crashes on prices that are zero.
+156	closed	Internal error (to do with sorting/serializing)
+155	closed	Use entry_points instead of scripts in setup.py
+154	open	Distribute some wheels on pypi
+153	closed	issue with bean-web since python update to 3.6
+151	open	Expand includes for sources in bean-web
+150	open	Review behaviour of options and plugins directives in included files
+149	closed	Too many transactions lead to closed-connection/connection-reset?
+148	closed	bean-query makes it cumbersome to run queries from CLI
+147	open	plugins declared in include-d files are ignored
+146	closed	bean-format fails on currencies that contain "_" (underscore)
+145	open	Commodities acquired and sold within a single transaction aren't found
+144	open	allow tagging of individual postings / transaction legs
+143	closed	full-line comments not allowed within transactions
+142	closed	bean-check should return non-zero exit code upon failure
+141	closed	beancount fails with ValueError: day is out of range for month on document
+140	open	Add type annotation to beancount codebase
+139	closed	TypeError in core.display_context
+138	closed	Make it possible to use account names with a single character.
+137	open	Feature request: Add option to specify column for bean-format
+136	open	bean-format get's tripped by calculated values
+135	closed	Deviation of currency converting
+134	closed	Toplevel accounts need to be provided on each file
+132	closed	bean-query csv output format
+131	open	Aggregate the state of DisplayContext across all parsed files.
+130	open	Padding involving the same account doesn't work incrementally
+129	closed	bean-report and custom directives
+128	closed	bean-report holdings market value incorrect if no price given initially
+126	closed	restricted page in Google docs.
+125	open	Omitting all currencies in a transaction does not raise an error.
+124	closed	Possible memory leak in the parser.
+123	open	Option to disable pickle cache.
+122	open	pickle cache prevents document folder from being scanned
+121	open	Build some common infrastructure function to make configuring plugins via argparse easy, with nice error reporting.
+120	closed	Documents directive with a trailing slash fails; relative path is undocumented
+119	open	If beancount file is encrypted relative document paths behave differently
+118	open	Create a balance_end directive
+117	open	Support for locale based currency
+116	open	Missing account from bean-report balances
+112	open	Make the bean-report command run the queries from Query directives by default.
+111	open	Allow unknown options for other programs.
+110	closed	Add the ability to include with globbing patterns
+109	open	A lot of decimal digits if using total price
+108	open	beancount.report reports aren't honoring the DisplayContext.. make them do so.
+107	open	Review all codes that renders units, costs and prices for precision using display context.
+106	closed	render_commas is unused
+104	closed	bean-format failed when number contains comma
+103	open	Make the balance sheet and income statement reports support conversion to a single currency
+102	open	Create a balance assertion that applies only to tagged or linked transactions.
+101	closed	Integrate aumayr's beancount-docs into beancount/doc
+100	closed	Provide an external registration mechanism to build new reports, for fava
+99	closed	multi-line syntax for tags and links
+96	closed	Try to import "cdecimal" explicitly if regular "decimal" isn't cdecimal
+95	open	Provide a standardized method to identify automatically-generated transactions
+94	closed	Cache does not handle moved files
+93	closed	make build error: "invalid directive: `%precedence'"
+92	closed	bean-check doesn't produce error listing when using data cached via picklecache
+91	closed	options_map misses entries from multiple import directives
+90	closed	beancount should consider warning when the _decimal C extension is missing
+89	closed	Create a unittest to verify that all the binaries and packages are installed in setup.py
+88	closed	Improve docs index-ability
+87	open	Use unicode.east_asian_width() to compute character widths?
+86	closed	textutils.replace_numbers() does not replace integers
+85	closed	GET /errors returns 500 error
+84	closed	include doesn't work with booking method
+83	closed	Renamed "default_tolerances" option, users find it confusing.
+82	closed	Ability to associate documents to a component
+81	closed	default_tolerance doesn't work as expected
+80	closed	bean-format fail on files without transactions
+79	closed	beancount.core.data.AttrDict.__getattr__ raises KeyError, foiling deepcopy.
+78	closed	pad directive skips balance when balance is for 0 units
+77	closed	@ EUR  not working
+76	open	Infer prices from price database, not just locally. (Optionally)
+75	closed	Invalid priority for SQL parser
+74	closed	Make the printer not output | separator anymore
+73	open	bean-bake should support all the same options as bean-web
+72	closed	Consider installing with setuptools again
+71	closed	bean-bake doesn't pass all options through to bean-web
+70	open	Add #tag to the Pad directive and propagate the tags to the generated transactions
+69	closed	Emacs: Using syntax tables for strings fails on long strings
+68	open	DecimalRenderer ignores its currency when formatting for an Amount
+67	closed	option "account_rounding" should check for valid account name
+66	open	Change active years in bean-web to be calculated using the correct year month boundary
+65	open	Context should render with natural precision
+63	closed	bean-format fails due to whitespace after account name
+62	closed	Document "operating_currencies" in Language/Syntax document
+60	closed	Rendering precision for reports is inconsistent.
+59	closed	Figure out Windows installation sans Cygwin
+58	closed	Add support for querying metadata in bean-query
+57	closed	bean-bake is broken; fix it by rewriting it in Python, removing the dependency on wget
+56	open	Figure out how to disable tolerance inference on numbers output from arithmetic expressions
+55	open	Make it easy to filter out transactions in the future
+54	closed	In exportpf report, add an option to aggregate postings by currency
+53	closed	Extend the cost-inferred tolerance further
+52	closed	PEP8 issues
+51	closed	ImportError: Module 'curses' is not installed
+50	closed	TypeError: balance() missing 1 required positional argument: 'kvlist'
+49	closed	Bring back inference of tolerance using cost
+48	closed	Setting account_rounding affects the outcome of balance assertions
+47	closed	crash with use_legacy_fixed_tolerances True
+46	open	bean-web should render numbers using display_context
+45	closed	bean-web fails if I use a price for a transaction
+43	closed	Decimal-None in unrealized gains with cost 0
+42	closed	Zero-cost assets not included in unrealized gains
+41	closed	bean-example fails - unit test succeeds, running the script fails
+39	closed	complex numbers in annualize_returns
+38	open	Implement --open/--close dates for balsheet/income reports
+37	open	Total balance check is easy to implement and is desired
+36	open	Balances output sometimes outputs -0.00
+35	closed	SELECT account, sum(position) WHERE account ~ ‘Income’;
+34	closed	Watch included files for re-read too
+32	closed	Bug in treeify column identification
+31	closed	NameError: name 'prices' is not defined
+30	closed	'Transaction' object has no attribute 'source' ← when requesting BQL field "filename"
+29	closed	KeyError: 'USD' running returns.py due to date calculation
+28	open	Exporting with total cost somehow leads to a negative value for total.
+27	closed	SQL precedence for membership (IN) operator appears incorrect
+25	closed	bean-web does not watch all the included files, just the top-level one
+23	closed	Round-trip test does not work with escaped characters nor metadata
+22	open	Cost currency same as unit currency will fail with an assertion, not a reported error
+19	open	In the web interface, clicking on a directive that has no context generates an error
+18	open	bean-doctor context command should support a separate top-level file for running and as an argument for querying
+17	closed	"bean-doctor context" broke in revision ba5032375ba8
+16	closed	unrealized.py: "A valid price could not be found" warnings for leaked cost basis
+15	open	Render subtotals in balances/balsheet/income reports
+14	closed	treeify fails with very very long account names
+12	closed	In bean-query, "history" does not reflect the current history
+11	closed	"bean-query help print" should give the grammar
+10	closed	"print from close_date" causes problems on account open
+9	closed	Add --public option to bean-web to bind to external connections.
+8	closed	Need to add "commodity" as a reserved keyword in beancount.el
+7	closed	Confusing error message: "Amount is zero or negative"
+6	closed	bean-query barfs when comparing a position with a number
+5	closed	Exception in leafonly plugin if non-leaf account has no Open directive
+4	closed	'ParserSyntaxError' object has no attribute 'meta'
+3	closed	bean-check fails on a transaction with no values
+2	closed	plugins/leafonly.py has wrong docstring
+1	closed	reports/convert_reports.py refers to undefined variables

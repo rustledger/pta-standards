@@ -1,0 +1,269 @@
+270	open	Optimise ledger parsing with caching
+269	closed	fix: Fix Tatsu dependency issue
+268	closed	TatSu 5.15.0 module refactoring breaks beanquery
+267	closed	What is the intended (future?) design concerning structured type (entry.payee, amount.numbers, ...)
+266	open	Render ProgrammingError, CompilationError and ParserError alway user-friendly
+265	open	GROUP BY CUBE / ROLLUP / GROUPING SETS
+264	open	Allow any()/all() on LHS to allow ANY(set) ~ pattern
+263	open	Improve function help by grouping by function type
+262	closed	Improve function help by grouping by function type
+261	open	Give better error: all non-aggregates must be covered by GROUP-BY clause
+260	open	Allow to INSERT multiple records
+259	closed	pyproject: Adopt License-Expression (PEP 639) 
+258	closed	pyproject.toml: use SPDX identifier to describe license
+257	open	Better error messages when `beancount` format does not apply
+256	closed	publish v.0.3.0 pre-release
+255	open	REST API server
+254	closed	Tracking balance for inventories results in long processing time and large memory consumption
+253	open	Totals summary?
+252	closed	publish 0.3
+251	closed	ignore build by-products
+250	closed	How to serialize Inventory to JSON?
+249	open	Add support for parameters in query directives
+248	closed	ROUND() function?
+247	open	Improve exception message when attempting to connect to an invalid DSN
+246	closed	0.2.0 No module named 'beanquery.sources.'
+245	open	Implement JOIN
+244	open	sources.beancount: Lazily compute tables data
+243	closed	parser: Allow to escape single quote string delimiters by doubling them
+242	open	sources.beancount: Correct type for links and tags columns
+241	closed	Fix resource leaks
+240	closed	Fix quoted identifiers support in SELECT statements
+239	open	Deprecations in 0.3.0
+238	closed	Allow to enter the quote character in strings
+237	closed	Make date a structured type
+236	closed	shell: Adapt to work on non-Beancount databases
+235	closed	Implement CREATE TABLE AS
+234	closed	Improve FROM clause handling
+233	closed	sources.csv: Tables backed by data in CSV files
+232	closed	Implement CREATE TABLE and INSERT
+231	closed	beancount: Move tables definitions to beanquery.sources.beancount
+230	closed	`readline` raises `OSError` if an old history file exists
+229	closed	execute: Support DISTINCT for rows containing non hashable objects
+228	closed	Find a way to make `DISTINCT` work for queries with unhashable columns
+227	closed	Implement ANY and ALL
+226	closed	Beanquery is incompatible with TatSu 5.13.1
+225	open	Allow to enter multi-line BQL queries in the shell
+224	closed	uses: astral-sh/ruff-action@v3
+223	closed	shell: Fix --no-errors option and some small cleanups
+222	closed	compiler: Add table name to column not found error
+221	closed	Cleanups
+220	closed	shell: Correctly set up completion on systems using libedit
+219	closed	Tiny API tweaks
+218	closed	Implement .format and .output shell commands
+217	closed	Switch dependency from TatSu to TatSu-LTS
+216	closed	Suppress Warnings with -q
+215	closed	Please relax the upper version requirement for tatsu
+214	open	Support complex size filtering and restriction statements for position or other similar values
+213	closed	Cleanups
+212	closed	Implement date_bin() BQL function
+211	closed	ci: Assorted cleanups
+210	closed	ci: Add job to publish wheels on PyPI when tagging a release
+209	closed	Badges for README.md
+208	closed	Implement subquery support for the IN operator
+207	open	history lost (moved) when upgrading
+206	closed	api: Module level constants for DB-API 2.0 compliance
+205	closed	ci: Update actions versions
+204	closed	Small documentation update
+203	closed	ci: Run tests on Python 3.13 too
+202	closed	Revisit API to allow arbitrary keyword arguments to connect()
+201	closed	implement named parameterized queries
+200	closed	shell: Fix pager support
+199	closed	shell: Fix CTRL-C handling
+198	closed	pager $PAGER no longer working
+197	closed	Crtl-C: `AttributeError: 'BQLShell' object has no attribute 'stderr'`
+196	closed	Functions context
+195	open	Implement `.*` oprator to select all fields of a strctured type
+194	open	String formatting ang string concatenation
+193	closed	Fix "filename", "lineno", and "location" columns for pad postings
+192	closed	Selecting location fails for entries created out of pad directive
+191	open	Migration instructions
+190	closed	compiler: Improve validation of ORDER BY clause with column number
+189	open	Find a way to report the balance only after all postings of a transaction are applied
+188	closed	Add "beancount" result set renderer
+187	open	Add a `PRICE(currency, costcurrency, date)` function to pull the price at a given date
+186	open	Allow multiple statement per invocation
+185	open	Allow to direct query results to a file
+184	open	Implement `JOIN`s
+183	open	`SELECT *`  should really render all the possible fields
+182	open	Rename `ACCOUNT_SORTKEY()` to `REPORD()`
+181	open	Suppport `SELECT x, ... FROM ... GROUP BY x ORDER BY func(x)`
+180	open	Implement `BALANCES ... WHERE ...` syntax
+179	open	Find a better solution for the `OPEN ON`, `CLOSE ON` and `CLEAR` clauses
+178	open	Improve support for arrays, including `ANY()`, `ALL()` and `UNNEST()`
+177	open	Implement `AVERAGE(inventory)` BQL fucntion
+176	open	Move implementation of Beancount-specific BQL functions to the `beancount` data source
+175	open	Review BQL functions naming
+174	closed	Allow to call the root() BQL function with only one argument
+173	closed	Add date_part() BQL function
+172	closed	ci: Test with upcoming TatSu 5.7.5
+171	closed	Unicode support for output in bean-query
+170	closed	Unsupported operand type(s) for &: 'bool' and 'NoneType'
+169	closed	add date_trunc and interval functions
+168	closed	render: Fix CSV rendering
+167	closed	CSV output broken
+166	closed	render: Make results set rendering formats extensible
+165	closed	offer markdown output from beanquery
+164	closed	escape comma in csv outputs
+163	closed	packaging: Switch to pyproject.toml and modern setuptools
+162	closed	beanquery: add empty init file in beanquery.sources
+161	closed	Shell fixes
+160	closed	Print errors to stderr
+159	closed	More tables
+158	closed	Fix CSV rendering
+157	closed	ci: Updates
+156	closed	beancount: Add "accounts" table
+155	open	More subqueries support
+154	closed	ci: Test also with Python 3.12
+153	closed	parser: Allow double quoted identifiers
+152	open	Deprecate and remove one argument version of `PARSE_DATE()` 
+151	closed	Use dateutil.parser directly
+150	closed	bean-query returns an improper balance if date >= is specified
+149	closed	Fixlets
+148	closed	shell: Restructure and add "." prefix to all shell commands
+147	closed	parser, compiler, cursor: Implement handling of query parameters
+146	closed	compiler: Reorganize
+145	closed	Add BETWEEN and !~ operators
+144	closed	Fix meta() and any_meta() functions for postings on pad transactions
+143	closed	beancount: Define more structured types
+142	closed	Implement most of the DB-API 2.0 specification
+141	closed	Implement more structured types
+140	closed	Tweaks
+139	closed	compile: Consistent error messages capitalization
+138	closed	shell: Sundry improvements
+137	closed	Add getitem and getattr
+136	closed	env: Return NULL on division by zero
+135	closed	Switch from pylint to ruff
+134	open	Default `CLOSE` date for queries stored in the ledger
+133	closed	parser, shell: Revisit default close date implementation
+132	closed	Restructure API
+131	closed	parser: Simplification
+130	closed	Drop python-dateutil dependency
+129	closed	bean query aggregate up to specified level of accounts
+128	closed	Fix help
+127	open	Deprecate and eventually remove `SAFE_DIV()`
+126	closed	Fix rendering of columns containing only NULL values 
+125	closed	Output incomplete on query producing empty result
+124	closed	Implement `COUNT(*)`
+123	closed	Implement `WHERE` for `PRINT`
+122	closed	Argument to `help` should be treated as case-insensitive
+121	closed	Cannot use `cost_date` as `date` in WHERE-clause
+120	closed	Fix shell help
+119	closed	Add #prices table definition
+118	closed	show prices?  `SELECT * from #prices`
+117	closed	Support `!~` regex match
+116	closed	Empty query (enter) leads to `AttributeError: 'NoneType' object has no attribute 'lower'`
+115	closed	`help from` leads to `AttributeError: 'EntriesTable' object has no attribute 'functions'`
+114	closed	Support quoted identifiers
+113	closed	parser: Update TatSu generated parser
+112	closed	parser: Remove support for #'...' date literals
+111	closed	Sundry fixes for aggregate functions
+110	closed	shell: Do not require readline
+109	closed	Windows support (readline stdlib)
+108	closed	sum(value(position)) that uses cost in some cases 
+107	closed	value(position) when generating balance for previous FY
+106	closed	More work toward regularization
+105	closed	compile: Implement constants folding
+104	closed	Sundry code rearganization in preparation of parser rewrite
+103	closed	setup: Update
+102	closed	Update license_file
+100	closed	pylint: Silence some warnings
+99	closed	parser: Switch to TatSu as parser generator
+98	closed	Refactor columns definitions
+97	open	What to replace `open_meta()` and `commodity_meta()` and similar with
+96	closed	`filename` and `lineno` traget columns implementation does not match documentation
+95	closed	Implement PIVOT BY cluase
+94	closed	Implement `PIVOT BY`
+93	closed	render: Fix inventory renderer
+92	closed	Remove partial support for the FLATTEN query option
+91	open	Optimize the CSV export code
+90	closed	Generalize beanquery to work on more than Beancount ledgers
+89	closed	Fix pylint warnings
+87	closed	Revisit results set table rendering
+86	closed	Remove support for #"..." date literals?
+85	open	Support arithmetic operations on Amounts
+84	closed	Arithmetic
+83	closed	Switch from pytest to plain unittest for the CI jobs
+82	closed	Parser test coverage improvements
+81	closed	 Add support for c-like /* ... */ comments to the BQL parser
+80	closed	Fix BQL IN operator
+79	closed	Relax required Beancount version to allow to be used with v2
+78	closed	PLY is not maintained anymore as a package on PyPI
+77	closed	Fix shell help targets
+76	open	Alternative way to handle NULLs
+75	closed	Fix BQL boolean operators handling of NULL values
+74	closed	Better deal with NULLs
+73	closed	Harden meta(), entry_meta(), and any_meta() BQL functions
+72	closed	Adjust BQL functions operating on metadata dictionaries
+71	closed	Add round() BQL function
+70	closed	Refactoring
+69	closed	Move run, reload, errors, and explain commands handling from BQL to shell
+68	closed	Allow digits in BSL identifiers
+33	closed	Refactor binary ops
+32	closed	Fixups
+31	closed	Constants are not operators
+30	closed	Code cleanup and simplification
+29	open	Implement support for referencing output names in WHERE and HAVING
+28	closed	Revise sorting of NULL values and support specifying ordering direction for each column in ORDER BY clause
+88	open	Query result of a column as a percentage
+27	closed	Refactor BQL functions implementation, part 2
+26	closed	Make tests self contained
+25	closed	Refactor implementation of BQL functions
+24	closed	Allow to be installed with Beancount v2
+23	closed	CI Fixes
+22	closed	Implement HAVING clause
+21	closed	Add empty() BQL function to determine whether an inventiry is empty
+20	closed	BQL functions decimal(str, [int]), round(decimal, int)
+19	closed	Fix docs for ABS() in bean-query
+18	closed	tests: Modernize a bit
+17	closed	Remove bin/bean-query from the repository
+16	closed	Fix redirection to the pager when evaluating a PRINT query.
+15	closed	Fix pylint violations in query_env.py.
+14	closed	Fix pylint errors in shell_test.py
+13	closed	Fix meta() BQL function when used in the FROM clause
+12	closed	Add packaging
+11	closed	Add github actions for pylint
+10	closed	Setup formatting check in CI
+9	closed	Fix pylint errors in shell.py.
+8	closed	Setup pylint
+7	open	Setup type checker
+6	closed	Add .pylintrc as preparation to enable pylint.
+5	closed	Setup github actions to run pytest.
+4	closed	Fix imports to refer to local libraries.
+3	closed	Fix unit tests.
+2	closed	Use pipenv to manage the dependencies.
+1	closed	Add requirements.txt with beancount v3.
+35	open	Add balance column to aggregate query
+36	closed	BQL: queries on aggregates
+37	closed	GROUP BY and financial year
+38	closed	Add INT() function to BQL
+39	open	Document SELECT location
+40	closed	Nested field is displayed with its elements in arbitrary order, e.g. SUM(VALUE(position))
+41	closed	posting flag ignored / how to query posting flag?
+42	closed	Make ANY_META case insensitive?
+43	open	Allow a balance column by referencing another column, sum up position converted at original rate
+67	closed	run query requires quotes around query when not necessary
+44	closed	Using the FLATTEN keyword results in an exception
+45	closed	bsql: unsupported operand type(s) for &: 'NoneType' and 'bool'
+46	open	Column name specified via AS can't be used in WHERE
+47	closed	bean-query order not consistent
+48	closed	None should be considered False in boolean context
+49	closed	SQL shell should check for data types for columns returning containers (and others)
+50	open	balance column should be computed after sorting
+51	closed	Query result should be empty string instead of None so ORDER BY can work
+52	closed	unorderable types: NoneType() < datetime.date() / 'BQLShell' object has no attribute 'do_SELECT'
+53	open	CONVERT() should accept a price as parameter
+54	open	Document should cover CONVERT()
+55	open	Add function to compute net income
+56	closed	Allow arithmetic operations on dates
+57	closed	Implement HAVING
+58	closed	Convert the query rendering routines to use the DisplayContext
+59	closed	Allow comments in BQL
+60	closed	The precedence of IN operator is incorrect
+61	closed	Implement pivot table tool & make sure it works to produce monthly aggregations
+62	closed	bean-query "order by": separate sort orders for different keys
+63	closed	bean-query: ORDER BY does not accept per-keyword sort direction
+64	open	ORDER BY clause with no target should work
+65	closed	Precision for rendering is broken for some subsets of amounts
+34	open	Truth evaluation allows ambiguous queries that should fail
+66	closed	bean-query check for non-empty position fails

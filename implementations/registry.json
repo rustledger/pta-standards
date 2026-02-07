@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PTA Implementation Registry",
+  "description": "Known implementations of plain text accounting formats",
+  "last_updated": "2024-01-01",
+  "implementations": [
+    {
+      "name": "beancount",
+      "format": ["beancount"],
+      "language": "Python",
+      "repository": "https://github.com/beancount/beancount",
+      "website": "https://beancount.github.io/",
+      "license": "GPL-2.0",
+      "status": "stable",
+      "type": "reference",
+      "features": [
+        "parse",
+        "validate",
+        "query",
+        "plugins",
+        "import"
+      ],
+      "conformance": {
+        "spec_version": "reference",
+        "notes": "Reference implementation - spec is derived from this"
+      }
+    },
+    {
+      "name": "ledger",
+      "format": ["ledger"],
+      "language": "C++",
+      "repository": "https://github.com/ledger/ledger",
+      "website": "https://ledger-cli.org/",
+      "license": "BSD-3-Clause",
+      "status": "stable",
+      "type": "reference",
+      "features": [
+        "parse",
+        "validate",
+        "query",
+        "reports",
+        "expressions"
+      ],
+      "conformance": {
+        "spec_version": "reference",
+        "notes": "Reference implementation - spec is derived from this"
+      }
+    },
+    {
+      "name": "hledger",
+      "format": ["hledger", "ledger"],
+      "language": "Haskell",
+      "repository": "https://github.com/simonmichael/hledger",
+      "website": "https://hledger.org/",
+      "license": "GPL-3.0",
+      "status": "stable",
+      "type": "reference",
+      "features": [
+        "parse",
+        "validate",
+        "query",
+        "reports",
+        "web-ui"
+      ],
+      "conformance": {
+        "spec_version": "reference",
+        "notes": "Reference implementation for hledger format"
+      }
+    },
+    {
+      "name": "fava",
+      "format": ["beancount"],
+      "language": "Python",
+      "repository": "https://github.com/beancount/fava",
+      "website": "https://beancount.github.io/fava/",
+      "license": "MIT",
+      "status": "stable",
+      "type": "tool",
+      "features": [
+        "web-ui",
+        "reports",
+        "visualization"
+      ],
+      "conformance": {
+        "notes": "Web interface, uses beancount library for parsing"
+      }
+    },
+    {
+      "name": "beancount-language-server",
+      "format": ["beancount"],
+      "language": "Rust",
+      "repository": "https://github.com/polarmutex/beancount-language-server",
+      "license": "MIT",
+      "status": "maintained",
+      "type": "tool",
+      "features": [
+        "parse",
+        "lsp",
+        "diagnostics",
+        "completion"
+      ],
+      "conformance": {
+        "notes": "LSP server for editor integration"
+      }
+    },
+    {
+      "name": "tree-sitter-beancount",
+      "format": ["beancount"],
+      "language": "JavaScript",
+      "repository": "https://github.com/polarmutex/tree-sitter-beancount",
+      "license": "MIT",
+      "status": "maintained",
+      "type": "library",
+      "features": [
+        "parse",
+        "syntax-highlighting"
+      ],
+      "conformance": {
+        "notes": "Tree-sitter grammar for syntax highlighting"
+      }
+    }
+  ],
+  "status_definitions": {
+    "development": "In active development, not ready for production",
+    "beta": "Feature complete, testing in progress",
+    "stable": "Production ready, actively maintained",
+    "maintained": "Stable, receiving bug fixes",
+    "unmaintained": "No longer actively maintained"
+  },
+  "type_definitions": {
+    "reference": "Reference implementation that defines the format",
+    "library": "Library for use in other applications",
+    "tool": "Standalone tool or application",
+    "plugin": "Plugin for another tool"
+  }
+}
