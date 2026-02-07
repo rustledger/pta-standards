@@ -21,6 +21,11 @@ Thumbs.db
 *.pdf
 railroad/
 generated/
+conformance/benchmarks/files/
+
+# Virtual environments
+.venv*/
+venv/
 
 # Reference repos (cloned, not tracked)
 references/
