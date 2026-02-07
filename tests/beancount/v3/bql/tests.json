@@ -529,6 +529,510 @@
         "row_count": 0
       },
       "tags": ["bql", "empty"]
+    },
+    {
+      "id": "bql-having-clause",
+      "description": "HAVING filters aggregated results",
+      "spec_ref": "bql/having.md",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, count(*) AS cnt FROM postings GROUP BY account HAVING count(*) > 1"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "having", "aggregation"]
+    },
+    {
+      "id": "bql-flatten",
+      "description": "FLATTEN expands inventory positions",
+      "spec_ref": "bql/flatten.md",
+      "skip": true,
+      "skip_reason": "FLATTEN syntax not supported in beanquery",
+      "input": {
+        "file": "fixtures/with-costs.beancount",
+        "query": "SELECT account, units(sum(position)) FROM postings GROUP BY account FLATTEN"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "flatten", "unimplemented"]
+    },
+    {
+      "id": "bql-multiple-group-by",
+      "description": "GROUP BY multiple columns",
+      "spec_ref": "bql/groupby.md",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT year(date), month(date), sum(position) FROM postings GROUP BY year(date), month(date)"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "groupby"]
+    },
+    {
+      "id": "bql-order-by-multiple",
+      "description": "ORDER BY multiple columns",
+      "spec_ref": "bql/order.md",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT date, account, position FROM postings ORDER BY date DESC, account ASC"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "order"]
+    },
+    {
+      "id": "bql-like-operator",
+      "description": "LIKE operator for pattern matching",
+      "spec_ref": "bql/where.md#like",
+      "skip": true,
+      "skip_reason": "LIKE operator not supported in beanquery - use ~ regex instead",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM postings WHERE account LIKE 'Assets:%'"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "where", "like", "unimplemented"]
+    },
+    {
+      "id": "bql-between-operator",
+      "description": "BETWEEN operator for range filtering",
+      "spec_ref": "bql/where.md#between",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM postings WHERE date BETWEEN 2024-01-01 AND 2024-12-31"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "where", "between"]
+    },
+    {
+      "id": "bql-null-check",
+      "description": "IS NULL and IS NOT NULL checks",
+      "spec_ref": "bql/where.md#null",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM entries WHERE payee IS NOT NULL"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "where", "null"]
+    },
+    {
+      "id": "bql-units-function",
+      "description": "UNITS function extracts amount units",
+      "spec_ref": "bql/functions.md#units",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, units(position) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "units"]
+    },
+    {
+      "id": "bql-number-function",
+      "description": "NUMBER function extracts numeric value",
+      "spec_ref": "bql/functions.md#number",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, number(units(position)) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "number"]
+    },
+    {
+      "id": "bql-currency-function",
+      "description": "CURRENCY function extracts currency",
+      "spec_ref": "bql/functions.md#currency",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT DISTINCT currency(units(position)) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "currency"]
+    },
+    {
+      "id": "bql-length-function",
+      "description": "LENGTH function returns string length",
+      "spec_ref": "bql/functions.md#length",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, length(account) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "string"]
+    },
+    {
+      "id": "bql-coalesce-function",
+      "description": "COALESCE returns first non-null value",
+      "spec_ref": "bql/functions.md#coalesce",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT coalesce(payee, narration, 'N/A') FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "coalesce"]
+    },
+    {
+      "id": "bql-date-diff",
+      "description": "Date arithmetic with date_diff",
+      "spec_ref": "bql/functions.md#date-diff",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT date, date_diff(date, 2024-01-01) FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "date"]
+    },
+    {
+      "id": "bql-today-function",
+      "description": "TODAY function returns current date",
+      "spec_ref": "bql/functions.md#today",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM postings WHERE date <= today()"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "date"]
+    },
+    {
+      "id": "bql-quarter-function",
+      "description": "QUARTER function extracts quarter from date",
+      "spec_ref": "bql/functions.md#quarter",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT quarter(date), sum(position) FROM postings GROUP BY quarter(date)"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "date"]
+    },
+    {
+      "id": "bql-weekday-function",
+      "description": "WEEKDAY function returns day of week",
+      "spec_ref": "bql/functions.md#weekday",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT weekday(date), date FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "date"]
+    },
+    {
+      "id": "bql-open-date",
+      "description": "OPEN_DATE returns account open date",
+      "spec_ref": "bql/functions.md#open-date",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, open_date(account) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "account"]
+    },
+    {
+      "id": "bql-close-date",
+      "description": "CLOSE_DATE returns account close date",
+      "spec_ref": "bql/functions.md#close-date",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, close_date(account) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "account"]
+    },
+    {
+      "id": "bql-open-meta",
+      "description": "OPEN_META accesses account metadata",
+      "spec_ref": "bql/functions.md#open-meta",
+      "input": {
+        "file": "fixtures/with-metadata.beancount",
+        "query": "SELECT account, open_meta(account, 'institution') FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "account", "metadata"]
+    },
+    {
+      "id": "bql-subaccount",
+      "description": "SUBACCOUNT extracts account component",
+      "spec_ref": "bql/functions.md#subaccount",
+      "skip": true,
+      "skip_reason": "subaccount function not available in beanquery",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT subaccount(account, 0), subaccount(account, 1) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "account", "unimplemented"]
+    },
+    {
+      "id": "bql-grep-narration",
+      "description": "GREP function searches narration text",
+      "spec_ref": "bql/functions.md#grep",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM entries WHERE grep('Salary', narration)"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "string"]
+    },
+    {
+      "id": "bql-case-expression",
+      "description": "CASE expression for conditional logic",
+      "spec_ref": "bql/case.md",
+      "skip": true,
+      "skip_reason": "CASE expression not supported in beanquery",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, CASE WHEN number > 0 THEN 'debit' ELSE 'credit' END FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "case", "unimplemented"]
+    },
+    {
+      "id": "bql-arithmetic-expression",
+      "description": "Arithmetic in SELECT",
+      "spec_ref": "bql/expressions.md",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account, number * 2 AS doubled FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "arithmetic"]
+    },
+    {
+      "id": "bql-string-concat",
+      "description": "String concatenation",
+      "spec_ref": "bql/expressions.md#concat",
+      "skip": true,
+      "skip_reason": "String concatenation (||) not supported in beanquery",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT account || ' - ' || currency AS label FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "string", "concat", "unimplemented"]
+    },
+    {
+      "id": "bql-type-column",
+      "description": "TYPE column shows directive type",
+      "spec_ref": "bql/columns.md#type",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT type, count(*) FROM entries GROUP BY type"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "type"]
+    },
+    {
+      "id": "bql-filename-column",
+      "description": "FILENAME column shows source file",
+      "spec_ref": "bql/columns.md#filename",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT DISTINCT filename FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "filename"]
+    },
+    {
+      "id": "bql-lineno-column",
+      "description": "LINENO column shows source line number",
+      "spec_ref": "bql/columns.md#lineno",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT lineno, narration FROM entries ORDER BY lineno"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "lineno"]
+    },
+    {
+      "id": "bql-flag-column",
+      "description": "FLAG column shows transaction flag",
+      "spec_ref": "bql/columns.md#flag",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT flag, narration FROM entries WHERE type = 'Transaction'"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "flag"]
+    },
+    {
+      "id": "bql-tags-column",
+      "description": "TAGS column shows transaction tags",
+      "spec_ref": "bql/columns.md#tags",
+      "input": {
+        "file": "fixtures/with-tags.beancount",
+        "query": "SELECT date, tags FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "tags"]
+    },
+    {
+      "id": "bql-links-column",
+      "description": "LINKS column shows transaction links",
+      "spec_ref": "bql/columns.md#links",
+      "input": {
+        "file": "fixtures/with-links.beancount",
+        "query": "SELECT date, links FROM entries"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "links"]
+    },
+    {
+      "id": "bql-balance-column",
+      "description": "BALANCE column in postings",
+      "spec_ref": "bql/columns.md#balance",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT date, account, position, balance FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "column", "balance"]
+    },
+    {
+      "id": "bql-weight-function",
+      "description": "WEIGHT function returns position weight",
+      "spec_ref": "bql/functions.md#weight",
+      "skip": true,
+      "skip_reason": "weight function not available in beanquery",
+      "input": {
+        "file": "fixtures/with-costs.beancount",
+        "query": "SELECT account, weight(position) FROM postings"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "weight", "unimplemented"]
+    },
+    {
+      "id": "bql-getprice-function",
+      "description": "GETPRICE retrieves price at date",
+      "spec_ref": "bql/functions.md#getprice",
+      "input": {
+        "file": "fixtures/multi-currency.beancount",
+        "query": "SELECT getprice('EUR', 'USD', 2024-01-15)"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "function", "price"]
+    },
+    {
+      "id": "bql-filter-by-flag",
+      "description": "Filter transactions by flag",
+      "spec_ref": "bql/where.md#flag",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM entries WHERE flag = '*'"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "where", "flag"]
+    },
+    {
+      "id": "bql-filter-by-type",
+      "description": "Filter entries by type",
+      "spec_ref": "bql/where.md#type",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT * FROM entries WHERE type IN ('Transaction', 'Balance', 'Open')"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "where", "type"]
+    },
+    {
+      "id": "bql-complex-query",
+      "description": "Complex query with multiple clauses",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT year(date) AS yr, root(account, 1) AS category, sum(position) AS total FROM postings WHERE account ~ 'Expenses:' AND date >= 2024-01-01 GROUP BY yr, category ORDER BY yr DESC, total DESC LIMIT 10"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "complex"]
+    },
+    {
+      "id": "bql-unknown-function",
+      "description": "Unknown function produces error",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT nonexistent_function(account) FROM postings"
+      },
+      "expected": {
+        "query": "error",
+        "error_contains": ["no function matches"]
+      },
+      "tags": ["bql", "error"]
+    },
+    {
+      "id": "bql-division-by-zero",
+      "description": "Division by zero handling",
+      "input": {
+        "file": "fixtures/simple-ledger.beancount",
+        "query": "SELECT number / 0 FROM postings WHERE number = 0"
+      },
+      "expected": {
+        "query": "success"
+      },
+      "tags": ["bql", "arithmetic", "edge-case"]
     }
   ]
 }

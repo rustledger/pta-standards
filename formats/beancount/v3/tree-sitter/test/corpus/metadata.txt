@@ -1,0 +1,216 @@
+================================================================================
+Directive with string metadata
+================================================================================
+
+2024-01-01 open Assets:Checking
+  institution: "Bank of America"
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (string)))))
+
+================================================================================
+Directive with multiple metadata
+================================================================================
+
+2024-01-01 open Assets:Checking
+  institution: "Bank of America"
+  account-number: "1234567890"
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (string)))
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (string)))))
+
+================================================================================
+Metadata with date value
+================================================================================
+
+2024-01-01 commodity AAPL
+  expiration: 2025-12-31
+
+--------------------------------------------------------------------------------
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (date)))))
+
+================================================================================
+Metadata with amount value
+================================================================================
+
+2024-01-01 commodity USD
+  precision: 0.01 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (amount
+          (number)
+          (currency))))))
+
+================================================================================
+Metadata with number value
+================================================================================
+
+2024-01-01 commodity AAPL
+  shares-outstanding: 15000000
+
+--------------------------------------------------------------------------------
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (number)))))
+
+================================================================================
+Metadata with boolean value
+================================================================================
+
+2024-01-01 open Assets:Checking
+  active: TRUE
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (boolean)))))
+
+================================================================================
+Metadata with tag value
+================================================================================
+
+2024-01-01 open Assets:Checking
+  category: #primary
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (tag)))))
+
+================================================================================
+Metadata with account value
+================================================================================
+
+2024-01-01 open Assets:Checking
+  linked-account: Assets:Savings
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (account)))))
+
+================================================================================
+Transaction with transaction-level metadata
+================================================================================
+
+2024-01-15 * "With metadata"
+  order-id: "12345"
+  Assets:Checking  -100 USD
+  Expenses:Food
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (string)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Posting with posting-level metadata
+================================================================================
+
+2024-01-15 * "Posting metadata"
+  Assets:Checking  100 USD
+    note: "received"
+  Income:Salary   -100 USD
+    source: "payroll"
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (posting_metadata
+        (metadata_key)
+        (metadata_value
+          (string))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (posting_metadata
+        (metadata_key)
+        (metadata_value
+          (string))))))

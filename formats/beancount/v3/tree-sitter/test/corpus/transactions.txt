@@ -1,0 +1,478 @@
+================================================================================
+Transaction with * flag
+================================================================================
+
+2024-01-15 * "Simple transaction"
+  Assets:Checking  100 USD
+  Income:Salary   -100 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with ! flag
+================================================================================
+
+2024-01-15 ! "Pending transaction"
+  Assets:Checking  100 USD
+  Income:Salary
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with txn keyword
+================================================================================
+
+2024-01-15 txn "Using txn"
+  Assets:Checking  100 USD
+  Income:Salary
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with payee and narration
+================================================================================
+
+2024-01-15 * "Payee Name" "Description here"
+  Assets:Checking  -50 USD
+  Expenses:Food
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string)
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with tags
+================================================================================
+
+2024-01-15 * "Tagged" #travel #business
+  Assets:Checking  -50 USD
+  Expenses:Travel
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (tags_links
+      (tag)
+      (tag))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with links
+================================================================================
+
+2024-01-15 * "Linked" ^invoice-123 ^ref-456
+  Assets:Checking  -50 USD
+  Expenses:Travel
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (tags_links
+      (link)
+      (link))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with mixed tags and links
+================================================================================
+
+2024-01-15 * "Mixed" #travel ^invoice-123
+  Assets:Checking  -50 USD
+  Expenses:Travel
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (tags_links
+      (tag)
+      (link))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
+
+================================================================================
+Transaction with posting flag
+================================================================================
+
+2024-01-15 * "With posting flags"
+  * Assets:Checking  100 USD
+  ! Income:Salary   -100 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (posting_flag)
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (posting_flag)
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with per-unit cost
+================================================================================
+
+2024-01-15 * "Buy stock"
+  Assets:Stock  10 AAPL {150 USD}
+  Assets:Cash  -1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency))))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with total cost
+================================================================================
+
+2024-01-15 * "Buy stock total"
+  Assets:Stock  10 AAPL {{1500 USD}}
+  Assets:Cash  -1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency))))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with cost and date
+================================================================================
+
+2024-01-15 * "Cost with date"
+  Assets:Stock  10 AAPL {150 USD, 2024-01-15}
+  Assets:Cash  -1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency)))
+          (cost_comp
+            (date)))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with cost and label
+================================================================================
+
+2024-01-15 * "Cost with label"
+  Assets:Stock  10 AAPL {150 USD, "lot1"}
+  Assets:Cash  -1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency)))
+          (cost_comp
+            (string)))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with price annotation
+================================================================================
+
+2024-01-15 * "Currency conversion"
+  Assets:EUR  100 EUR @ 1.10 USD
+  Assets:USD  -110 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (price_annotation
+        (amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with total price annotation
+================================================================================
+
+2024-01-15 * "Total price"
+  Assets:EUR  100 EUR @@ 110 USD
+  Assets:USD  -110 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (price_annotation
+        (amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with cost and price
+================================================================================
+
+2024-01-15 * "Sell stock"
+  Assets:Stock  -10 AAPL {150 USD} @ 180 USD
+  Assets:Cash   1800 USD
+  Income:Gains  -300 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency)))))
+      (price_annotation
+        (amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction with posting comment
+================================================================================
+
+2024-01-15 * "With comments"
+  Assets:Checking  100 USD  ; inline comment
+  Income:Salary   -100 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (comment))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))

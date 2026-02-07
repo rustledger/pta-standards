@@ -1,0 +1,368 @@
+================================================================================
+Empty cost spec
+================================================================================
+
+2024-01-15 * "Empty cost"
+  Assets:Stock  10 AAPL {}
+  Assets:Cash  -1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Cost with wildcard (lot matching)
+================================================================================
+
+2024-01-15 * "Sell any lot"
+  Assets:Stock  -10 AAPL {*}
+  Assets:Cash   1500 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Transaction without narration
+================================================================================
+
+2024-01-15 *
+  Assets:A  100 USD
+  Assets:B -100 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))))
+
+================================================================================
+Deep account hierarchy
+================================================================================
+
+2024-01-01 open Assets:Bank:Checking:Personal:Primary
+
+--------------------------------------------------------------------------------
+
+(file
+  (open
+    (date)
+    (account)))
+
+================================================================================
+Very long currency name
+================================================================================
+
+2024-01-01 commodity VANGUARD-SP500-INDEX
+
+--------------------------------------------------------------------------------
+
+(file
+  (commodity
+    (date)
+    (currency)))
+
+================================================================================
+Posting with all features
+================================================================================
+
+2024-01-15 * "Complete posting"
+  Assets:Stock  10 AAPL {150 USD, 2024-01-15, "lot1"} @ 160 USD  ; with gain
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp_list
+          (cost_comp
+            (amount
+              (number)
+              (currency)))
+          (cost_comp
+            (date))
+          (cost_comp
+            (string))))
+      (price_annotation
+        (amount
+          (number)
+          (currency)))
+      (comment))))
+
+================================================================================
+Multiple postings elided
+================================================================================
+
+2024-01-15 * "Multiple payees"
+  Assets:Cash  -100 USD
+  Expenses:Food:Restaurant
+  Expenses:Food:Tip
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account))
+    (posting
+      (account))))
+
+================================================================================
+Custom directive with boolean
+================================================================================
+
+2024-01-15 custom "autopay" Assets:Checking TRUE
+
+--------------------------------------------------------------------------------
+
+(file
+  (custom
+    (date)
+    type: (string)
+    (custom_value
+      (account))
+    (custom_value
+      (boolean))))
+
+================================================================================
+Custom directive with date
+================================================================================
+
+2024-01-15 custom "deadline" 2024-12-31
+
+--------------------------------------------------------------------------------
+
+(file
+  (custom
+    (date)
+    type: (string)
+    (custom_value
+      (date))))
+
+================================================================================
+Complex transaction with metadata
+================================================================================
+
+2024-01-15 * "Payee" "Complex" #tag ^link
+  order-id: "12345"
+  Assets:Checking  -100 USD
+    memo: "payment"
+  Expenses:Food  50 USD
+  Expenses:Tip   50 USD
+    percent: 20
+
+--------------------------------------------------------------------------------
+
+(file
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string)
+      (string))
+    (tags_links
+      (tag)
+      (link))
+    (metadata
+      (metadata_key)
+      (metadata_value
+        (string)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (posting_metadata
+        (metadata_key)
+        (metadata_value
+          (string))))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency))
+      (posting_metadata
+        (metadata_key)
+        (metadata_value
+          (number))))))
+
+================================================================================
+Multiple option directives
+================================================================================
+
+option "title" "My Finances"
+option "operating_currency" "USD"
+option "operating_currency" "EUR"
+
+--------------------------------------------------------------------------------
+
+(file
+  (option
+    name: (string)
+    value: (string))
+  (option
+    name: (string)
+    value: (string))
+  (option
+    name: (string)
+    value: (string)))
+
+================================================================================
+Tag and meta stack sequence
+================================================================================
+
+pushtag #project
+pushmeta status: "active"
+2024-01-15 * "Tagged and meta"
+  Assets:A -100 USD
+  Expenses:B
+popmeta status:
+poptag #project
+
+--------------------------------------------------------------------------------
+
+(file
+  (pushtag
+    (tag))
+  (pushmeta
+    (metadata_key)
+    (metadata_value
+      (string)))
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)))
+  (popmeta
+    (metadata_key))
+  (poptag
+    (tag)))
+
+================================================================================
+Full ledger structure
+================================================================================
+
+option "title" "Test Ledger"
+plugin "beancount.plugins.auto_accounts"
+
+2024-01-01 open Assets:Checking USD
+2024-01-01 open Equity:Opening USD
+
+2024-01-01 * "Opening"
+  Assets:Checking  1000 USD
+  Equity:Opening
+
+2024-01-31 balance Assets:Checking 1000 USD
+
+--------------------------------------------------------------------------------
+
+(file
+  (option
+    name: (string)
+    value: (string))
+  (plugin
+    module: (string))
+  (open
+    (date)
+    (account)
+    (currency_list
+      (currency)))
+  (open
+    (date)
+    (account)
+    (currency_list
+      (currency)))
+  (transaction
+    (date)
+    (txn_flag)
+    (txn_strings
+      (string))
+    (posting
+      (account)
+      (amount
+        (number)
+        (currency)))
+    (posting
+      (account)))
+  (balance
+    (date)
+    (account)
+    (amount_with_tolerance
+      (amount
+        (number)
+        (currency)))))
