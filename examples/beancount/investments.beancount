@@ -1,0 +1,130 @@
+; Investment Portfolio Example - Beancount
+; Demonstrates stock purchases, sales, dividends, and cost basis tracking
+
+option "title" "Investment Portfolio"
+option "operating_currency" "USD"
+
+; ============================================================
+; Commodity Declarations
+; ============================================================
+
+2020-01-01 commodity USD
+2020-01-01 commodity AAPL
+  name: "Apple Inc."
+2020-01-01 commodity GOOGL
+  name: "Alphabet Inc."
+2020-01-01 commodity VTI
+  name: "Vanguard Total Stock Market ETF"
+
+; ============================================================
+; Account Declarations
+; ============================================================
+
+2024-01-01 open Assets:Brokerage:Cash           USD
+2024-01-01 open Assets:Brokerage:AAPL           AAPL
+2024-01-01 open Assets:Brokerage:GOOGL          GOOGL
+2024-01-01 open Assets:Brokerage:VTI            VTI
+2024-01-01 open Income:Dividends                USD
+2024-01-01 open Income:Capital-Gains:Short-Term USD
+2024-01-01 open Income:Capital-Gains:Long-Term  USD
+2024-01-01 open Expenses:Commissions            USD
+2024-01-01 open Equity:Opening-Balances
+
+; ============================================================
+; Opening Balances
+; ============================================================
+
+2024-01-01 * "Opening Balances"
+  Assets:Brokerage:Cash       50000.00 USD
+  Equity:Opening-Balances
+
+; ============================================================
+; Stock Purchases
+; ============================================================
+
+2024-01-10 * "Buy AAPL"
+  Assets:Brokerage:AAPL          50 AAPL {185.50 USD, 2024-01-10}
+  Assets:Brokerage:Cash      -9275.00 USD
+  Expenses:Commissions            0.00 USD
+
+2024-01-15 * "Buy VTI"
+  Assets:Brokerage:VTI          100 VTI {245.00 USD, 2024-01-15}
+  Assets:Brokerage:Cash     -24500.00 USD
+
+2024-01-20 * "Buy GOOGL"
+  Assets:Brokerage:GOOGL         30 GOOGL {142.00 USD, 2024-01-20}
+  Assets:Brokerage:Cash      -4260.00 USD
+
+2024-02-05 * "Buy more AAPL at higher price"
+  Assets:Brokerage:AAPL          25 AAPL {192.00 USD, 2024-02-05}
+  Assets:Brokerage:Cash      -4800.00 USD
+
+; ============================================================
+; Dividends
+; ============================================================
+
+2024-02-15 * "AAPL Dividend"
+  Assets:Brokerage:Cash          56.25 USD
+  Income:Dividends              -56.25 USD
+
+2024-03-01 * "VTI Dividend"
+  Assets:Brokerage:Cash          75.00 USD
+  Income:Dividends              -75.00 USD
+
+; ============================================================
+; Stock Sales with Cost Basis
+; ============================================================
+
+; Sell 20 shares of AAPL using FIFO
+; Cost basis: 20 * 185.50 = 3710 USD
+; Sale proceeds: 20 * 195.00 = 3900 USD
+; Gain: 190 USD
+
+2024-03-15 * "Sell AAPL" "Partial sale - FIFO"
+  Assets:Brokerage:AAPL         -20 AAPL {185.50 USD, 2024-01-10} @ 195.00 USD
+  Assets:Brokerage:Cash        3900.00 USD
+  Income:Capital-Gains:Short-Term -190.00 USD
+
+; ============================================================
+; Price Directives for Valuation
+; ============================================================
+
+2024-03-31 price AAPL  198.00 USD
+2024-03-31 price GOOGL 155.00 USD
+2024-03-31 price VTI   252.00 USD
+
+; ============================================================
+; Balance Assertions
+; ============================================================
+
+; Cash: 50000 - 9275 - 24500 - 4260 - 4800 + 56.25 + 75 + 3900 = 11196.25
+2024-03-31 balance Assets:Brokerage:Cash   11196.25 USD
+
+; AAPL: 50 - 20 + 25 = 55 shares
+2024-03-31 balance Assets:Brokerage:AAPL         55 AAPL
+
+; VTI: 100 shares
+2024-03-31 balance Assets:Brokerage:VTI         100 VTI
+
+; GOOGL: 30 shares
+2024-03-31 balance Assets:Brokerage:GOOGL        30 GOOGL
+
+; ============================================================
+; Portfolio Summary
+; ============================================================
+
+; Holdings at market value (2024-03-31):
+;   Cash:   11,196.25 USD
+;   AAPL:   55 * 198.00 = 10,890.00 USD
+;   VTI:   100 * 252.00 = 25,200.00 USD
+;   GOOGL:  30 * 155.00 =  4,650.00 USD
+;   Total: 51,936.25 USD
+;
+; Unrealized gains:
+;   AAPL:  (30 * (198-185.50)) + (25 * (198-192)) = 375 + 150 = 525 USD
+;   VTI:   100 * (252-245) = 700 USD
+;   GOOGL: 30 * (155-142) = 390 USD
+;   Total: 1,615 USD unrealized
+;
+; Realized gains: 190 USD (AAPL sale)
+; Dividends received: 56.25 + 75 = 131.25 USD

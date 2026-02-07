@@ -1,0 +1,103 @@
+; Investment Portfolio Example - Ledger
+; Demonstrates stock purchases, sales, and dividends
+
+; ============================================================
+; Commodity Declarations
+; ============================================================
+
+commodity $
+    format $1,000.00
+
+commodity AAPL
+    format 1000 AAPL
+
+commodity GOOGL
+    format 1000 GOOGL
+
+commodity VTI
+    format 1000 VTI
+
+; ============================================================
+; Account Declarations
+; ============================================================
+
+account Assets:Brokerage:Cash
+account Assets:Brokerage:AAPL
+account Assets:Brokerage:GOOGL
+account Assets:Brokerage:VTI
+account Income:Dividends
+account Income:Capital-Gains
+account Expenses:Commissions
+account Equity:Opening-Balances
+
+; ============================================================
+; Opening Balances
+; ============================================================
+
+2024/01/01 * Opening Balances
+    Assets:Brokerage:Cash           $50,000.00
+    Equity:Opening-Balances
+
+; ============================================================
+; Stock Purchases
+; ============================================================
+
+2024/01/10 * Buy AAPL
+    Assets:Brokerage:AAPL             50 AAPL {$185.50}
+    Assets:Brokerage:Cash           $-9,275.00
+
+2024/01/15 * Buy VTI
+    Assets:Brokerage:VTI             100 VTI {$245.00}
+    Assets:Brokerage:Cash          $-24,500.00
+
+2024/01/20 * Buy GOOGL
+    Assets:Brokerage:GOOGL            30 GOOGL {$142.00}
+    Assets:Brokerage:Cash           $-4,260.00
+
+2024/02/05 * Buy more AAPL
+    Assets:Brokerage:AAPL             25 AAPL {$192.00}
+    Assets:Brokerage:Cash           $-4,800.00
+
+; ============================================================
+; Dividends
+; ============================================================
+
+2024/02/15 * AAPL Dividend
+    Assets:Brokerage:Cash              $56.25
+    Income:Dividends                  $-56.25
+
+2024/03/01 * VTI Dividend
+    Assets:Brokerage:Cash              $75.00
+    Income:Dividends                  $-75.00
+
+; ============================================================
+; Stock Sales
+; ============================================================
+
+; Sell 20 shares of AAPL from first lot
+; Cost basis: 20 * $185.50 = $3,710
+; Sale proceeds: 20 * $195.00 = $3,900
+; Gain: $190
+
+2024/03/15 * Sell AAPL
+    Assets:Brokerage:AAPL            -20 AAPL {$185.50} @ $195.00
+    Assets:Brokerage:Cash           $3,900.00
+    Income:Capital-Gains             $-190.00
+
+; ============================================================
+; Price History
+; ============================================================
+
+P 2024/03/31 AAPL $198.00
+P 2024/03/31 GOOGL $155.00
+P 2024/03/31 VTI $252.00
+
+; ============================================================
+; Balance Assertions
+; ============================================================
+
+2024/03/31 * Balance check
+    Assets:Brokerage:Cash                $0 = $11,196.25
+    Assets:Brokerage:AAPL             0 AAPL = 55 AAPL
+    Assets:Brokerage:VTI               0 VTI = 100 VTI
+    Assets:Brokerage:GOOGL          0 GOOGL = 30 GOOGL

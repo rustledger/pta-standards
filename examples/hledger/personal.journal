@@ -1,0 +1,93 @@
+; Personal Finance Example - hledger
+; Demonstrates basic personal accounting with hledger
+
+; ============================================================
+; Account Declarations (optional in hledger)
+; ============================================================
+
+account Assets:Bank:Checking
+account Assets:Bank:Savings
+account Assets:Cash
+account Liabilities:CreditCard
+account Income:Salary
+account Income:Interest
+account Expenses:Food:Groceries
+account Expenses:Food:Restaurants
+account Expenses:Housing:Rent
+account Expenses:Utilities:Electric
+account Expenses:Utilities:Internet
+account Expenses:Transportation:Gas
+account Expenses:Entertainment
+account Equity:Opening-Balances
+
+; ============================================================
+; Opening Balances
+; ============================================================
+
+2024-01-01 * Opening Balances
+    Assets:Bank:Checking           $5,000.00
+    Assets:Bank:Savings           $10,000.00
+    Assets:Cash                      $200.00
+    Liabilities:CreditCard          $-500.00
+    Equity:Opening-Balances
+
+; ============================================================
+; January Transactions
+; ============================================================
+
+2024-01-05 * Whole Foods | Weekly groceries
+    Assets:Bank:Checking           $-125.50
+    Expenses:Food:Groceries         $125.50
+
+2024-01-10 * Shell | Gas fill-up
+    Assets:Bank:Checking            $-45.00
+    Expenses:Transportation:Gas      $45.00
+
+2024-01-15 * ACME Corp | Salary deposit
+    Assets:Bank:Checking          $3,500.00
+    Income:Salary
+
+2024-01-15 * Landlord | January rent
+    Assets:Bank:Checking         $-1,500.00
+    Expenses:Housing:Rent         $1,500.00
+
+2024-01-18 * Electric Company | January electric bill
+    Assets:Bank:Checking           $-120.00
+    Expenses:Utilities:Electric     $120.00
+
+2024-01-20 * Thai Restaurant | Dinner with friends
+    Liabilities:CreditCard          $-65.00
+    Expenses:Food:Restaurants        $65.00
+
+2024-01-22 * ISP | Internet service
+    Assets:Bank:Checking            $-79.99
+    Expenses:Utilities:Internet      $79.99
+
+2024-01-25 * Transfer to Savings
+    Assets:Bank:Checking         $-1,000.00
+    Assets:Bank:Savings           $1,000.00
+
+2024-01-28 * ATM Withdrawal
+    Assets:Bank:Checking           $-200.00
+    Assets:Cash                     $200.00
+
+2024-01-30 * Coffee Shop
+    Assets:Cash                      $-5.50
+    Expenses:Food:Restaurants         $5.50
+
+2024-01-31 * Credit Card Payment
+    Assets:Bank:Checking           $-565.00
+    Liabilities:CreditCard          $565.00
+
+2024-01-31 * Bank | Interest earned
+    Assets:Bank:Savings               $2.50
+    Income:Interest
+
+; ============================================================
+; Balance Assertions
+; ============================================================
+
+2024-01-31 * Balance assertion
+    Assets:Bank:Checking               $0 = $4,859.01
+    Assets:Bank:Savings                $0 = $11,002.50
+    Liabilities:CreditCard             $0 = $0
