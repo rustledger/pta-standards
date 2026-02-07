@@ -34,11 +34,14 @@ class BQLExecutor(BaseExecutor):
                 )
 
             # Determine the file path for beanquery connection
+            # Note: beanquery requires absolute paths
             if test.input.file is not None:
                 file_path = test.input.get_file_path(test.base_path)
                 if file_path is None:
                     return TestResult.failure(test, "Could not resolve input file")
-                dsn = f"beancount://{file_path}"
+                # Convert to absolute path for beanquery
+                abs_path = Path(file_path).resolve()
+                dsn = f"beancount://{abs_path}"
             elif test.input.inline is not None:
                 content = test.input.inline
                 with tempfile.NamedTemporaryFile(

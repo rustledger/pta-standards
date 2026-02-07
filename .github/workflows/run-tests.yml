@@ -60,14 +60,19 @@ jobs:
         id: tests
         run: |
           cd tests/harness/runners/python
-          python runner.py --manifest ../../beancount/v3/manifest.json --format json > results.json
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json 2>runner_errors.txt | tee results.json
+          if [ -s runner_errors.txt ]; then
+            echo "Runner stderr:"
+            cat runner_errors.txt
+          fi
         continue-on-error: true
 
       - name: Parse test results
         id: parse
         run: |
           cd tests/harness/runners/python
-          python -c "
+          if [ -s results.json ]; then
+            python -c "
           import json
           with open('results.json') as f:
               data = json.load(f)
@@ -77,6 +82,13 @@ jobs:
           print(f\"failed={s['failed']}\")
           print(f\"skipped={s['skipped']}\")
           " >> $GITHUB_OUTPUT
+          else
+            echo "results.json is empty or missing"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -116,7 +128,7 @@ jobs:
           ref: main
 
       - name: Set up Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -150,7 +162,11 @@ jobs:
           cd tests/harness/runners/python
           # Use rustledger binary instead of beancount
           export RLEDGER_BIN="${GITHUB_WORKSPACE}/rustledger/target/release/rledger"
-          python runner.py --manifest ../../beancount/v3/manifest.json --format json --impl rustledger > results.json || true
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json --impl rustledger 2>runner_errors.txt | tee results.json
+          if [ -s runner_errors.txt ]; then
+            echo "Runner stderr:"
+            cat runner_errors.txt
+          fi
         continue-on-error: true
 
       - name: Parse test results
