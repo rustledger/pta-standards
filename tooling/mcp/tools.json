@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "pta-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for Plain Text Accounting operations",
+  "tools": [
+    {
+      "name": "parse",
+      "description": "Parse a PTA journal file and return the AST",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Journal content to parse"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"],
+            "default": "beancount",
+            "description": "Journal format"
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable strict parsing mode"
+          }
+        }
+      }
+    },
+    {
+      "name": "validate",
+      "description": "Validate a PTA journal for correctness",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Journal content to validate"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"],
+            "default": "beancount"
+          },
+          "checkBalance": {
+            "type": "boolean",
+            "default": true,
+            "description": "Check transaction balance"
+          },
+          "checkAccounts": {
+            "type": "boolean",
+            "default": true,
+            "description": "Verify accounts are opened before use"
+          }
+        }
+      }
+    },
+    {
+      "name": "query",
+      "description": "Execute a BQL query against a journal",
+      "inputSchema": {
+        "type": "object",
+        "required": ["journal", "query"],
+        "properties": {
+          "journal": {
+            "type": "string",
+            "description": "Journal content"
+          },
+          "query": {
+            "type": "string",
+            "description": "BQL query to execute"
+          },
+          "outputFormat": {
+            "type": "string",
+            "enum": ["text", "csv", "json"],
+            "default": "text"
+          }
+        }
+      }
+    },
+    {
+      "name": "balance",
+      "description": "Get account balances from a journal",
+      "inputSchema": {
+        "type": "object",
+        "required": ["journal"],
+        "properties": {
+          "journal": {
+            "type": "string",
+            "description": "Journal content"
+          },
+          "accountPattern": {
+            "type": "string",
+            "description": "Regex pattern to filter accounts"
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Calculate balances as of this date"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Convert all amounts to this currency"
+          }
+        }
+      }
+    },
+    {
+      "name": "format",
+      "description": "Format a PTA journal to canonical style",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Journal content to format"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"],
+            "default": "beancount"
+          },
+          "indent": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8,
+            "default": 2
+          },
+          "alignAmounts": {
+            "type": "boolean",
+            "default": true
+          },
+          "sortDirectives": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "convert",
+      "description": "Convert between PTA formats",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content", "from", "to"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Journal content to convert"
+          },
+          "from": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"],
+            "description": "Source format"
+          },
+          "to": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"],
+            "description": "Target format"
+          },
+          "preserveMetadata": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "name": "add_transaction",
+      "description": "Add a new transaction to a journal",
+      "inputSchema": {
+        "type": "object",
+        "required": ["journal", "transaction"],
+        "properties": {
+          "journal": {
+            "type": "string",
+            "description": "Existing journal content"
+          },
+          "transaction": {
+            "type": "object",
+            "required": ["date", "payee", "postings"],
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "payee": {
+                "type": "string"
+              },
+              "narration": {
+                "type": "string"
+              },
+              "postings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["account"],
+                  "properties": {
+                    "account": { "type": "string" },
+                    "amount": { "type": "number" },
+                    "currency": { "type": "string" }
+                  }
+                },
+                "minItems": 2
+              },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "insertPosition": {
+            "type": "string",
+            "enum": ["beginning", "end", "date-sorted"],
+            "default": "end"
+          }
+        }
+      }
+    },
+    {
+      "name": "lint",
+      "description": "Run linting rules on a journal",
+      "inputSchema": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Journal content to lint"
+          },
+          "rules": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Specific rules to enable (all if empty)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "info"],
+            "default": "warning",
+            "description": "Minimum severity to report"
+          }
+        }
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "accounts",
+      "description": "List of accounts in a journal",
+      "uriTemplate": "pta://accounts?journal={journal}",
+      "mimeType": "application/json"
+    },
+    {
+      "name": "commodities",
+      "description": "List of commodities in a journal",
+      "uriTemplate": "pta://commodities?journal={journal}",
+      "mimeType": "application/json"
+    },
+    {
+      "name": "errors",
+      "description": "Validation errors for a journal",
+      "uriTemplate": "pta://errors?journal={journal}",
+      "mimeType": "application/json"
+    }
+  ]
+}

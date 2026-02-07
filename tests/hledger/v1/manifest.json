@@ -1,0 +1,19 @@
+{
+  "$schema": "../../harness/manifest.schema.json",
+  "format": "hledger",
+  "version": "1",
+  "description": "Conformance test suite for hledger format",
+  "test_directories": [
+    "syntax/valid",
+    "syntax/invalid",
+    "validation",
+    "assertions",
+    "queries",
+    "forecasting"
+  ],
+  "metadata": {
+    "created": "2024-02-07",
+    "spec_version": "draft",
+    "reference_implementation": "hledger 1.32"
+  }
+}

@@ -1,0 +1,57 @@
+name: Run Alloy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.als'
+      - '.github/workflows/run-alloy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.als'
+      - '.github/workflows/run-alloy.yml'
+  workflow_dispatch:
+
+jobs:
+  alloy:
+    name: Alloy Model Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download Alloy
+        run: |
+          mkdir -p alloy
+          curl -L -o alloy/alloy.jar \
+            https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v6.1.0/org.alloytools.alloy.dist-6.1.0.jar
+
+      - name: Find Alloy models
+        id: find-models
+        run: |
+          echo "models=$(find . -name '*.als' -type f | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Run Alloy checks
+        run: |
+          for model in ${{ steps.find-models.outputs.models }}; do
+            echo "Checking: $model"
+            java -cp alloy/alloy.jar edu.mit.csail.sdg.alloy4whole.ExampleUsingTheAPI "$model" || {
+              echo "::error file=$model::Alloy model check failed"
+              exit 1
+            }
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Alloy Model Verification Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for model in $(find . -name '*.als' -type f); do
+            echo "- \`$model\`" >> $GITHUB_STEP_SUMMARY
+          done

@@ -1,0 +1,122 @@
+name: Conformance Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/**'
+      - '.github/workflows/conformance-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/**'
+  workflow_dispatch:
+
+jobs:
+  beancount-tests:
+    name: Beancount v3 Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install beancount beanquery
+
+      - name: Run conformance tests
+        run: |
+          cd tests/harness/runners/python
+          python runner.py \
+            --manifest ../../beancount/v3/manifest.json \
+            --format tap
+
+      - name: Run tests (JSON output)
+        run: |
+          cd tests/harness/runners/python
+          python runner.py \
+            --manifest ../../beancount/v3/manifest.json \
+            --format json > results.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: beancount-results
+          path: tests/harness/runners/python/results.json
+
+  validate-schemas:
+    name: Validate JSON Schemas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ajv-cli
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Validate test case schemas
+        run: |
+          # Validate all tests.json files against schema
+          for f in $(find tests -name "tests.json"); do
+            echo "Validating $f..."
+            ajv validate \
+              -s tests/harness/test-case.schema.json \
+              -d "$f" \
+              --spec=draft2020-12 \
+              -c ajv-formats || true
+          done
+
+      - name: Validate manifest schemas
+        run: |
+          # Validate all manifest.json files
+          for f in $(find tests -name "manifest.json"); do
+            echo "Validating $f..."
+            ajv validate \
+              -s tests/harness/manifest.schema.json \
+              -d "$f" \
+              --spec=draft2020-12 \
+              -c ajv-formats || true
+          done
+
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Lint markdown files
+        run: |
+          markdownlint '**/*.md' --ignore node_modules || true
+
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --include-fragments '**/*.md'
+          fail: false

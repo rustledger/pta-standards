@@ -1,0 +1,314 @@
+(* hledger EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This grammar defines the concrete syntax for hledger format.
+ * hledger is largely compatible with Ledger but has some differences.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *   -     exception
+ *)
+
+(* =========================================================================== *)
+(* TOP LEVEL                                                                   *)
+(* =========================================================================== *)
+
+file = { line, NEWLINE }, [ line ] ;
+
+line = transaction
+     | periodic_transaction
+     | auto_posting_rule
+     | directive
+     | comment_line
+     | empty_line ;
+
+empty_line = { WHITESPACE } ;
+
+comment_line = ( ";" | "#" | "*" ), { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* TRANSACTIONS                                                                *)
+(* =========================================================================== *)
+
+transaction = date, [ secondary_date ], [ status ], [ code ],
+              [ WHITESPACE, description ], [ trailing_comment ], NEWLINE,
+              { posting_line, NEWLINE }- ;
+
+secondary_date = "=", date ;
+
+status = WHITESPACE, ( "*" | "!" ) ;
+
+code = WHITESPACE, "(", { ANY - ( ")" | NEWLINE ) }, ")" ;
+
+description = { ANY - ( ";" | NEWLINE | "|" ) }- , [ "|", payee ] ;
+(* hledger uses | to separate payee from narration *)
+
+payee = { ANY - ( ";" | NEWLINE ) }- ;
+
+(* --------------------------------------------------------------------------- *)
+(* Postings                                                                    *)
+(* --------------------------------------------------------------------------- *)
+
+posting_line = WHITESPACE, { WHITESPACE }, posting, [ trailing_comment ]
+             | comment_line ;
+
+posting = [ posting_status ], account_name,
+          [ { WHITESPACE }-, amount, [ lot_price ], [ unit_price ] ],
+          [ balance_assertion ] ;
+
+posting_status = ( "*" | "!" ), WHITESPACE ;
+
+account_name = account | virtual_account ;
+
+account = account_component, { ":", account_component } ;
+
+account_component = { ANY - ( ":" | WHITESPACE | NEWLINE | ";" | "=" ) }- ;
+
+virtual_account = "(", account, ")"
+                | "[", account, "]" ;
+
+balance_assertion = { WHITESPACE }, assertion_type, { WHITESPACE }, amount ;
+
+assertion_type = "="      (* single commodity balance *)
+               | "=="     (* total balance *)
+               | "=*"     (* single commodity, subaccounts included *)
+               | "==*" ;  (* total balance, subaccounts included *)
+
+lot_price = { WHITESPACE }, "{", { WHITESPACE }, amount, { WHITESPACE }, "}"
+          | { WHITESPACE }, "{{", { WHITESPACE }, amount, { WHITESPACE }, "}}" ;
+
+unit_price = { WHITESPACE }, ( "@@" | "@" ), { WHITESPACE }, amount ;
+
+(* =========================================================================== *)
+(* PERIODIC TRANSACTIONS                                                       *)
+(* =========================================================================== *)
+
+periodic_transaction = "~", { WHITESPACE }, period_expression,
+                       [ trailing_comment ], NEWLINE,
+                       { posting_line, NEWLINE }- ;
+
+period_expression = { ANY - ( ";" | NEWLINE ) }- ;
+(* Examples: "monthly", "every 2 weeks", "monthly from 2024-01" *)
+
+(* =========================================================================== *)
+(* AUTO POSTING RULES                                                          *)
+(* =========================================================================== *)
+
+auto_posting_rule = "=", { WHITESPACE }, query,
+                    [ trailing_comment ], NEWLINE,
+                    { auto_posting_line, NEWLINE }- ;
+
+query = { ANY - ( ";" | NEWLINE ) }- ;
+(* Examples: "expenses:food", "amt:>100" *)
+
+auto_posting_line = WHITESPACE, { WHITESPACE }, auto_posting,
+                    [ trailing_comment ]
+                  | comment_line ;
+
+auto_posting = [ posting_status ], account_name,
+               [ { WHITESPACE }-, amount_or_multiplier ] ;
+
+amount_or_multiplier = amount
+                     | "*", number  (* multiply matched amount *)
+                     ;
+
+(* =========================================================================== *)
+(* DIRECTIVES                                                                  *)
+(* =========================================================================== *)
+
+directive = account_directive
+          | commodity_directive
+          | decimal_mark_directive
+          | payee_directive
+          | tag_directive
+          | alias_directive
+          | apply_directive
+          | end_directive
+          | include_directive
+          | price_directive
+          | year_directive
+          | comment_block ;
+
+(* --------------------------------------------------------------------------- *)
+(* Account Directive                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+account_directive = "account", WHITESPACE, { WHITESPACE }, account,
+                    [ trailing_comment ],
+                    { NEWLINE, account_subdirective } ;
+
+account_subdirective = WHITESPACE, { WHITESPACE },
+                       ( "alias", WHITESPACE, alias_name
+                       | "default"
+                       | "type", WHITESPACE, account_type
+                       | tag_name, ":", { WHITESPACE }, tag_value
+                       | ";", { ANY - NEWLINE } ),
+                       [ trailing_comment ] ;
+
+alias_name = { ANY - ( WHITESPACE | NEWLINE ) }- ;
+
+account_type = "Asset" | "Liability" | "Equity" | "Revenue" | "Expense"
+             | "A" | "L" | "E" | "R" | "X" ;
+
+(* --------------------------------------------------------------------------- *)
+(* Commodity Directive                                                         *)
+(* --------------------------------------------------------------------------- *)
+
+commodity_directive = "commodity", WHITESPACE, { WHITESPACE },
+                      ( commodity_symbol | amount ),
+                      [ trailing_comment ],
+                      { NEWLINE, commodity_subdirective } ;
+
+commodity_subdirective = WHITESPACE, { WHITESPACE },
+                         ( "format", WHITESPACE, format_spec
+                         | tag_name, ":", { WHITESPACE }, tag_value
+                         | ";", { ANY - NEWLINE } ),
+                         [ trailing_comment ] ;
+
+format_spec = amount ;
+
+(* --------------------------------------------------------------------------- *)
+(* Decimal Mark Directive                                                      *)
+(* --------------------------------------------------------------------------- *)
+
+decimal_mark_directive = "decimal-mark", WHITESPACE, { WHITESPACE },
+                         ( "." | "," ), [ trailing_comment ] ;
+
+(* --------------------------------------------------------------------------- *)
+(* Other Directives                                                            *)
+(* --------------------------------------------------------------------------- *)
+
+payee_directive = "payee", WHITESPACE, { WHITESPACE }, payee_pattern,
+                  [ trailing_comment ] ;
+
+payee_pattern = { ANY - ( ";" | NEWLINE ) }- ;
+
+tag_directive = "tag", WHITESPACE, { WHITESPACE }, tag_name,
+                [ trailing_comment ] ;
+
+tag_name = { ASCII_ALPHANUMERIC | "-" | "_" }- ;
+
+tag_value = { ANY - NEWLINE } ;
+
+alias_directive = "alias", WHITESPACE, { WHITESPACE }, alias_pattern, "=",
+                  { WHITESPACE }, account, [ trailing_comment ] ;
+
+alias_pattern = { ANY - ( "=" | NEWLINE ) }- ;
+
+apply_directive = "apply", WHITESPACE, "account", WHITESPACE, { WHITESPACE },
+                  account, [ trailing_comment ] ;
+
+end_directive = "end", [ WHITESPACE, ( "apply" | "comment" ) ],
+                [ trailing_comment ] ;
+
+include_directive = "include", WHITESPACE, { WHITESPACE }, file_glob,
+                    [ trailing_comment ] ;
+
+file_glob = { ANY - ( ";" | NEWLINE ) }- ;
+(* Supports glob patterns like *.journal *)
+
+price_directive = "P", WHITESPACE, { WHITESPACE }, date,
+                  WHITESPACE, { WHITESPACE }, commodity_symbol,
+                  WHITESPACE, { WHITESPACE }, amount,
+                  [ trailing_comment ] ;
+
+year_directive = ( "year" | "Y" ), WHITESPACE, { WHITESPACE }, year,
+                 [ trailing_comment ] ;
+
+comment_block = "comment", [ trailing_comment ], NEWLINE,
+                { { ANY - NEWLINE }, NEWLINE },
+                "end", [ WHITESPACE, "comment" ] ;
+
+(* =========================================================================== *)
+(* AMOUNTS                                                                     *)
+(* =========================================================================== *)
+
+amount = [ "-" ], [ commodity_symbol, { WHITESPACE } ],
+         quantity,
+         [ { WHITESPACE }, commodity_symbol ] ;
+
+quantity = integer_part, [ decimal_mark, fractional_part ]
+         | decimal_mark, fractional_part ;
+
+integer_part = digit, { digit | digit_group_mark } ;
+
+fractional_part = { digit }- ;
+
+digit_group_mark = "," | "." | " " | "'" ;
+(* hledger supports various digit grouping styles *)
+
+decimal_mark = "." | "," ;
+(* Determined by context or decimal-mark directive *)
+
+commodity_symbol = commodity_quoted | commodity_unquoted ;
+
+commodity_unquoted = { ASCII_ALPHA | "$" | "£" | "€" | "¥" | "₹" }- ;
+
+commodity_quoted = '"', { ANY - '"' }, '"' ;
+
+(* =========================================================================== *)
+(* DATES                                                                       *)
+(* =========================================================================== *)
+
+date = simple_date | smart_date ;
+
+simple_date = year, date_sep, month, date_sep, day
+            | year, date_sep, month
+            | month, date_sep, day ;
+
+smart_date = "today" | "yesterday" | "tomorrow"
+           | "last", WHITESPACE, day_of_week
+           | "this", WHITESPACE, day_of_week
+           | "next", WHITESPACE, day_of_week ;
+
+day_of_week = "monday" | "tuesday" | "wednesday" | "thursday"
+            | "friday" | "saturday" | "sunday"
+            | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun" ;
+
+date_sep = "-" | "/" | "." ;
+
+year = digit, digit, digit, digit ;
+
+month = digit, [ digit ] ;
+
+day = digit, [ digit ] ;
+
+(* =========================================================================== *)
+(* METADATA                                                                    *)
+(* =========================================================================== *)
+
+(* hledger tags can appear in comments *)
+tag_spec = tag_name, ":", [ tag_value ]
+         | tag_name ;
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+trailing_comment = { WHITESPACE }, ( ";" | "#" ), { ANY - NEWLINE } ;
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+number = [ "-" ], digit, { digit }, [ ".", { digit }- ] ;
+
+ASCII_ALPHA = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+            | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+            | "U" | "V" | "W" | "X" | "Y" | "Z"
+            | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+            | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+            | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+ASCII_ALPHANUMERIC = ASCII_ALPHA | digit ;

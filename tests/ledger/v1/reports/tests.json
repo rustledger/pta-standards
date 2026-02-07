@@ -1,0 +1,152 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "ledger-reports",
+  "description": "Ledger report output tests",
+  "tests": [
+    {
+      "id": "report-balance-simple",
+      "description": "Simple balance report",
+      "input": {"inline": "2024/01/15 Opening Balance\n    Assets:Checking  $1000.00\n    Equity:Opening"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Assets:Checking": {"USD": "1000.00"},
+          "Equity:Opening": {"USD": "-1000.00"}
+        }
+      },
+      "tags": ["report", "balance"]
+    },
+    {
+      "id": "report-balance-multi-account",
+      "description": "Balance report with multiple accounts",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $1000.00\n    Assets:Savings  $5000.00\n    Equity:Opening\n\n2024/01/20 Transfer\n    Assets:Savings  $500.00\n    Assets:Checking  $-500.00"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Assets:Checking": {"USD": "500.00"},
+          "Assets:Savings": {"USD": "5500.00"},
+          "Equity:Opening": {"USD": "-6000.00"}
+        }
+      },
+      "tags": ["report", "balance"]
+    },
+    {
+      "id": "report-balance-multi-commodity",
+      "description": "Balance report with multiple commodities",
+      "input": {"inline": "2024/01/15 Deposit\n    Assets:Checking  $1000.00\n    Assets:EUR  500.00 EUR\n    Equity:Opening"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Assets:Checking": {"USD": "1000.00"},
+          "Assets:EUR": {"EUR": "500.00"}
+        }
+      },
+      "tags": ["report", "balance", "commodity"]
+    },
+    {
+      "id": "report-register-simple",
+      "description": "Simple register report",
+      "input": {"inline": "2024/01/15 Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking\n\n2024/01/16 Gas Station\n    Expenses:Auto:Fuel  $40.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "register"]
+    },
+    {
+      "id": "report-register-running-total",
+      "description": "Register with running total",
+      "input": {"inline": "2024/01/01 Opening\n    Assets:Checking  $1000.00\n    Equity:Opening\n\n2024/01/15 Expense\n    Expenses:Food  $50.00\n    Assets:Checking\n\n2024/01/20 Expense\n    Expenses:Food  $30.00\n    Assets:Checking"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Assets:Checking": {"USD": "920.00"}
+        }
+      },
+      "tags": ["report", "register", "running"]
+    },
+    {
+      "id": "report-equity",
+      "description": "Equity report",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $1000.00\n    Liabilities:Credit  $-500.00\n    Equity:Opening"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Equity:Opening": {"USD": "-500.00"}
+        }
+      },
+      "tags": ["report", "equity"]
+    },
+    {
+      "id": "report-budget-vs-actual",
+      "description": "Budget vs actual report",
+      "input": {"inline": "~ Monthly\n    Expenses:Food  $500.00\n    Assets:Checking\n\n2024/01/05 Groceries\n    Expenses:Food  $120.00\n    Assets:Checking\n\n2024/01/12 Groceries\n    Expenses:Food  $85.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "budget"]
+    },
+    {
+      "id": "report-cleared",
+      "description": "Report only cleared transactions",
+      "input": {"inline": "2024/01/15 * Cleared\n    Expenses:Food  $50.00\n    Assets:Checking\n\n2024/01/16 ! Pending\n    Expenses:Food  $30.00\n    Assets:Checking\n\n2024/01/17 Uncleared\n    Expenses:Food  $20.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "cleared"]
+    },
+    {
+      "id": "report-depth",
+      "description": "Report with account depth limit",
+      "input": {"inline": "2024/01/15 Test\n    Expenses:Food:Groceries:Produce  $20.00\n    Expenses:Food:Groceries:Dairy  $15.00\n    Expenses:Food:Restaurant  $50.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "depth"]
+    },
+    {
+      "id": "report-period-monthly",
+      "description": "Report grouped by month",
+      "input": {"inline": "2024/01/15 January\n    Expenses:Food  $100.00\n    Assets:Checking\n\n2024/02/15 February\n    Expenses:Food  $120.00\n    Assets:Checking\n\n2024/03/15 March\n    Expenses:Food  $90.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "period", "monthly"]
+    },
+    {
+      "id": "report-payee",
+      "description": "Report grouped by payee",
+      "input": {"inline": "2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking\n\n2024/01/20 * Grocery Store\n    Expenses:Food  $60.00\n    Assets:Checking\n\n2024/01/25 * Restaurant\n    Expenses:Dining  $40.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "payee"]
+    },
+    {
+      "id": "report-tag-filter",
+      "description": "Report filtered by tag",
+      "input": {"inline": "2024/01/15 Business Lunch\n    ; :business:\n    Expenses:Meals  $50.00\n    Assets:Checking\n\n2024/01/16 Personal Lunch\n    Expenses:Meals  $20.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "tag"]
+    },
+    {
+      "id": "report-average",
+      "description": "Report with averages",
+      "input": {"inline": "2024/01/15 Expense 1\n    Expenses:Food  $100.00\n    Assets:Checking\n\n2024/02/15 Expense 2\n    Expenses:Food  $150.00\n    Assets:Checking\n\n2024/03/15 Expense 3\n    Expenses:Food  $50.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["report", "average"]
+    },
+    {
+      "id": "report-total-only",
+      "description": "Report showing only totals",
+      "input": {"inline": "2024/01/15 Test 1\n    Expenses:A  $100.00\n    Assets:Checking\n\n2024/01/16 Test 2\n    Expenses:B  $200.00\n    Assets:Checking"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Expenses": {"USD": "300.00"},
+          "Assets:Checking": {"USD": "-300.00"}
+        }
+      },
+      "tags": ["report", "total"]
+    },
+    {
+      "id": "report-gain-loss",
+      "description": "Report with capital gains/losses",
+      "input": {"inline": "2024/01/15 Buy\n    Assets:Brokerage  10 AAPL @ $150.00\n    Assets:Checking  $-1500.00\n\n2024/06/15 Sell\n    Assets:Checking  $1600.00\n    Assets:Brokerage  -10 AAPL {$150.00} @ $160.00\n    Income:Gains  $-100.00"},
+      "expected": {
+        "parse": "success",
+        "balance": {
+          "Income:Gains": {"USD": "-100.00"}
+        }
+      },
+      "tags": ["report", "gains"]
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+name: Check Links
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - '.github/workflows/check-links.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - '.github/workflows/check-links.yml'
+  schedule:
+    # Run weekly to catch external link rot
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  check-links:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check
+
+      - name: Create link check config
+        run: |
+          cat > .markdown-link-check.json << 'EOF'
+          {
+            "ignorePatterns": [
+              { "pattern": "^#" },
+              { "pattern": "^mailto:" }
+            ],
+            "replacementPatterns": [
+              { "pattern": "^/", "replacement": "{{BASEURL}}/" }
+            ],
+            "httpHeaders": [
+              {
+                "urls": ["https://github.com"],
+                "headers": {
+                  "Accept-Encoding": "gzip, deflate"
+                }
+              }
+            ],
+            "timeout": "10s",
+            "retryOn429": true,
+            "retryCount": 3,
+            "aliveStatusCodes": [200, 206, 301, 302, 308]
+          }
+          EOF
+
+      - name: Check internal links
+        run: |
+          find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' | while read file; do
+            echo "Checking: $file"
+            markdown-link-check --quiet --config .markdown-link-check.json "$file" || true
+          done
+
+      - name: Check for broken internal references
+        run: |
+          # Check for references to non-existent .md files
+          errors=0
+          for file in $(find . -name '*.md' -not -path './.git/*'); do
+            dir=$(dirname "$file")
+            # Extract relative .md links
+            grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null | while read link; do
+              target=$(echo "$link" | sed 's/\](\([^)#]*\).*/\1/')
+              # Resolve relative path
+              if [[ "$target" == /* ]]; then
+                full_path=".$target"
+              else
+                full_path="$dir/$target"
+              fi
+              if [[ ! -f "$full_path" ]]; then
+                echo "::warning file=$file::Broken link to $target"
+                errors=$((errors + 1))
+              fi
+            done
+          done
+          if [[ $errors -gt 0 ]]; then
+            echo "::warning::Found $errors broken internal links"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Link Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          total=$(find . -name '*.md' -not -path './.git/*' | wc -l)
+          echo "Checked **$total** markdown files." >> $GITHUB_STEP_SUMMARY

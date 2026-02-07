@@ -1,0 +1,96 @@
+name: Bug Report
+description: Report an issue with the PTA specification or test suite
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug in the PTA Standards project.
+        Please fill out the form below to help us understand and address the issue.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      description: Which part of the project is affected?
+      options:
+        - Beancount Specification
+        - Ledger Specification
+        - hledger Specification
+        - Core Specification
+        - Test Suite
+        - Test Harness
+        - Documentation
+        - Tooling Specs
+        - CI/Build
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: file
+    attributes:
+      label: Affected File(s)
+      description: Path to the affected specification or test file(s)
+      placeholder: "e.g., formats/beancount/v3/spec/costs.md"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe the issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen according to the specification?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens?
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Input
+      description: Provide a minimal example that demonstrates the issue
+      render: text
+      placeholder: |
+        2024-01-01 * "Example transaction"
+          Assets:Bank  100 USD
+          Expenses:Food
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to related specifications, issues, or discussions
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have read the relevant specification sections
+          required: false

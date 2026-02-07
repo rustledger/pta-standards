@@ -1,0 +1,139 @@
+{
+  "$schema": "../../../../harness/test-case.schema.json",
+  "suite": "hledger-syntax-invalid",
+  "description": "Invalid hledger syntax that should fail parsing",
+  "tests": [
+    {
+      "id": "invalid-date",
+      "description": "Invalid date format",
+      "input": {"inline": "2024-13-45 Test\n    assets:a  $100\n    assets:b"},
+      "expected": {"parse": "error", "error_contains": ["date"]},
+      "tags": ["date"]
+    },
+    {
+      "id": "unbalanced-transaction",
+      "description": "Transaction that doesn't balance",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $100\n    assets:b  $50"},
+      "expected": {"parse": "error", "error_contains": ["balance"]},
+      "tags": ["balance"]
+    },
+    {
+      "id": "no-postings",
+      "description": "Transaction without postings",
+      "input": {"inline": "2024-01-15 Empty transaction"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction"]
+    },
+    {
+      "id": "single-posting",
+      "description": "Transaction with only one posting",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $100"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction", "posting"]
+    },
+    {
+      "id": "invalid-amount",
+      "description": "Invalid amount format",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $abc\n    assets:b"},
+      "expected": {"parse": "error"},
+      "tags": ["amount"]
+    },
+    {
+      "id": "multiple-elided",
+      "description": "Multiple postings without amounts",
+      "input": {"inline": "2024-01-15 Test\n    assets:a\n    assets:b\n    assets:c  $100"},
+      "expected": {"parse": "error"},
+      "tags": ["posting", "amount"]
+    },
+    {
+      "id": "unclosed-parenthesis",
+      "description": "Unclosed parenthesis in virtual account",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $100\n    (budget:food  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["virtual"]
+    },
+    {
+      "id": "unclosed-bracket",
+      "description": "Unclosed bracket in balanced virtual",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $100\n    [budget:food  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["virtual"]
+    },
+    {
+      "id": "bad-price-syntax",
+      "description": "Invalid price specification",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  10 AAPL @@@ $150\n    assets:b"},
+      "expected": {"parse": "error"},
+      "tags": ["price"]
+    },
+    {
+      "id": "missing-description",
+      "description": "Transaction without description",
+      "input": {"inline": "2024-01-15\n    assets:a  $100\n    assets:b"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction"],
+      "skip": true,
+      "skip_reason": "hledger may allow empty description"
+    },
+    {
+      "id": "wrong-indentation",
+      "description": "Posting without indentation",
+      "input": {"inline": "2024-01-15 Test\nassets:a  $100\nassets:b  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["format"]
+    },
+    {
+      "id": "tab-in-account",
+      "description": "Tab character in account name",
+      "input": {"inline": "2024-01-15 Test\n    assets:a\tb  $100\n    assets:c"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "invalid-periodic",
+      "description": "Invalid periodic transaction syntax",
+      "input": {"inline": "~ invalid period\n    assets:a  $100\n    assets:b"},
+      "expected": {"parse": "error"},
+      "tags": ["periodic"]
+    },
+    {
+      "id": "invalid-auto",
+      "description": "Invalid auto posting syntax",
+      "input": {"inline": "= [unclosed regex\n    assets:a  $100"},
+      "expected": {"parse": "error"},
+      "tags": ["auto"]
+    },
+    {
+      "id": "balance-assertion-wrong",
+      "description": "Balance assertion with wrong value",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00 = $9999.00\n    income:salary"},
+      "expected": {"validate": "error", "error_contains": ["balance"]},
+      "tags": ["assertion"]
+    },
+    {
+      "id": "circular-include",
+      "description": "Circular include",
+      "input": {"file": "circular-a.journal"},
+      "expected": {"parse": "error"},
+      "tags": ["include"],
+      "skip": true,
+      "skip_reason": "Requires file fixtures"
+    },
+    {
+      "id": "include-not-found",
+      "description": "Include file not found",
+      "input": {"inline": "include nonexistent.journal"},
+      "expected": {"parse": "error"},
+      "tags": ["include"]
+    },
+    {
+      "id": "account-space-start",
+      "description": "Account starting with space",
+      "input": {"inline": "2024-01-15 Test\n     assets:a  $100\n    assets:b"},
+      "expected": {"parse": "error"},
+      "tags": ["account", "format"],
+      "skip": true,
+      "skip_reason": "May be treated as extra indentation"
+    }
+  ]
+}

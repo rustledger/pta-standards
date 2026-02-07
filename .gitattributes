@@ -1,0 +1,159 @@
+# Git Attributes - https://git-scm.com/docs/gitattributes
+# Controls how Git handles files in this repository
+
+# =============================================================================
+# AUTO-DETECTION
+# =============================================================================
+
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# =============================================================================
+# TEXT FILES
+# =============================================================================
+
+# Documentation
+*.md text diff=markdown
+*.txt text
+
+# Configuration
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.ini text
+*.cfg text
+
+# Grammars
+*.ebnf text
+*.abnf text
+
+# Formal models
+*.als text
+
+# Schemas
+*.proto text
+*.schema.json text
+
+# Source code
+*.js text
+*.ts text
+*.py text diff=python
+*.rs text diff=rust
+*.sh text eol=lf
+*.bash text eol=lf
+
+# PTA formats
+*.beancount text
+*.ledger text
+*.journal text
+*.timedot text
+
+# Web
+*.html text diff=html
+*.css text diff=css
+*.scss text
+*.svg text
+
+# Query files
+*.scm text
+*.sql text
+
+# Interface files
+*.wit text
+
+# Build files
+Makefile text eol=lf
+*.mk text eol=lf
+*.nix text
+
+# Git files
+.gitattributes text
+.gitignore text
+.gitmodules text
+
+# =============================================================================
+# BINARY FILES
+# =============================================================================
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.tar.gz binary
+*.tgz binary
+*.gz binary
+
+# Documents
+*.pdf binary
+
+# Compiled/generated
+*.wasm binary
+
+# =============================================================================
+# DIFF SETTINGS
+# =============================================================================
+
+# Use specific diff drivers for certain file types
+*.json diff=json
+*.md diff=markdown
+
+# =============================================================================
+# MERGE SETTINGS
+# =============================================================================
+
+# Lock files should use union merge
+package-lock.json merge=ours
+yarn.lock merge=ours
+Cargo.lock merge=ours
+
+# =============================================================================
+# LINGUIST SETTINGS (GitHub language detection)
+# =============================================================================
+
+# Mark generated files
+dist/** linguist-generated=true
+**/generated/** linguist-generated=true
+
+# Mark documentation
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+
+# Mark vendor files
+vendor/** linguist-vendored=true
+
+# Custom language detection
+*.beancount linguist-language=Beancount
+*.ledger linguist-language=Ledger
+*.journal linguist-language=Ledger
+*.timedot linguist-language=Ledger
+*.ebnf linguist-language=EBNF
+*.abnf linguist-language=ABNF
+*.als linguist-language=Alloy
+*.wit linguist-language=WIT
+*.scm linguist-language=Scheme
+
+# =============================================================================
+# EXPORT SETTINGS
+# =============================================================================
+
+# Files to exclude from archives (git archive)
+.github export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.editorconfig export-ignore
+.markdownlint.json export-ignore

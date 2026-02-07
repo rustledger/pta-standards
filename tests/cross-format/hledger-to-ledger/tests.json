@@ -1,0 +1,159 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "hledger-to-ledger",
+  "description": "hledger to Ledger format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts with high fidelity",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Grocery Store\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "account-case-preserved",
+      "description": "Account case is preserved (Ledger is case-insensitive)",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["account", "case"]
+    },
+    {
+      "id": "virtual-posting",
+      "description": "Virtual postings convert directly",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    (budget:food)  $-50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["virtual"]
+    },
+    {
+      "id": "periodic-transaction",
+      "description": "Periodic transaction converts",
+      "source": {
+        "format": "hledger",
+        "inline": "~ monthly\n    expenses:rent  $1500\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["periodic"]
+    },
+    {
+      "id": "auto-posting",
+      "description": "Auto posting converts",
+      "source": {
+        "format": "hledger",
+        "inline": "= expenses:food\n    (budget:food)  *-1"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["auto"]
+    },
+    {
+      "id": "balance-assignment",
+      "description": "Balance assignment converts",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 Adjustment\n    assets:checking  = $500.00\n    equity:adjustments"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assignment"]
+    },
+    {
+      "id": "subaccount-assertion",
+      "description": "Subaccount assertion with =*",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 Check\n    assets:bank:checking  $0 =* $1000.00\n    income:dummy"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"],
+      "skip": true,
+      "skip_reason": "Ledger doesn't have subaccount assertions"
+    },
+    {
+      "id": "date-format",
+      "description": "Date format converts (dash to slash)",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["date", "format"]
+    },
+    {
+      "id": "tags",
+      "description": "Tags convert to metadata",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    ; project: alpha\n    expenses:travel  $100.00\n    assets:checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["tags", "metadata"]
+    },
+    {
+      "id": "decimal-mark",
+      "description": "Decimal mark conversion",
+      "source": {
+        "format": "hledger",
+        "inline": "decimal-mark ,\n\n2024-01-15 Test\n    expenses:food  50,00 EUR\n    assets:bank"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["decimal", "format"]
+    }
+  ]
+}

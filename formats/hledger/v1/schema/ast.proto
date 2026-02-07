@@ -1,0 +1,320 @@
+// hledger AST Protocol Buffers Schema
+// For binary serialization and gRPC APIs
+//
+// Version: v1
+// License: MIT
+
+syntax = "proto3";
+
+package hledger.v1;
+
+option go_package = "github.com/pta-standards/hledger/v1/ast";
+option java_package = "org.ptastandards.hledger.v1.ast";
+option java_multiple_files = true;
+
+// =============================================================================
+// TOP LEVEL
+// =============================================================================
+
+// Complete parsed hledger journal
+message Journal {
+  repeated Entry entries = 1;
+  repeated Error errors = 2;
+  optional JournalMeta meta = 3;
+}
+
+// Journal-level metadata
+message JournalMeta {
+  optional string decimal_mark = 1;     // "." or ","
+  repeated string include_paths = 2;    // Included files
+  repeated string commodity_styles = 3; // Inferred commodity formats
+  optional string apply_account = 4;    // Current apply account scope
+}
+
+// =============================================================================
+// ENTRIES
+// =============================================================================
+
+// Union of all entry types
+message Entry {
+  oneof entry {
+    Transaction transaction = 1;
+    PeriodicTransaction periodic = 2;
+    AutoPostingRule auto_rule = 3;
+    AccountDeclaration account_decl = 4;
+    CommodityDeclaration commodity_decl = 5;
+    PriceDirective price = 6;
+    PayeeDirective payee = 7;
+    TagDirective tag = 8;
+    AliasDirective alias = 9;
+    IncludeDirective include = 10;
+    DecimalMarkDirective decimal_mark = 11;
+    ApplyDirective apply = 12;
+    EndDirective end = 13;
+    YearDirective year = 14;
+    CommentBlock comment_block = 15;
+  }
+  SourceLocation source = 100;
+}
+
+// =============================================================================
+// TRANSACTIONS
+// =============================================================================
+
+// Regular transaction
+message Transaction {
+  Date date = 1;
+  optional Date date2 = 2;           // Secondary/effective date
+  optional StatusFlag status = 3;
+  optional string code = 4;
+  optional string description = 5;   // Full description or narration only
+  optional string payee = 6;         // Extracted payee (if using | separator)
+  repeated Posting postings = 7;
+  repeated TagValue tags = 8;
+  optional string comment = 9;
+}
+
+// Periodic transaction (for budgeting/forecasting)
+message PeriodicTransaction {
+  string period_expression = 1;      // e.g., "monthly", "every 2 weeks"
+  repeated Posting postings = 2;
+  optional string comment = 3;
+}
+
+// Auto-posting rule
+message AutoPostingRule {
+  string query = 1;                  // Query expression
+  repeated AutoPosting postings = 2;
+  optional string comment = 3;
+}
+
+// =============================================================================
+// POSTINGS
+// =============================================================================
+
+// Regular posting
+message Posting {
+  optional StatusFlag status = 1;
+  string account = 2;
+  PostingType type = 3;              // Real, virtual, or balanced virtual
+  optional Amount amount = 4;
+  optional LotPrice lot_price = 5;
+  optional UnitPrice unit_price = 6;
+  optional BalanceAssertion assertion = 7;
+  repeated TagValue tags = 8;
+  optional string comment = 9;
+}
+
+// Auto-posting (can use amount multipliers)
+message AutoPosting {
+  optional StatusFlag status = 1;
+  string account = 2;
+  optional AutoAmount amount = 3;
+  repeated TagValue tags = 4;
+  optional string comment = 5;
+}
+
+// Amount for auto-postings (can be multiplier)
+message AutoAmount {
+  oneof value {
+    Amount fixed = 1;
+    string multiplier = 2;           // e.g., "*0.10" for 10%
+  }
+}
+
+// Lot price (cost basis)
+message LotPrice {
+  Amount amount = 1;
+  bool is_total = 2;                 // {{ }} vs { }
+}
+
+// Unit price annotation
+message UnitPrice {
+  Amount amount = 1;
+  bool is_total = 2;                 // @@ vs @
+}
+
+// Balance assertion
+message BalanceAssertion {
+  AssertionType type = 1;
+  Amount amount = 2;
+}
+
+// =============================================================================
+// DIRECTIVES
+// =============================================================================
+
+// Account declaration
+message AccountDeclaration {
+  string account = 1;
+  optional AccountType type = 2;
+  repeated string aliases = 3;
+  optional bool is_default = 4;
+  repeated TagValue tags = 5;
+  optional string comment = 6;
+}
+
+// Commodity declaration
+message CommodityDeclaration {
+  string commodity = 1;
+  optional Amount format = 2;        // Display format example
+  repeated TagValue tags = 3;
+  optional string comment = 4;
+}
+
+// Price history directive
+message PriceDirective {
+  Date date = 1;
+  string commodity = 2;
+  Amount price = 3;
+}
+
+// Payee directive
+message PayeeDirective {
+  string pattern = 1;
+}
+
+// Tag directive
+message TagDirective {
+  string name = 1;
+}
+
+// Alias directive
+message AliasDirective {
+  string pattern = 1;
+  string replacement = 2;
+}
+
+// Include directive
+message IncludeDirective {
+  string path = 1;                   // May contain glob patterns
+}
+
+// Decimal mark directive
+message DecimalMarkDirective {
+  string mark = 1;                   // "." or ","
+}
+
+// Apply directive
+message ApplyDirective {
+  string account = 1;
+}
+
+// End directive
+message EndDirective {
+  optional string type = 1;          // "apply", "comment", or empty
+}
+
+// Year directive
+message YearDirective {
+  int32 year = 1;
+}
+
+// Comment block
+message CommentBlock {
+  string content = 1;
+}
+
+// =============================================================================
+// PRIMITIVES
+// =============================================================================
+
+// Amount: number with optional commodity
+message Amount {
+  string number = 1;                 // Decimal as string to preserve precision
+  optional string commodity = 2;
+  CommodityStyle style = 3;
+}
+
+// Commodity display style
+message CommodityStyle {
+  CommodityPosition position = 1;
+  bool space_between = 2;
+  string decimal_mark = 3;
+  string digit_group_mark = 4;
+  int32 decimal_places = 5;
+}
+
+// Date (YYYY-MM-DD)
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+// Tag with optional value
+message TagValue {
+  string name = 1;
+  optional string value = 2;
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+// Transaction/posting status
+enum StatusFlag {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_CLEARED = 1;                // *
+  STATUS_PENDING = 2;                // !
+}
+
+// Posting type (real vs virtual)
+enum PostingType {
+  POSTING_TYPE_REAL = 0;             // Regular posting
+  POSTING_TYPE_VIRTUAL = 1;          // (account)
+  POSTING_TYPE_BALANCED_VIRTUAL = 2; // [account]
+}
+
+// Balance assertion type
+enum AssertionType {
+  ASSERTION_SINGLE = 0;              // =
+  ASSERTION_TOTAL = 1;               // ==
+  ASSERTION_SINGLE_INCLUSIVE = 2;    // =*
+  ASSERTION_TOTAL_INCLUSIVE = 3;     // ==*
+}
+
+// Account type
+enum AccountType {
+  ACCOUNT_TYPE_UNSPECIFIED = 0;
+  ACCOUNT_TYPE_ASSET = 1;            // A
+  ACCOUNT_TYPE_LIABILITY = 2;        // L
+  ACCOUNT_TYPE_EQUITY = 3;           // E
+  ACCOUNT_TYPE_REVENUE = 4;          // R
+  ACCOUNT_TYPE_EXPENSE = 5;          // X
+}
+
+// Commodity position relative to number
+enum CommodityPosition {
+  COMMODITY_POSITION_UNSPECIFIED = 0;
+  COMMODITY_POSITION_LEFT = 1;       // $100
+  COMMODITY_POSITION_RIGHT = 2;      // 100 USD
+}
+
+// =============================================================================
+// ERRORS
+// =============================================================================
+
+// Parse or validation error
+message Error {
+  SourceLocation source = 1;
+  string message = 2;
+  ErrorSeverity severity = 3;
+  optional string code = 4;
+}
+
+// Error severity
+enum ErrorSeverity {
+  ERROR_SEVERITY_UNSPECIFIED = 0;
+  ERROR_SEVERITY_WARNING = 1;
+  ERROR_SEVERITY_ERROR = 2;
+}
+
+// Source file location
+message SourceLocation {
+  string filename = 1;
+  int32 line = 2;
+  optional int32 column = 3;
+  optional int32 end_line = 4;
+  optional int32 end_column = 5;
+}

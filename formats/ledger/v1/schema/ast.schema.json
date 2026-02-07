@@ -1,0 +1,457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/ledger/v1/ast.schema.json",
+  "title": "Ledger AST Schema",
+  "description": "JSON Schema for Ledger file abstract syntax tree",
+  "type": "object",
+  "required": ["version", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    },
+    "metadata": {
+      "$ref": "#/$defs/FileMetadata"
+    }
+  },
+  "$defs": {
+    "FileMetadata": {
+      "type": "object",
+      "properties": {
+        "filename": { "type": "string" },
+        "parse_time_ms": { "type": "number" },
+        "line_count": { "type": "integer" },
+        "entry_count": { "type": "integer" }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "required": ["line", "column"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 0 },
+        "filename": { "type": "string" },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "end_column": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/$defs/Transaction" },
+        { "$ref": "#/$defs/AccountDirective" },
+        { "$ref": "#/$defs/CommodityDirective" },
+        { "$ref": "#/$defs/PriceDirective" },
+        { "$ref": "#/$defs/IncludeDirective" },
+        { "$ref": "#/$defs/AliasDirective" },
+        { "$ref": "#/$defs/BucketDirective" },
+        { "$ref": "#/$defs/DefaultDirective" },
+        { "$ref": "#/$defs/TagDirective" },
+        { "$ref": "#/$defs/PayeeDirective" },
+        { "$ref": "#/$defs/YearDirective" },
+        { "$ref": "#/$defs/AssertDirective" },
+        { "$ref": "#/$defs/CheckDirective" },
+        { "$ref": "#/$defs/AutomatedTransaction" },
+        { "$ref": "#/$defs/PeriodicTransaction" },
+        { "$ref": "#/$defs/Comment" }
+      ]
+    },
+    "Transaction": {
+      "type": "object",
+      "required": ["type", "date", "postings"],
+      "properties": {
+        "type": { "const": "transaction" },
+        "date": { "$ref": "#/$defs/Date" },
+        "effective_date": { "$ref": "#/$defs/Date" },
+        "status": { "$ref": "#/$defs/Status" },
+        "code": { "type": "string" },
+        "payee": { "type": "string" },
+        "note": { "type": "string" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" },
+          "minItems": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Tag" }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Date": {
+      "type": "string",
+      "pattern": "^\\d{4}[/-]\\d{2}[/-]\\d{2}$",
+      "description": "Date in YYYY/MM/DD or YYYY-MM-DD format"
+    },
+    "Status": {
+      "type": "string",
+      "enum": ["unmarked", "pending", "cleared"],
+      "description": "Transaction/posting status"
+    },
+    "Posting": {
+      "type": "object",
+      "required": ["account"],
+      "properties": {
+        "status": { "$ref": "#/$defs/Status" },
+        "account": { "type": "string" },
+        "is_virtual": { "type": "boolean", "default": false },
+        "is_balanced_virtual": { "type": "boolean", "default": false },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "price": { "$ref": "#/$defs/PriceAnnotation" },
+        "cost": { "$ref": "#/$defs/CostSpec" },
+        "balance_assertion": { "$ref": "#/$defs/BalanceAssertion" },
+        "note": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Tag" }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Amount": {
+      "type": "object",
+      "required": ["quantity", "commodity"],
+      "properties": {
+        "quantity": { "$ref": "#/$defs/Decimal" },
+        "commodity": { "type": "string" }
+      }
+    },
+    "Decimal": {
+      "oneOf": [
+        { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" },
+        { "type": "number" }
+      ],
+      "description": "Decimal number as string for precision or number"
+    },
+    "PriceAnnotation": {
+      "type": "object",
+      "required": ["amount"],
+      "properties": {
+        "per_unit": { "type": "boolean", "default": true },
+        "amount": { "$ref": "#/$defs/Amount" }
+      }
+    },
+    "CostSpec": {
+      "type": "object",
+      "properties": {
+        "per_unit": { "type": "boolean", "default": true },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "date": { "$ref": "#/$defs/Date" },
+        "label": { "type": "string" }
+      }
+    },
+    "BalanceAssertion": {
+      "type": "object",
+      "required": ["amount"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/Amount" },
+        "is_total": { "type": "boolean", "default": false }
+      }
+    },
+    "Tag": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
+        "value": { "type": "string" }
+      }
+    },
+    "AccountDirective": {
+      "type": "object",
+      "required": ["type", "account"],
+      "properties": {
+        "type": { "const": "account" },
+        "account": { "type": "string" },
+        "note": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "payees": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "checks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" }
+        },
+        "asserts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" }
+        },
+        "default": { "type": "boolean" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "CommodityDirective": {
+      "type": "object",
+      "required": ["type", "commodity"],
+      "properties": {
+        "type": { "const": "commodity" },
+        "commodity": { "type": "string" },
+        "format": { "type": "string" },
+        "note": { "type": "string" },
+        "nomarket": { "type": "boolean" },
+        "default": { "type": "boolean" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "PriceDirective": {
+      "type": "object",
+      "required": ["type", "date", "commodity", "price"],
+      "properties": {
+        "type": { "const": "price" },
+        "date": { "$ref": "#/$defs/Date" },
+        "time": { "type": "string", "pattern": "^\\d{2}:\\d{2}(:\\d{2})?$" },
+        "commodity": { "type": "string" },
+        "price": { "$ref": "#/$defs/Amount" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "IncludeDirective": {
+      "type": "object",
+      "required": ["type", "path"],
+      "properties": {
+        "type": { "const": "include" },
+        "path": { "type": "string" },
+        "is_glob": { "type": "boolean", "default": false },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "AliasDirective": {
+      "type": "object",
+      "required": ["type", "pattern", "replacement"],
+      "properties": {
+        "type": { "const": "alias" },
+        "pattern": { "type": "string" },
+        "replacement": { "type": "string" },
+        "is_regex": { "type": "boolean", "default": false },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "BucketDirective": {
+      "type": "object",
+      "required": ["type", "account"],
+      "properties": {
+        "type": { "const": "bucket" },
+        "account": { "type": "string" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "DefaultDirective": {
+      "type": "object",
+      "required": ["type", "amount"],
+      "properties": {
+        "type": { "const": "default" },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "TagDirective": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "tag" },
+        "name": { "type": "string" },
+        "check": { "$ref": "#/$defs/Expression" },
+        "assert": { "$ref": "#/$defs/Expression" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "PayeeDirective": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "payee" },
+        "name": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "uuid": { "type": "string" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "YearDirective": {
+      "type": "object",
+      "required": ["type", "year"],
+      "properties": {
+        "type": { "const": "year" },
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "AssertDirective": {
+      "type": "object",
+      "required": ["type", "expression"],
+      "properties": {
+        "type": { "const": "assert" },
+        "expression": { "$ref": "#/$defs/Expression" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "CheckDirective": {
+      "type": "object",
+      "required": ["type", "expression"],
+      "properties": {
+        "type": { "const": "check" },
+        "expression": { "$ref": "#/$defs/Expression" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "AutomatedTransaction": {
+      "type": "object",
+      "required": ["type", "query", "postings"],
+      "properties": {
+        "type": { "const": "automated" },
+        "query": { "$ref": "#/$defs/Query" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "PeriodicTransaction": {
+      "type": "object",
+      "required": ["type", "period", "postings"],
+      "properties": {
+        "type": { "const": "periodic" },
+        "period": { "type": "string" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "comment" },
+        "text": { "type": "string" },
+        "is_block": { "type": "boolean", "default": false },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Expression": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/$defs/BinaryExpr" },
+        { "$ref": "#/$defs/UnaryExpr" },
+        { "$ref": "#/$defs/FunctionCall" },
+        { "$ref": "#/$defs/Variable" },
+        { "$ref": "#/$defs/Literal" },
+        { "$ref": "#/$defs/ConditionalExpr" }
+      ]
+    },
+    "BinaryExpr": {
+      "type": "object",
+      "required": ["type", "operator", "left", "right"],
+      "properties": {
+        "type": { "const": "binary" },
+        "operator": {
+          "type": "string",
+          "enum": ["+", "-", "*", "/", "%", "==", "!=", "<", ">", "<=", ">=", "=~", "!~", "and", "or"]
+        },
+        "left": { "$ref": "#/$defs/Expression" },
+        "right": { "$ref": "#/$defs/Expression" }
+      }
+    },
+    "UnaryExpr": {
+      "type": "object",
+      "required": ["type", "operator", "operand"],
+      "properties": {
+        "type": { "const": "unary" },
+        "operator": {
+          "type": "string",
+          "enum": ["-", "not"]
+        },
+        "operand": { "$ref": "#/$defs/Expression" }
+      }
+    },
+    "FunctionCall": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "function" },
+        "name": { "type": "string" },
+        "arguments": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Expression" }
+        }
+      }
+    },
+    "Variable": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "variable" },
+        "name": { "type": "string" }
+      }
+    },
+    "Literal": {
+      "type": "object",
+      "required": ["type", "value_type", "value"],
+      "properties": {
+        "type": { "const": "literal" },
+        "value_type": {
+          "type": "string",
+          "enum": ["number", "string", "date", "amount", "boolean", "regex"]
+        },
+        "value": {}
+      }
+    },
+    "ConditionalExpr": {
+      "type": "object",
+      "required": ["type", "condition", "then", "else"],
+      "properties": {
+        "type": { "const": "conditional" },
+        "condition": { "$ref": "#/$defs/Expression" },
+        "then": { "$ref": "#/$defs/Expression" },
+        "else": { "$ref": "#/$defs/Expression" }
+      }
+    },
+    "Query": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/$defs/RegexQuery" },
+        { "$ref": "#/$defs/ExpressionQuery" }
+      ]
+    },
+    "RegexQuery": {
+      "type": "object",
+      "required": ["type", "pattern"],
+      "properties": {
+        "type": { "const": "regex" },
+        "pattern": { "type": "string" }
+      }
+    },
+    "ExpressionQuery": {
+      "type": "object",
+      "required": ["type", "expression"],
+      "properties": {
+        "type": { "const": "expression" },
+        "expression": { "$ref": "#/$defs/Expression" }
+      }
+    }
+  }
+}

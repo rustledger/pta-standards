@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pta-standards.org/schemas/manifest.json",
+  "title": "PTA Standards Test Manifest",
+  "description": "Schema for conformance test suite manifests",
+  "type": "object",
+  "required": ["format", "version", "test_directories"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "format": {
+      "type": "string",
+      "enum": ["beancount", "ledger", "hledger"],
+      "description": "The PTA format being tested"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the format specification (e.g., '3', 'v1')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this test suite"
+    },
+    "test_directories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of directories containing tests.json files",
+      "minItems": 1
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the test suite was created"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the test suite was last updated"
+        },
+        "spec_version": {
+          "type": "string",
+          "description": "Version of the specification these tests target"
+        },
+        "reference_implementation": {
+          "type": "string",
+          "description": "Reference implementation and version used for validation"
+        },
+        "authors": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Authors or maintainers of the test suite"
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "description": "Runner configuration options",
+      "properties": {
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "description": "Default timeout per test in milliseconds"
+        },
+        "parallel": {
+          "type": "boolean",
+          "description": "Whether tests can be run in parallel"
+        },
+        "decimal_tolerance": {
+          "type": "string",
+          "description": "Tolerance for decimal comparisons (e.g., '0.01')"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "External dependencies for running tests",
+      "properties": {
+        "fixtures": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Required fixture files or directories"
+        },
+        "implementations": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Required implementations (e.g., 'beancount>=3.0')"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "format": "beancount",
+      "version": "3",
+      "description": "Conformance test suite for Beancount v3",
+      "test_directories": [
+        "syntax/valid",
+        "syntax/invalid",
+        "validation",
+        "booking",
+        "bql"
+      ],
+      "metadata": {
+        "created": "2024-02-07",
+        "spec_version": "draft",
+        "reference_implementation": "beancount 3.2.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/reports/report.json",
+  "title": "PTA Report Schema",
+  "description": "Schema for standardized PTA report output",
+  "type": "object",
+  "required": ["version", "type", "generated"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["balance-sheet", "income-statement", "trial-balance", "register", "budget"],
+      "description": "Report type"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Report generation timestamp"
+    },
+    "source": {
+      "$ref": "#/$defs/ReportSource"
+    },
+    "parameters": {
+      "$ref": "#/$defs/ReportParameters"
+    },
+    "data": {
+      "oneOf": [
+        { "$ref": "#/$defs/BalanceSheetData" },
+        { "$ref": "#/$defs/IncomeStatementData" },
+        { "$ref": "#/$defs/TrialBalanceData" },
+        { "$ref": "#/$defs/RegisterData" },
+        { "$ref": "#/$defs/BudgetData" }
+      ]
+    }
+  },
+  "$defs": {
+    "ReportSource": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "format": {
+          "type": "string",
+          "enum": ["beancount", "ledger", "hledger"]
+        },
+        "tool": {
+          "type": "string"
+        },
+        "toolVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportParameters": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "accountFilter": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "Amount": {
+      "type": "object",
+      "required": ["number", "currency"],
+      "properties": {
+        "number": {
+          "type": "string",
+          "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+        },
+        "currency": {
+          "type": "string"
+        }
+      }
+    },
+    "AccountBalance": {
+      "type": "object",
+      "required": ["account", "balance"],
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "balance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Amount"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountBalance"
+          }
+        }
+      }
+    },
+    "BalanceSheetData": {
+      "type": "object",
+      "required": ["assets", "liabilities", "equity"],
+      "properties": {
+        "assets": {
+          "type": "object",
+          "required": ["accounts", "total"],
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AccountBalance" }
+            },
+            "total": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        },
+        "liabilities": {
+          "type": "object",
+          "required": ["accounts", "total"],
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AccountBalance" }
+            },
+            "total": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        },
+        "equity": {
+          "type": "object",
+          "required": ["accounts", "total"],
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AccountBalance" }
+            },
+            "total": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        },
+        "netWorth": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Amount" }
+        }
+      }
+    },
+    "IncomeStatementData": {
+      "type": "object",
+      "required": ["income", "expenses"],
+      "properties": {
+        "income": {
+          "type": "object",
+          "required": ["accounts", "total"],
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AccountBalance" }
+            },
+            "total": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        },
+        "expenses": {
+          "type": "object",
+          "required": ["accounts", "total"],
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/AccountBalance" }
+            },
+            "total": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        },
+        "netIncome": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Amount" }
+        }
+      }
+    },
+    "TrialBalanceData": {
+      "type": "object",
+      "required": ["accounts"],
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["account", "debit", "credit"],
+            "properties": {
+              "account": { "type": "string" },
+              "debit": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/Amount" }
+              },
+              "credit": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/Amount" }
+              }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "debit": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            },
+            "credit": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Amount" }
+            }
+          }
+        }
+      }
+    },
+    "RegisterData": {
+      "type": "object",
+      "required": ["entries"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["date", "description", "postings"],
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "description": {
+                "type": "string"
+              },
+              "postings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["account", "amount"],
+                  "properties": {
+                    "account": { "type": "string" },
+                    "amount": { "$ref": "#/$defs/Amount" },
+                    "balance": { "$ref": "#/$defs/Amount" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "BudgetData": {
+      "type": "object",
+      "required": ["periods"],
+      "properties": {
+        "periods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["start", "end", "accounts"],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              },
+              "accounts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["account"],
+                  "properties": {
+                    "account": { "type": "string" },
+                    "budget": { "$ref": "#/$defs/Amount" },
+                    "actual": { "$ref": "#/$defs/Amount" },
+                    "variance": { "$ref": "#/$defs/Amount" },
+                    "variancePercent": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

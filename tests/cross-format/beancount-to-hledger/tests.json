@@ -1,0 +1,163 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "beancount-to-hledger",
+  "description": "Beancount to hledger format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts correctly",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Grocery Store\" \"Weekly shopping\"\n  Expenses:Food  50.00 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "expenses:food": {"USD": "50.00"},
+          "assets:checking": {"USD": "-50.00"}
+        }
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "account-case-conversion",
+      "description": "Account names convert to lowercase",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Bank:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success",
+        "accounts": ["assets:bank:checking"]
+      },
+      "tags": ["account", "case"]
+    },
+    {
+      "id": "transaction-with-tags",
+      "description": "Tags convert to hledger tags",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Test\" #project #travel\n  Expenses:Travel  100.00 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["tags"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 balance Assets:Checking  1000.00 USD"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "lot-with-price",
+      "description": "Lot with price annotation converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Brokerage\n2024-01-01 open Assets:Checking\n\n2024-01-15 * \"Buy Stock\"\n  Assets:Brokerage  10 AAPL @ 150.00 USD\n  Assets:Checking  -1500.00 USD"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["lot", "price"]
+    },
+    {
+      "id": "multi-posting-metadata",
+      "description": "Posting metadata converts to comments",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Test\"\n  Expenses:Food  50.00 USD\n    category: \"groceries\"\n  Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["metadata"]
+    },
+    {
+      "id": "payee-narration",
+      "description": "Payee and narration convert to description",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Acme Corp\" \"Payment for services\"\n  Assets:Receivables  500.00 USD\n  Income:Consulting"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["description", "payee"]
+    },
+    {
+      "id": "price-directive",
+      "description": "Price directive converts to P directive",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 price AAPL 150.00 USD"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "price"]
+    },
+    {
+      "id": "commodity-format",
+      "description": "Commodity format is preserved",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Test\"\n  Expenses:Food  1,234.56 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["commodity", "format"]
+    },
+    {
+      "id": "booking-method-lost",
+      "description": "Booking method information is lost",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Brokerage AAPL \"FIFO\""
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["booking method"]
+      },
+      "tags": ["booking", "loss"]
+    }
+  ]
+}

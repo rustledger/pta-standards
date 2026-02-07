@@ -1,0 +1,120 @@
+name: Feature Request
+description: Suggest an addition or enhancement to the PTA specifications
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement to the PTA Standards project!
+        Please describe your feature request in detail below.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Target Area
+      description: Which part of the project would this affect?
+      options:
+        - Beancount Specification
+        - Ledger Specification
+        - hledger Specification
+        - Core Specification
+        - Test Suite
+        - Test Harness
+        - Tooling Specs
+        - Conformance Program
+        - Documentation
+        - Extensions System
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of Change
+      description: What kind of change is this?
+      options:
+        - New directive or syntax
+        - Enhancement to existing feature
+        - New test cases
+        - Documentation improvement
+        - Clarification of existing spec
+        - New tooling specification
+        - Process improvement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Why is it needed?
+      placeholder: "Currently, there is no way to... This causes issues when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this to work? Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: syntax
+    attributes:
+      label: Proposed Syntax (if applicable)
+      description: If this involves new syntax, provide an example
+      render: text
+      placeholder: |
+        2024-01-01 new-directive "parameters"
+          ; metadata: value
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches did you consider?
+    validations:
+      required: false
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility Considerations
+      description: How would this affect existing implementations?
+      placeholder: |
+        - Backward compatibility with existing files
+        - Cross-format compatibility
+        - Migration path for existing users
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: What is the scope of this change?
+      options:
+        - label: This is a breaking change
+        - label: This requires changes to the core specification
+        - label: This affects multiple formats (Beancount, Ledger, hledger)
+        - label: This requires new test cases
+        - label: This should go through the RFC process
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and RFCs to ensure this is not a duplicate
+          required: true
+        - label: I am willing to help implement this feature
+          required: false

@@ -1,0 +1,52 @@
+[package]
+name = "pta-test-runner"
+version = "0.1.0"
+edition = "2021"
+authors = ["PTA Standards Contributors"]
+description = "Conformance test runner for PTA (Plain Text Accounting) specifications"
+license = "MIT"
+repository = "https://github.com/pta-standards/pta-standards"
+keywords = ["beancount", "ledger", "hledger", "accounting", "testing"]
+categories = ["command-line-utilities", "development-tools::testing"]
+
+[dependencies]
+# CLI argument parsing
+clap = { version = "4", features = ["derive"] }
+
+# JSON parsing
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime (for parallel test execution)
+tokio = { version = "1", features = ["full"] }
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Glob patterns for file matching
+glob = "0.3"
+
+# Regex for pattern matching
+regex = "1"
+
+# Colored terminal output
+colored = "2"
+
+# Progress bars
+indicatif = "0.17"
+
+# Time measurement
+chrono = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
+
+[[bin]]
+name = "pta-test-runner"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

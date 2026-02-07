@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/hledger/csv-rules/ast.json",
+  "title": "CSV Rules AST",
+  "description": "Abstract Syntax Tree schema for hledger CSV import rules",
+  "type": "object",
+  "required": ["version", "rules"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "rules": {
+      "$ref": "#/$defs/RuleSet"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceInfo"
+    }
+  },
+  "$defs": {
+    "RuleSet": {
+      "type": "object",
+      "properties": {
+        "skip": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of header lines to skip"
+        },
+        "fields": {
+          "$ref": "#/$defs/FieldMapping"
+        },
+        "separator": {
+          "type": "string",
+          "maxLength": 1,
+          "default": ",",
+          "description": "Field separator character"
+        },
+        "dateFormat": {
+          "type": "string",
+          "description": "Date format string (strftime)"
+        },
+        "newestFirst": {
+          "type": "boolean",
+          "description": "Whether newest transactions appear first"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Default currency"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["*", "!", ""],
+          "description": "Default transaction status"
+        },
+        "account1": {
+          "type": "string",
+          "description": "Default first account"
+        },
+        "account2": {
+          "type": "string",
+          "description": "Default second account"
+        },
+        "conditionalBlocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConditionalBlock"
+          }
+        },
+        "includeRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Included rules files"
+        }
+      }
+    },
+    "FieldMapping": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ordered list of field names"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "integer" },
+              { "type": "string" }
+            ]
+          },
+          "description": "Named field mappings (name -> column index or header)"
+        }
+      ]
+    },
+    "ConditionalBlock": {
+      "type": "object",
+      "required": ["conditions", "assignments"],
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "description": "Conditions that must match"
+        },
+        "assignments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Field assignments when conditions match"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      }
+    },
+    "Condition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["regex", "field-regex", "amount", "date"],
+          "description": "Condition type"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern or comparison value"
+        },
+        "field": {
+          "type": "string",
+          "description": "Field name to match against"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["<", ">", "<=", ">=", "=", "!="],
+          "description": "Comparison operator"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" }
+          ],
+          "description": "Comparison value"
+        }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "required": ["line"],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endColumn": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "SourceInfo": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string",
+          "default": "utf-8"
+        }
+      }
+    }
+  }
+}

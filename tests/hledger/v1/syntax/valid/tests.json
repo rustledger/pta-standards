@@ -1,0 +1,352 @@
+{
+  "$schema": "../../../../harness/test-case.schema.json",
+  "suite": "hledger-syntax-valid",
+  "description": "Valid hledger syntax that should parse successfully",
+  "tests": [
+    {
+      "id": "empty-file",
+      "description": "Empty file is valid",
+      "input": {"inline": ""},
+      "expected": {"parse": "success"},
+      "tags": ["minimal"]
+    },
+    {
+      "id": "comment-semicolon",
+      "description": "Semicolon comment",
+      "input": {"inline": "; This is a comment"},
+      "expected": {"parse": "success"},
+      "tags": ["comments"]
+    },
+    {
+      "id": "comment-hash",
+      "description": "Hash comment",
+      "input": {"inline": "# This is also a comment"},
+      "expected": {"parse": "success"},
+      "tags": ["comments"]
+    },
+    {
+      "id": "comment-asterisk",
+      "description": "Asterisk comment for org-mode",
+      "input": {"inline": "* This is an org-mode heading\n** Subheading"},
+      "expected": {"parse": "success"},
+      "tags": ["comments", "org-mode"]
+    },
+    {
+      "id": "transaction-minimal",
+      "description": "Minimal transaction with two postings",
+      "input": {"inline": "2024-01-15 Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "minimal"]
+    },
+    {
+      "id": "transaction-slash-date",
+      "description": "Transaction with slash date format",
+      "input": {"inline": "2024/01/15 Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "date"]
+    },
+    {
+      "id": "transaction-dot-date",
+      "description": "Transaction with dot date format",
+      "input": {"inline": "2024.01.15 Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "date"]
+    },
+    {
+      "id": "transaction-cleared",
+      "description": "Cleared transaction with *",
+      "input": {"inline": "2024-01-15 * Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "status"]
+    },
+    {
+      "id": "transaction-pending",
+      "description": "Pending transaction with !",
+      "input": {"inline": "2024-01-15 ! Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "status"]
+    },
+    {
+      "id": "transaction-code",
+      "description": "Transaction with code/check number",
+      "input": {"inline": "2024-01-15 * (1234) Grocery Store\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "code"]
+    },
+    {
+      "id": "transaction-description-pipe",
+      "description": "Transaction with payee | note format",
+      "input": {"inline": "2024-01-15 * Grocery Store | weekly shopping\n    expenses:food  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "description"]
+    },
+    {
+      "id": "amount-commodity-right",
+      "description": "Amount with commodity on right",
+      "input": {"inline": "2024-01-15 Test\n    assets:bank  100.00 EUR\n    assets:other"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "commodity"]
+    },
+    {
+      "id": "amount-commodity-left",
+      "description": "Amount with commodity on left",
+      "input": {"inline": "2024-01-15 Test\n    assets:bank  $100.00\n    assets:other"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "commodity"]
+    },
+    {
+      "id": "amount-negative",
+      "description": "Negative amount",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  -$100.00\n    assets:b  $100.00"},
+      "expected": {"parse": "success"},
+      "tags": ["amount"]
+    },
+    {
+      "id": "amount-thousands-comma",
+      "description": "Amount with comma thousand separator",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  $1,000.00\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "format"]
+    },
+    {
+      "id": "amount-thousands-space",
+      "description": "Amount with space thousand separator",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  1 000.00 EUR\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "format"]
+    },
+    {
+      "id": "posting-comment",
+      "description": "Posting with inline comment",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food  $50.00  ; grocery run\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "comment"]
+    },
+    {
+      "id": "posting-tag",
+      "description": "Posting with tag",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food  $50.00\n    ; category: groceries\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "tag"]
+    },
+    {
+      "id": "posting-virtual",
+      "description": "Virtual posting with parentheses",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food  $50.00\n    (budget:food)  $-50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "virtual"]
+    },
+    {
+      "id": "posting-balanced-virtual",
+      "description": "Balanced virtual posting with brackets",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food  $50.00\n    [budget:food]  $-50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "virtual"]
+    },
+    {
+      "id": "posting-lot-price",
+      "description": "Posting with unit price",
+      "input": {"inline": "2024-01-15 Buy Stock\n    assets:brokerage  10 AAPL @ $150.00\n    assets:checking  $-1500.00"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "price"]
+    },
+    {
+      "id": "posting-lot-total-price",
+      "description": "Posting with total price",
+      "input": {"inline": "2024-01-15 Buy Stock\n    assets:brokerage  10 AAPL @@ $1500.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "price"]
+    },
+    {
+      "id": "posting-lot-cost",
+      "description": "Posting with cost basis",
+      "input": {"inline": "2024-01-15 Sell Stock\n    assets:checking  $1600.00\n    assets:brokerage  -10 AAPL @ $150.00"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "cost"]
+    },
+    {
+      "id": "account-directive",
+      "description": "Account directive",
+      "input": {"inline": "account assets:checking\n    ; type: Asset"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "account"]
+    },
+    {
+      "id": "commodity-directive",
+      "description": "Commodity directive",
+      "input": {"inline": "commodity $1,000.00"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "commodity"]
+    },
+    {
+      "id": "commodity-directive-format",
+      "description": "Commodity directive with format subdirective",
+      "input": {"inline": "commodity EUR\n    format 1.000,00 EUR"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "commodity"]
+    },
+    {
+      "id": "alias-directive",
+      "description": "Account alias",
+      "input": {"inline": "alias checking = assets:bank:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "alias"]
+    },
+    {
+      "id": "include-directive",
+      "description": "Include directive",
+      "input": {"inline": "include other.journal"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "include"]
+    },
+    {
+      "id": "payee-directive",
+      "description": "Payee directive",
+      "input": {"inline": "payee Grocery Store"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "payee"]
+    },
+    {
+      "id": "tag-directive",
+      "description": "Tag directive",
+      "input": {"inline": "tag project"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "tag"]
+    },
+    {
+      "id": "decimal-mark",
+      "description": "Decimal mark directive",
+      "input": {"inline": "decimal-mark ,\n\n2024-01-15 Test\n    assets:a  1000,50 EUR\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "format"]
+    },
+    {
+      "id": "year-directive",
+      "description": "Year directive for default year",
+      "input": {"inline": "Y 2024\n\n01-15 Test\n    assets:a  $100\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "year"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion",
+      "input": {"inline": "2024-01-15 Deposit\n    assets:checking  $100.00 = $1100.00\n    income:salary"},
+      "expected": {"parse": "success"},
+      "tags": ["assertion", "balance"]
+    },
+    {
+      "id": "balance-assertion-subaccount",
+      "description": "Balance assertion with subaccount",
+      "input": {"inline": "2024-01-15 Deposit\n    assets:checking  $100.00 =* $1100.00\n    income:salary"},
+      "expected": {"parse": "success"},
+      "tags": ["assertion", "balance"]
+    },
+    {
+      "id": "balance-assignment",
+      "description": "Balance assignment (set balance)",
+      "input": {"inline": "2024-01-15 Adjustment\n    assets:checking  = $500.00\n    equity:adjustments"},
+      "expected": {"parse": "success"},
+      "tags": ["assertion", "assignment"]
+    },
+    {
+      "id": "periodic-transaction",
+      "description": "Periodic transaction for forecasting",
+      "input": {"inline": "~ monthly from 2024-01\n    expenses:rent  $1500.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "forecast"]
+    },
+    {
+      "id": "periodic-every-day",
+      "description": "Daily periodic transaction",
+      "input": {"inline": "~ every day\n    expenses:coffee  $5.00\n    assets:cash"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic"]
+    },
+    {
+      "id": "periodic-every-week",
+      "description": "Weekly periodic transaction",
+      "input": {"inline": "~ every week\n    expenses:groceries  $150.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic"]
+    },
+    {
+      "id": "periodic-every-nth",
+      "description": "Every Nth day periodic",
+      "input": {"inline": "~ every 2nd day of month\n    expenses:gym  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic"]
+    },
+    {
+      "id": "auto-posting",
+      "description": "Auto posting rule",
+      "input": {"inline": "= expenses:food\n    (budget:food)  *-1"},
+      "expected": {"parse": "success"},
+      "tags": ["auto"]
+    },
+    {
+      "id": "auto-posting-regex",
+      "description": "Auto posting with regex",
+      "input": {"inline": "= /^expenses:food/\n    (budget:food)  *-1"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "regex"]
+    },
+    {
+      "id": "transaction-tag",
+      "description": "Transaction with tag",
+      "input": {"inline": "2024-01-15 * Business Lunch\n    ; project: clientA\n    expenses:meals  $50.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "tag"]
+    },
+    {
+      "id": "transaction-multiple-tags",
+      "description": "Transaction with multiple tags",
+      "input": {"inline": "2024-01-15 * Conference\n    ; project: marketing\n    ; billable:\n    expenses:travel  $500.00\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "tag"]
+    },
+    {
+      "id": "unicode-description",
+      "description": "Unicode in transaction description",
+      "input": {"inline": "2024-01-15 Café Müller\n    expenses:food  10.00 EUR\n    assets:cash"},
+      "expected": {"parse": "success"},
+      "tags": ["unicode"]
+    },
+    {
+      "id": "unicode-account",
+      "description": "Unicode in account name",
+      "input": {"inline": "2024-01-15 Test\n    dépenses:épicerie  50.00 EUR\n    actifs:banque"},
+      "expected": {"parse": "success"},
+      "tags": ["unicode", "account"]
+    },
+    {
+      "id": "apply-account",
+      "description": "Apply account block",
+      "input": {"inline": "apply account assets:personal\n\n2024-01-15 Test\n    checking  $100\n    savings  $-100\n\nend apply account"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "apply"]
+    },
+    {
+      "id": "apply-tag",
+      "description": "Apply tag block",
+      "input": {"inline": "apply tag project:home\n\n2024-01-15 Renovation\n    expenses:home  $500\n    assets:checking\n\nend apply tag"},
+      "expected": {"parse": "success"},
+      "tags": ["directive", "apply", "tag"]
+    },
+    {
+      "id": "multi-date",
+      "description": "Transaction with secondary date",
+      "input": {"inline": "2024-01-15=2024-01-20 Future-dated\n    expenses:bills  $100\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["date", "secondary"]
+    },
+    {
+      "id": "timedot-basic",
+      "description": "Basic timedot entry",
+      "input": {"inline": "2024-01-15\nproject:clientA  .... ...."},
+      "expected": {"parse": "success"},
+      "tags": ["timedot"],
+      "skip": true,
+      "skip_reason": "Timedot is separate format"
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "$schema": "../../../../harness/test-case.schema.json",
+  "suite": "syntax-edge-cases",
+  "description": "Edge cases and boundary conditions for Beancount syntax",
+  "tests": [
+    {
+      "id": "unicode-account-name",
+      "description": "Account name with Unicode characters (rejected by Beancount)",
+      "input": {"inline": "2024-01-01 open Assets:銀行口座"},
+      "expected": {"parse": "error", "error_contains": ["Invalid account"]},
+      "tags": ["unicode", "account", "invalid"]
+    },
+    {
+      "id": "unicode-narration",
+      "description": "Transaction with Unicode narration",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"日本語の説明 🍣\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["unicode", "transaction"]
+    },
+    {
+      "id": "unicode-payee",
+      "description": "Transaction with Unicode payee",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-15 * \"株式会社ABC\" \"Payment\"\n  Assets:A  -50 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["unicode", "payee"]
+    },
+    {
+      "id": "very-long-account-name",
+      "description": "Account with many components",
+      "input": {"inline": "2024-01-01 open Assets:Bank:Checking:Personal:Main:Primary:Account:Number:One"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["account", "boundary"]
+    },
+    {
+      "id": "single-letter-account-component",
+      "description": "Account with single-letter components",
+      "input": {"inline": "2024-01-01 open Assets:A:B:C"},
+      "expected": {"parse": "success", "directives": 1},
+      "tags": ["account", "minimal"]
+    },
+    {
+      "id": "max-decimal-precision",
+      "description": "Amount with many decimal places",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"High precision\"\n  Assets:A  1.123456789012345678 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "precision"]
+    },
+    {
+      "id": "very-large-amount",
+      "description": "Very large amount value",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Large amount\"\n  Assets:A  999999999999999999.99 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "boundary"]
+    },
+    {
+      "id": "very-small-amount",
+      "description": "Very small non-zero amount",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Tiny amount\"\n  Assets:A  0.000000001 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "boundary"]
+    },
+    {
+      "id": "negative-zero",
+      "description": "Negative zero amount",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Negative zero\"\n  Assets:A  -0.00 USD\n  Assets:B  0.00 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["amount", "zero"]
+    },
+    {
+      "id": "date-year-boundaries",
+      "description": "Transactions at year boundaries",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-12-31 * \"Last day\"\n  Assets:A  50 USD\n  Assets:B\n\n2025-01-01 * \"First day\"\n  Assets:A  -50 USD\n  Assets:B"},
+      "expected": {"parse": "success", "directives": 4},
+      "tags": ["date", "boundary"]
+    },
+    {
+      "id": "leap-year-date",
+      "description": "Transaction on leap day",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-02-29 * \"Leap day\"\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["date", "leap-year"]
+    },
+    {
+      "id": "currency-all-caps-long",
+      "description": "Long uppercase currency code",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n2024-01-01 commodity VERYLONGCURRENCY\n\n2024-01-15 * \"Test\"\n  Assets:A  50 VERYLONGCURRENCY\n  Assets:B -50 VERYLONGCURRENCY"},
+      "expected": {"parse": "success"},
+      "tags": ["currency", "boundary"]
+    },
+    {
+      "id": "currency-with-numbers",
+      "description": "Currency code with embedded numbers",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Test\"\n  Assets:A  50 USD2024\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["currency"]
+    },
+    {
+      "id": "empty-narration",
+      "description": "Transaction with empty narration",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"\"\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["transaction", "empty"]
+    },
+    {
+      "id": "narration-with-quotes",
+      "description": "Narration containing escaped quotes",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"He said \\\"hello\\\"\"\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["string", "escape"]
+    },
+    {
+      "id": "narration-with-newlines",
+      "description": "Narration with escaped newlines",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Line 1\\nLine 2\"\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["string", "escape"]
+    },
+    {
+      "id": "multiple-tags",
+      "description": "Transaction with many tags",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Test\" #tag1 #tag2 #tag3 #tag4 #tag5\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["tags", "multiple"]
+    },
+    {
+      "id": "multiple-links",
+      "description": "Transaction with many links",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Test\" ^link1 ^link2 ^link3 ^link4 ^link5\n  Assets:A  50 USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["links", "multiple"]
+    },
+    {
+      "id": "many-postings",
+      "description": "Transaction with many postings",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B1\n2024-01-01 open Expenses:B2\n2024-01-01 open Expenses:B3\n2024-01-01 open Expenses:B4\n2024-01-01 open Expenses:B5\n\n2024-01-15 * \"Many postings\"\n  Expenses:B1  10 USD\n  Expenses:B2  10 USD\n  Expenses:B3  10 USD\n  Expenses:B4  10 USD\n  Expenses:B5  10 USD\n  Assets:A"},
+      "expected": {"parse": "success"},
+      "tags": ["posting", "multiple"]
+    },
+    {
+      "id": "deeply-nested-arithmetic",
+      "description": "Complex arithmetic expression",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Nested expression\"\n  Assets:A  ((100 + 50) * 2 / 3 - 10) USD\n  Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "cost-with-all-components",
+      "description": "Cost specification with all optional components",
+      "input": {"inline": "2024-01-01 open Assets:Brokerage\n2024-01-01 open Assets:Cash\n\n2024-01-15 * \"Full cost spec\"\n  Assets:Brokerage  10 AAPL {150.00 USD, 2024-01-15, \"lot1\"}\n  Assets:Cash  -1500.00 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["cost", "complete"]
+    },
+    {
+      "id": "price-and-cost-together",
+      "description": "Posting with both cost and price",
+      "input": {"inline": "2024-01-01 open Assets:Brokerage\n2024-01-01 open Assets:Cash\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Sell with gain\"\n  Assets:Brokerage  -10 AAPL {100.00 USD} @ 150.00 USD\n  Assets:Cash  1500.00 USD\n  Income:Gains"},
+      "expected": {"parse": "success"},
+      "tags": ["cost", "price"]
+    },
+    {
+      "id": "metadata-special-characters",
+      "description": "Metadata with various value types",
+      "input": {"inline": "2024-01-01 open Assets:A\n  url: \"https://example.com/path?q=1&r=2\"\n  count: 42\n  rate: 3.14\n  date: 2024-01-01"},
+      "expected": {"parse": "success"},
+      "tags": ["metadata", "types"]
+    },
+    {
+      "id": "consecutive-transactions",
+      "description": "Many consecutive transactions",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-01 * \"T1\"\n  Assets:A  -10 USD\n  Expenses:B\n\n2024-01-02 * \"T2\"\n  Assets:A  -10 USD\n  Expenses:B\n\n2024-01-03 * \"T3\"\n  Assets:A  -10 USD\n  Expenses:B\n\n2024-01-04 * \"T4\"\n  Assets:A  -10 USD\n  Expenses:B\n\n2024-01-05 * \"T5\"\n  Assets:A  -10 USD\n  Expenses:B"},
+      "expected": {"parse": "success", "directives": 7},
+      "tags": ["transaction", "multiple"]
+    },
+    {
+      "id": "mixed-whitespace",
+      "description": "Transaction with mixed indentation styles",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Mixed whitespace\"\n  Assets:A  50 USD\n\tAssets:B  -50 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["whitespace"],
+      "skip": true,
+      "skip_reason": "Mixed tab/space indentation may be implementation-specific"
+    },
+    {
+      "id": "comment-in-transaction",
+      "description": "Comments between postings",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"With comments\"\n  ; Comment before first posting\n  Assets:A  50 USD  ; Inline comment\n  ; Comment before second posting\n  Assets:B  -50 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["comment", "transaction"]
+    },
+    {
+      "id": "empty-lines-in-transaction",
+      "description": "Empty lines within transaction",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Empty lines\"\n  Assets:A  50 USD\n\n  Assets:B  -50 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["whitespace", "transaction"],
+      "skip": true,
+      "skip_reason": "Empty lines within transaction may end the transaction in some implementations"
+    },
+    {
+      "id": "account-starting-with-number",
+      "description": "Account component starting with digit",
+      "input": {"inline": "2024-01-01 open Assets:401k"},
+      "expected": {"parse": "success"},
+      "tags": ["account", "digit"]
+    },
+    {
+      "id": "account-with-hyphen",
+      "description": "Account with hyphenated component",
+      "input": {"inline": "2024-01-01 open Assets:Tax-Advantaged"},
+      "expected": {"parse": "success"},
+      "tags": ["account", "hyphen"]
+    },
+    {
+      "id": "minimum-valid-transaction",
+      "description": "Minimum valid transaction with proper account format",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Expenses:B\n\n2024-01-01 * \"\"\n  Assets:A  0 USD\n  Expenses:B"},
+      "expected": {"parse": "success"},
+      "tags": ["minimal", "boundary"]
+    },
+    {
+      "id": "balance-with-tolerance",
+      "description": "Balance assertion with explicit tolerance",
+      "input": {"inline": "2024-01-01 open Assets:A\n2024-01-01 open Equity:Opening\n\n2024-01-02 * \"Deposit\"\n  Assets:A  100.00 USD\n  Equity:Opening\n\n2024-01-15 balance Assets:A  100.00 ~ 0.01 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["balance", "tolerance"]
+    },
+    {
+      "id": "pad-directive",
+      "description": "Pad directive with equity account",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n2024-01-01 open Equity:Opening\n\n2024-01-15 pad Assets:Checking Equity:Opening\n\n2024-02-01 balance Assets:Checking  1000.00 USD"},
+      "expected": {"parse": "success"},
+      "tags": ["pad", "directive"]
+    },
+    {
+      "id": "plugin-with-config",
+      "description": "Plugin directive with configuration",
+      "input": {"inline": "plugin \"beancount.plugins.auto_accounts\""},
+      "expected": {"parse": "success"},
+      "tags": ["plugin", "directive"]
+    },
+    {
+      "id": "option-custom",
+      "description": "Custom option value",
+      "input": {"inline": "option \"insert_pythonpath\" \"True\""},
+      "expected": {"parse": "success"},
+      "tags": ["option", "directive"]
+    },
+    {
+      "id": "query-directive",
+      "description": "Named query directive",
+      "input": {"inline": "2024-01-01 query \"expenses-by-month\" \"SELECT month, sum(position) WHERE account ~ 'Expenses' GROUP BY month\""},
+      "expected": {"parse": "success"},
+      "tags": ["query", "directive"]
+    },
+    {
+      "id": "event-directive",
+      "description": "Event directive",
+      "input": {"inline": "2024-01-01 event \"location\" \"New York\""},
+      "expected": {"parse": "success"},
+      "tags": ["event", "directive"]
+    },
+    {
+      "id": "note-directive",
+      "description": "Note directive on account",
+      "input": {"inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 note Assets:Checking \"Updated account settings\""},
+      "expected": {"parse": "success"},
+      "tags": ["note", "directive"]
+    },
+    {
+      "id": "custom-directive",
+      "description": "Custom directive with multiple values",
+      "input": {"inline": "2024-01-01 custom \"budget\" Assets:Food 500.00 USD \"monthly\""},
+      "expected": {"parse": "success"},
+      "tags": ["custom", "directive"]
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "hledger-to-beancount",
+  "description": "hledger to Beancount format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts correctly",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Grocery Store\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "account-case-converted",
+      "description": "Account names converted to title case",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food:groceries  $50.00\n    assets:bank:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "accounts": ["Expenses:Food:Groceries", "Assets:Bank:Checking"]
+      },
+      "tags": ["account", "case"]
+    },
+    {
+      "id": "virtual-posting-lost",
+      "description": "Virtual postings are lost (warning)",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    (budget:food)  $-50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["virtual"]
+      },
+      "tags": ["virtual", "loss"]
+    },
+    {
+      "id": "periodic-lost",
+      "description": "Periodic transactions cannot convert",
+      "source": {
+        "format": "hledger",
+        "inline": "~ monthly\n    expenses:rent  $1500\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["periodic"]
+      },
+      "tags": ["periodic", "loss"]
+    },
+    {
+      "id": "auto-lost",
+      "description": "Auto postings cannot convert",
+      "source": {
+        "format": "hledger",
+        "inline": "= expenses:food\n    (budget:food)  *-1"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["auto"]
+      },
+      "tags": ["auto", "loss"]
+    },
+    {
+      "id": "commodity-symbol-converted",
+      "description": "Commodity symbols converted to codes",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["commodity", "symbol"]
+    },
+    {
+      "id": "open-directives-generated",
+      "description": "Open directives are generated",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    expenses:food  $50.00\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "directives": 3
+      },
+      "tags": ["account", "open"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion converts",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 Deposit\n    assets:checking  $100.00 = $1100.00\n    income:salary"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "balance-assignment-converted",
+      "description": "Balance assignment becomes balance directive",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 Adjustment\n    assets:checking  = $500.00\n    equity:adjustments"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assignment"]
+    },
+    {
+      "id": "tags-converted",
+      "description": "Tags convert to Beancount tags",
+      "source": {
+        "format": "hledger",
+        "inline": "2024-01-15 * Test\n    ; project: alpha\n    expenses:travel  $100.00\n    assets:checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["tags"]
+    }
+  ]
+}

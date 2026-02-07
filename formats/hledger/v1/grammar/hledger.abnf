@@ -1,0 +1,313 @@
+; hledger ABNF Grammar
+; RFC 5234 Augmented BNF notation
+;
+; This grammar defines the concrete syntax for hledger format.
+; hledger is largely compatible with Ledger but has some differences.
+;
+; Notation (RFC 5234):
+;   =       definition
+;   =/      incremental alternation
+;   /       alternation
+;   [ ]     optional (0 or 1)
+;   *       repetition (* = 0+, 1* = 1+, 2*4 = 2-4)
+;   ( )     grouping
+;   ""      case-insensitive literal
+;   %s""    case-sensitive literal
+;   %x      hexadecimal character
+;   ;       comment
+
+; ===========================================================================
+; TOP LEVEL
+; ===========================================================================
+
+file            = *( line NEWLINE ) [ line ]
+
+line            = transaction
+                / periodic-transaction
+                / auto-posting-rule
+                / directive
+                / comment-line
+                / empty-line
+
+empty-line      = *WSP
+
+comment-line    = ( ";" / "#" / "*" ) *VCHAR
+
+; ===========================================================================
+; TRANSACTIONS
+; ===========================================================================
+
+transaction     = date [ secondary-date ] [ status ] [ code ]
+                  [ 1*WSP description ] [ trailing-comment ] NEWLINE
+                  1*( posting-line NEWLINE )
+
+secondary-date  = "=" date
+
+status          = 1*WSP ( "*" / "!" )
+
+code            = 1*WSP "(" *( VCHAR / WSP ) ")"
+
+description     = payee-narration / narration-only
+
+payee-narration = payee "|" narration
+
+payee           = 1*( VCHAR / WSP )
+
+narration       = *( VCHAR / WSP )
+
+narration-only  = 1*( VCHAR / WSP )
+
+; ---------------------------------------------------------------------------
+; Postings
+; ---------------------------------------------------------------------------
+
+posting-line    = 1*WSP posting [ trailing-comment ]
+                / comment-line
+
+posting         = [ posting-status ] account-name
+                  [ 1*WSP amount [ lot-price ] [ unit-price ] ]
+                  [ balance-assertion ]
+
+posting-status  = ( "*" / "!" ) WSP
+
+account-name    = account / virtual-account
+
+account         = account-component *( ":" account-component )
+
+account-component = 1*( VCHAR )
+                    ; excluding : and whitespace
+
+virtual-account = "(" account ")"
+                / "[" account "]"
+
+balance-assertion = *WSP assertion-type *WSP amount
+
+assertion-type  = "="       ; single commodity balance
+                / "=="      ; total balance
+                / "=*"      ; single commodity, subaccounts
+                / "==*"     ; total balance, subaccounts
+
+lot-price       = *WSP "{" *WSP amount *WSP "}"
+                / *WSP "{{" *WSP amount *WSP "}}"
+
+unit-price      = *WSP ( "@@" / "@" ) *WSP amount
+
+; ===========================================================================
+; PERIODIC TRANSACTIONS
+; ===========================================================================
+
+periodic-transaction = "~" *WSP period-expression
+                       [ trailing-comment ] NEWLINE
+                       1*( posting-line NEWLINE )
+
+period-expression = 1*( VCHAR / WSP )
+                    ; "monthly", "every 2 weeks", "monthly from 2024-01"
+
+; ===========================================================================
+; AUTO POSTING RULES
+; ===========================================================================
+
+auto-posting-rule = "=" *WSP query
+                    [ trailing-comment ] NEWLINE
+                    1*( auto-posting-line NEWLINE )
+
+query           = 1*( VCHAR / WSP )
+                  ; "expenses:food", "amt:>100"
+
+auto-posting-line = 1*WSP auto-posting [ trailing-comment ]
+                  / comment-line
+
+auto-posting    = [ posting-status ] account-name
+                  [ 1*WSP amount-or-multiplier ]
+
+amount-or-multiplier = amount
+                     / "*" number   ; multiply matched amount
+
+; ===========================================================================
+; DIRECTIVES
+; ===========================================================================
+
+directive       = account-directive
+                / commodity-directive
+                / decimal-mark-directive
+                / payee-directive
+                / tag-directive
+                / alias-directive
+                / apply-directive
+                / end-directive
+                / include-directive
+                / price-directive
+                / year-directive
+                / comment-block
+
+; ---------------------------------------------------------------------------
+; Account Directive
+; ---------------------------------------------------------------------------
+
+account-directive = %s"account" 1*WSP account [ trailing-comment ]
+                    *( NEWLINE account-subdirective )
+
+account-subdirective = 1*WSP ( %s"alias" 1*WSP alias-name
+                             / %s"default"
+                             / %s"type" 1*WSP account-type
+                             / tag-name ":" *WSP tag-value
+                             / ";" *VCHAR )
+                       [ trailing-comment ]
+
+alias-name      = 1*VCHAR
+
+account-type    = %s"Asset" / %s"Liability" / %s"Equity"
+                / %s"Revenue" / %s"Expense"
+                / "A" / "L" / "E" / "R" / "X"
+
+; ---------------------------------------------------------------------------
+; Commodity Directive
+; ---------------------------------------------------------------------------
+
+commodity-directive = %s"commodity" 1*WSP ( commodity-symbol / amount )
+                      [ trailing-comment ]
+                      *( NEWLINE commodity-subdirective )
+
+commodity-subdirective = 1*WSP ( %s"format" 1*WSP format-spec
+                               / tag-name ":" *WSP tag-value
+                               / ";" *VCHAR )
+                         [ trailing-comment ]
+
+format-spec     = amount
+
+; ---------------------------------------------------------------------------
+; Decimal Mark Directive
+; ---------------------------------------------------------------------------
+
+decimal-mark-directive = %s"decimal-mark" 1*WSP ( "." / "," )
+                         [ trailing-comment ]
+
+; ---------------------------------------------------------------------------
+; Other Directives
+; ---------------------------------------------------------------------------
+
+payee-directive = %s"payee" 1*WSP payee-pattern [ trailing-comment ]
+
+payee-pattern   = 1*( VCHAR / WSP )
+
+tag-directive   = %s"tag" 1*WSP tag-name [ trailing-comment ]
+
+tag-name        = 1*( ALPHA / DIGIT / "-" / "_" )
+
+tag-value       = *VCHAR
+
+alias-directive = %s"alias" 1*WSP alias-pattern "=" *WSP account
+                  [ trailing-comment ]
+
+alias-pattern   = 1*( VCHAR / WSP )
+
+apply-directive = %s"apply" 1*WSP %s"account" 1*WSP account
+                  [ trailing-comment ]
+
+end-directive   = %s"end" [ 1*WSP ( %s"apply" / %s"comment" ) ]
+                  [ trailing-comment ]
+
+include-directive = %s"include" 1*WSP file-glob [ trailing-comment ]
+
+file-glob       = 1*( VCHAR / WSP )
+                  ; Supports glob patterns like *.journal
+
+price-directive = "P" 1*WSP date 1*WSP commodity-symbol 1*WSP amount
+                  [ trailing-comment ]
+
+year-directive  = ( %s"year" / "Y" ) 1*WSP year [ trailing-comment ]
+
+comment-block   = %s"comment" [ trailing-comment ] NEWLINE
+                  *( *VCHAR NEWLINE )
+                  %s"end" [ 1*WSP %s"comment" ]
+
+; ===========================================================================
+; AMOUNTS
+; ===========================================================================
+
+amount          = [ "-" ] [ commodity-symbol *WSP ] quantity
+                  [ *WSP commodity-symbol ]
+
+quantity        = integer-part [ decimal-mark fractional-part ]
+                / decimal-mark fractional-part
+
+integer-part    = 1*( DIGIT / digit-group-mark )
+
+fractional-part = 1*DIGIT
+
+digit-group-mark = "," / "." / SP / "'"
+                   ; hledger supports various digit grouping styles
+
+decimal-mark    = "." / ","
+                  ; Determined by context or decimal-mark directive
+
+commodity-symbol = commodity-quoted / commodity-unquoted
+
+commodity-unquoted = 1*( ALPHA / "$" / %xA3 / %x20AC / %xA5 / %x20B9 )
+                     ; $, £ (A3), € (20AC), ¥ (A5), ₹ (20B9)
+
+commodity-quoted = DQUOTE *( VCHAR / WSP ) DQUOTE
+
+; ===========================================================================
+; DATES
+; ===========================================================================
+
+date            = simple-date / smart-date
+
+simple-date     = year date-sep month date-sep day
+                / year date-sep month
+                / month date-sep day
+
+smart-date      = %s"today" / %s"yesterday" / %s"tomorrow"
+                / %s"last" 1*WSP day-of-week
+                / %s"this" 1*WSP day-of-week
+                / %s"next" 1*WSP day-of-week
+
+day-of-week     = %s"monday" / %s"tuesday" / %s"wednesday"
+                / %s"thursday" / %s"friday" / %s"saturday" / %s"sunday"
+                / %s"mon" / %s"tue" / %s"wed" / %s"thu"
+                / %s"fri" / %s"sat" / %s"sun"
+
+date-sep        = "-" / "/" / "."
+
+year            = 4DIGIT
+
+month           = 1*2DIGIT
+
+day             = 1*2DIGIT
+
+; ===========================================================================
+; METADATA
+; ===========================================================================
+
+; hledger tags can appear in comments
+tag-spec        = tag-name ":" [ tag-value ]
+                / tag-name
+
+; ===========================================================================
+; WHITESPACE & COMMENTS
+; ===========================================================================
+
+trailing-comment = *WSP ( ";" / "#" ) *VCHAR
+
+; ===========================================================================
+; PRIMITIVES
+; ===========================================================================
+
+number          = [ "-" ] 1*DIGIT [ "." 1*DIGIT ]
+
+; ===========================================================================
+; CORE RULES (RFC 5234 Standard)
+; ===========================================================================
+
+ALPHA           = %x41-5A / %x61-7A     ; A-Z / a-z
+DIGIT           = %x30-39               ; 0-9
+DQUOTE          = %x22                  ; "
+SP              = %x20                  ; space
+HTAB            = %x09                  ; horizontal tab
+WSP             = SP / HTAB             ; whitespace
+VCHAR           = %x21-7E               ; visible characters
+CR              = %x0D                  ; carriage return
+LF              = %x0A                  ; line feed
+CRLF            = CR LF
+NEWLINE         = CRLF / LF / CR        ; any line ending

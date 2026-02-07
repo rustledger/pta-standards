@@ -1,0 +1,340 @@
+(* Ledger EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This grammar defines the concrete syntax for Ledger CLI format.
+ * Semantic validation is not covered here.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *   -     exception
+ *)
+
+(* =========================================================================== *)
+(* TOP LEVEL                                                                   *)
+(* =========================================================================== *)
+
+file = { line, NEWLINE }, [ line ] ;
+
+line = transaction
+     | periodic_transaction
+     | automated_transaction
+     | directive
+     | comment_line
+     | empty_line ;
+
+empty_line = { WHITESPACE } ;
+
+comment_line = ( ";" | "#" | "*" | "|" ), { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* TRANSACTIONS                                                                *)
+(* =========================================================================== *)
+
+transaction = date, [ effective_date ], [ status ], [ code ],
+              [ WHITESPACE, payee ], [ trailing_comment ], NEWLINE,
+              { posting_line, NEWLINE }- ;
+
+effective_date = "=", date ;
+
+status = WHITESPACE, ( "*" | "!" ) ;
+
+code = WHITESPACE, "(", { ANY - ( ")" | NEWLINE ) }, ")" ;
+
+payee = { ANY - ( ";" | NEWLINE ) }- ;
+
+(* --------------------------------------------------------------------------- *)
+(* Postings                                                                    *)
+(* --------------------------------------------------------------------------- *)
+
+posting_line = WHITESPACE, { WHITESPACE }, posting, [ trailing_comment ]
+             | WHITESPACE, { WHITESPACE }, note_line
+             | comment_line ;
+
+posting = [ posting_status ], account,
+          [ { WHITESPACE }-, amount_expr, [ lot_spec ], [ price_annotation ] ],
+          [ balance_assertion ] ;
+
+posting_status = ( "*" | "!" ), WHITESPACE ;
+
+balance_assertion = { WHITESPACE }, "=", { WHITESPACE }, amount_expr
+                  | { WHITESPACE }, "==", { WHITESPACE }, amount_expr ;
+                  (* = asserts balance, == asserts total balance *)
+
+lot_spec = { WHITESPACE }, "{", { WHITESPACE }, amount_expr, { WHITESPACE }, "}"
+         | { WHITESPACE }, "{{", { WHITESPACE }, amount_expr, { WHITESPACE }, "}}"
+         | { WHITESPACE }, "(", lot_date, ")"
+         | { WHITESPACE }, "[", lot_note, "]" ;
+
+lot_date = date ;
+
+lot_note = { ANY - ( "]" | NEWLINE ) } ;
+
+price_annotation = { WHITESPACE }, ( "@@" | "@" ), { WHITESPACE }, amount_expr ;
+
+(* =========================================================================== *)
+(* PERIODIC TRANSACTIONS                                                       *)
+(* =========================================================================== *)
+
+periodic_transaction = "~", { WHITESPACE }, period_expression,
+                       [ trailing_comment ], NEWLINE,
+                       { posting_line, NEWLINE }- ;
+
+period_expression = { ANY - ( ";" | NEWLINE ) }- ;
+(* Examples: "monthly", "every week", "from 2024-01-01" *)
+
+(* =========================================================================== *)
+(* AUTOMATED TRANSACTIONS                                                      *)
+(* =========================================================================== *)
+
+automated_transaction = "=", { WHITESPACE }, query_pattern,
+                        [ trailing_comment ], NEWLINE,
+                        { automated_posting_line, NEWLINE }- ;
+
+query_pattern = { ANY - ( ";" | NEWLINE ) }- ;
+(* Examples: "/Food/", "@payee", "expr amount > 100" *)
+
+automated_posting_line = WHITESPACE, { WHITESPACE }, automated_posting,
+                         [ trailing_comment ]
+                       | comment_line ;
+
+automated_posting = [ posting_status ], account,
+                    [ { WHITESPACE }-, amount_expr ] ;
+(* Amount can include multipliers like (0.1) for 10% *)
+
+(* =========================================================================== *)
+(* DIRECTIVES                                                                  *)
+(* =========================================================================== *)
+
+directive = account_directive
+          | commodity_directive
+          | tag_directive
+          | payee_directive
+          | alias_directive
+          | apply_directive
+          | end_apply_directive
+          | bucket_directive
+          | default_directive
+          | year_directive
+          | include_directive
+          | price_directive
+          | assert_directive
+          | check_directive
+          | comment_block_directive
+          | define_directive ;
+
+(* --------------------------------------------------------------------------- *)
+(* Account Directive                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+account_directive = "account", WHITESPACE, { WHITESPACE }, account,
+                    [ trailing_comment ], { NEWLINE, account_subdirective } ;
+
+account_subdirective = WHITESPACE, { WHITESPACE },
+                       ( "alias", WHITESPACE, alias_name
+                       | "payee", WHITESPACE, payee_regex
+                       | "check", WHITESPACE, expression
+                       | "assert", WHITESPACE, expression
+                       | "eval", WHITESPACE, expression
+                       | "default"
+                       | "note", WHITESPACE, note_text ),
+                       [ trailing_comment ] ;
+
+alias_name = { ANY - ( WHITESPACE | NEWLINE ) }- ;
+
+payee_regex = { ANY - ( ";" | NEWLINE ) }- ;
+
+note_text = { ANY - ( ";" | NEWLINE ) }- ;
+
+(* --------------------------------------------------------------------------- *)
+(* Commodity Directive                                                         *)
+(* --------------------------------------------------------------------------- *)
+
+commodity_directive = "commodity", WHITESPACE, { WHITESPACE }, commodity,
+                      [ trailing_comment ], { NEWLINE, commodity_subdirective } ;
+
+commodity_subdirective = WHITESPACE, { WHITESPACE },
+                         ( "format", WHITESPACE, format_spec
+                         | "alias", WHITESPACE, alias_name
+                         | "note", WHITESPACE, note_text
+                         | "nomarket"
+                         | "default" ),
+                         [ trailing_comment ] ;
+
+format_spec = { ANY - ( ";" | NEWLINE ) }- ;
+
+(* --------------------------------------------------------------------------- *)
+(* Other Directives                                                            *)
+(* --------------------------------------------------------------------------- *)
+
+tag_directive = "tag", WHITESPACE, { WHITESPACE }, tag_name, [ trailing_comment ] ;
+
+tag_name = { ASCII_ALPHANUMERIC | "-" | "_" }- ;
+
+payee_directive = "payee", WHITESPACE, { WHITESPACE }, payee_name,
+                  [ trailing_comment ] ;
+
+payee_name = { ANY - ( ";" | NEWLINE ) }- ;
+
+alias_directive = "alias", WHITESPACE, { WHITESPACE }, alias_pattern, "=",
+                  { WHITESPACE }, account, [ trailing_comment ] ;
+
+alias_pattern = { ANY - ( "=" | NEWLINE ) }- ;
+
+apply_directive = "apply", WHITESPACE,
+                  ( "account", WHITESPACE, account
+                  | "tag", WHITESPACE, tag_name ),
+                  [ trailing_comment ] ;
+
+end_apply_directive = "end", WHITESPACE, "apply",
+                      [ WHITESPACE, ( "account" | "tag" ) ],
+                      [ trailing_comment ] ;
+
+bucket_directive = "bucket", WHITESPACE, { WHITESPACE }, account,
+                   [ trailing_comment ] ;
+
+default_directive = "D", WHITESPACE, { WHITESPACE }, amount_expr,
+                    [ trailing_comment ] ;
+
+year_directive = ( "year" | "Y" ), WHITESPACE, { WHITESPACE }, year,
+                 [ trailing_comment ] ;
+
+include_directive = "include", WHITESPACE, { WHITESPACE }, file_path,
+                    [ trailing_comment ] ;
+
+file_path = { ANY - ( ";" | NEWLINE ) }- ;
+
+price_directive = "P", WHITESPACE, { WHITESPACE }, date, WHITESPACE,
+                  { WHITESPACE }, commodity, WHITESPACE, { WHITESPACE },
+                  amount_expr, [ trailing_comment ] ;
+
+assert_directive = "assert", WHITESPACE, { WHITESPACE }, expression,
+                   [ trailing_comment ] ;
+
+check_directive = "check", WHITESPACE, { WHITESPACE }, expression,
+                  [ trailing_comment ] ;
+
+comment_block_directive = "comment", { ANY - NEWLINE }, NEWLINE,
+                          { ANY - "end comment" },
+                          "end", WHITESPACE, "comment" ;
+
+define_directive = "define", WHITESPACE, { WHITESPACE }, variable_name, "=",
+                   { WHITESPACE }, expression, [ trailing_comment ] ;
+
+variable_name = { ASCII_ALPHANUMERIC | "_" }- ;
+
+(* =========================================================================== *)
+(* ACCOUNTS                                                                    *)
+(* =========================================================================== *)
+
+account = account_component, { ":", account_component } ;
+
+account_component = { ANY - ( ":" | WHITESPACE | NEWLINE | ";" ) }- ;
+(* Ledger is more permissive than Beancount with account names *)
+
+(* Virtual accounts *)
+virtual_account = "(", account, ")"
+                | "[", account, "]" ;
+                (* () = unbalanced virtual, [] = balanced virtual *)
+
+(* =========================================================================== *)
+(* AMOUNTS & EXPRESSIONS                                                       *)
+(* =========================================================================== *)
+
+amount_expr = expression ;
+
+expression = term, { ( "+" | "-" ), term } ;
+
+term = factor, { ( "*" | "/" ), factor } ;
+
+factor = [ "-" ], primary ;
+
+primary = number
+        | amount
+        | variable_ref
+        | function_call
+        | "(", expression, ")" ;
+
+variable_ref = variable_name ;
+
+function_call = function_name, "(", [ arg_list ], ")" ;
+
+function_name = { ASCII_ALPHANUMERIC | "_" }- ;
+
+arg_list = expression, { ",", expression } ;
+
+amount = [ commodity ], number, [ commodity ]
+       | number, { WHITESPACE }, commodity
+       | commodity, { WHITESPACE }, number ;
+
+number = [ "-" ], ( integer_part, [ ".", fractional_part ]
+                  | ".", fractional_part ) ;
+
+integer_part = digit, { digit | "," } ;
+
+fractional_part = { digit }- ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+commodity = commodity_quoted | commodity_unquoted ;
+
+commodity_unquoted = { ASCII_ALPHA | "$" | "£" | "€" | "¥" }- ;
+
+commodity_quoted = '"', { ANY - '"' }, '"' ;
+
+(* =========================================================================== *)
+(* DATES                                                                       *)
+(* =========================================================================== *)
+
+date = year, date_sep, month, date_sep, day ;
+
+date_sep = "-" | "/" | "." ;
+
+year = digit, digit, digit, digit ;
+
+month = digit, [ digit ] ;
+
+day = digit, [ digit ] ;
+
+(* =========================================================================== *)
+(* METADATA                                                                    *)
+(* =========================================================================== *)
+
+note_line = ";", { WHITESPACE }, metadata_entry
+          | ";", { ANY - NEWLINE } ;
+
+metadata_entry = metadata_key, ":", { WHITESPACE }, metadata_value ;
+
+metadata_key = { ASCII_ALPHANUMERIC | "-" | "_" }- ;
+
+metadata_value = { ANY - NEWLINE } ;
+
+(* Tags in Ledger use : delimiters *)
+tag_spec = ":", tag_name, { ":", tag_name }, ":" ;
+
+(* =========================================================================== *)
+(* WHITESPACE & COMMENTS                                                       *)
+(* =========================================================================== *)
+
+trailing_comment = { WHITESPACE }, ";", { ANY - NEWLINE } ;
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+ASCII_ALPHA = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+            | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+            | "U" | "V" | "W" | "X" | "Y" | "Z"
+            | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+            | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+            | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+ASCII_ALPHANUMERIC = ASCII_ALPHA | digit ;

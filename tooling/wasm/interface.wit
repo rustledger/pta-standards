@@ -1,0 +1,297 @@
+// PTA WebAssembly Interface Types
+// Defines the interface for PTA parsers and validators as WASM components
+//
+// See: https://github.com/WebAssembly/component-model
+// See: https://component-model.bytecodealliance.org/
+
+package pta:core@0.1.0;
+
+// =============================================================================
+// CORE TYPES
+// =============================================================================
+
+/// Date represented as year, month, day
+record date {
+    year: u16,
+    month: u8,
+    day: u8,
+}
+
+/// Amount with decimal number and currency
+record amount {
+    /// Decimal number as string to preserve precision
+    number: string,
+    /// Currency/commodity symbol
+    currency: string,
+}
+
+/// Source location for error reporting
+record source-location {
+    /// Filename or "<input>" for inline content
+    filename: string,
+    /// Line number (1-based)
+    line: u32,
+    /// Column number (1-based, optional)
+    column: option<u32>,
+}
+
+/// Error severity level
+enum severity {
+    info,
+    warning,
+    error,
+}
+
+/// Parse or validation error
+record diagnostic {
+    /// Error location
+    location: source-location,
+    /// Error message
+    message: string,
+    /// Severity level
+    severity: severity,
+    /// Optional error code (e.g., "E1001")
+    code: option<string>,
+}
+
+// =============================================================================
+// PARSER INTERFACE
+// =============================================================================
+
+interface parser {
+    /// Supported PTA formats
+    enum format {
+        beancount,
+        ledger,
+        hledger,
+    }
+
+    /// Parser configuration options
+    record parse-options {
+        /// Input format (auto-detect if not specified)
+        format: option<format>,
+        /// Filename for error reporting
+        filename: option<string>,
+        /// Enable strict parsing mode
+        strict: bool,
+    }
+
+    /// Parse result containing AST or errors
+    record parse-result {
+        /// Serialized AST (JSON format)
+        ast: option<string>,
+        /// Parse errors
+        errors: list<diagnostic>,
+        /// Whether parsing succeeded
+        success: bool,
+    }
+
+    /// Parse PTA content and return AST
+    parse: func(content: string, options: parse-options) -> parse-result;
+
+    /// Check if content is valid syntax without full parse
+    check-syntax: func(content: string, format: option<format>) -> list<diagnostic>;
+
+    /// Get parser version information
+    version: func() -> string;
+}
+
+// =============================================================================
+// VALIDATOR INTERFACE
+// =============================================================================
+
+interface validator {
+    /// Validation options
+    record validate-options {
+        /// Check that transactions balance
+        check-balance: bool,
+        /// Check that accounts are opened before use
+        check-accounts: bool,
+        /// Check that accounts are not used after close
+        check-closed: bool,
+        /// Check balance assertions
+        check-assertions: bool,
+        /// Check for duplicate entries
+        check-duplicates: bool,
+    }
+
+    /// Validation result
+    record validate-result {
+        /// Validation diagnostics (errors and warnings)
+        diagnostics: list<diagnostic>,
+        /// Whether validation passed (no errors)
+        valid: bool,
+        /// Number of errors
+        error-count: u32,
+        /// Number of warnings
+        warning-count: u32,
+    }
+
+    /// Validate parsed AST
+    validate: func(ast: string, options: validate-options) -> validate-result;
+
+    /// Parse and validate in one step
+    parse-and-validate: func(
+        content: string,
+        parse-options: parser.parse-options,
+        validate-options: validate-options
+    ) -> validate-result;
+}
+
+// =============================================================================
+// FORMATTER INTERFACE
+// =============================================================================
+
+interface formatter {
+    /// Formatting options
+    record format-options {
+        /// Target format
+        format: parser.format,
+        /// Indentation size (spaces)
+        indent-size: u8,
+        /// Column to align amounts to
+        amount-column: option<u32>,
+        /// Sort directives by date
+        sort-by-date: bool,
+        /// Normalize account names
+        normalize-accounts: bool,
+    }
+
+    /// Format result
+    record format-result {
+        /// Formatted content
+        content: string,
+        /// Whether formatting succeeded
+        success: bool,
+        /// Any errors during formatting
+        errors: list<diagnostic>,
+    }
+
+    /// Format PTA content to canonical style
+    format: func(content: string, options: format-options) -> format-result;
+
+    /// Format AST to string
+    format-ast: func(ast: string, options: format-options) -> format-result;
+}
+
+// =============================================================================
+// QUERY INTERFACE (BQL)
+// =============================================================================
+
+interface query {
+    /// Query result row
+    record row {
+        /// Column values as strings
+        values: list<string>,
+    }
+
+    /// Query result
+    record query-result {
+        /// Column names
+        columns: list<string>,
+        /// Result rows
+        rows: list<row>,
+        /// Total row count
+        row-count: u32,
+        /// Whether query succeeded
+        success: bool,
+        /// Query errors
+        errors: list<diagnostic>,
+    }
+
+    /// Execute BQL query against AST
+    execute: func(ast: string, query-string: string) -> query-result;
+
+    /// Parse and validate BQL query without executing
+    parse-query: func(query-string: string) -> list<diagnostic>;
+}
+
+// =============================================================================
+// CONVERTER INTERFACE
+// =============================================================================
+
+interface converter {
+    /// Conversion options
+    record convert-options {
+        /// Source format
+        from: parser.format,
+        /// Target format
+        to: parser.format,
+        /// Preserve metadata where possible
+        preserve-metadata: bool,
+        /// Add comments for unconvertible features
+        comment-unconvertible: bool,
+    }
+
+    /// Conversion result
+    record convert-result {
+        /// Converted content
+        content: string,
+        /// Whether conversion succeeded
+        success: bool,
+        /// Conversion warnings (e.g., lost data)
+        warnings: list<diagnostic>,
+        /// Conversion errors
+        errors: list<diagnostic>,
+    }
+
+    /// Convert between PTA formats
+    convert: func(content: string, options: convert-options) -> convert-result;
+
+    /// Check if conversion is possible without data loss
+    check-conversion: func(content: string, from: parser.format, to: parser.format) -> list<diagnostic>;
+}
+
+// =============================================================================
+// ACCOUNTS INTERFACE
+// =============================================================================
+
+interface accounts {
+    /// Account information
+    record account-info {
+        /// Full account name
+        name: string,
+        /// Account type (Assets, Liabilities, etc.)
+        account-type: string,
+        /// Open date (if known)
+        open-date: option<date>,
+        /// Close date (if known)
+        close-date: option<date>,
+        /// Allowed currencies (if restricted)
+        currencies: list<string>,
+    }
+
+    /// Get list of all accounts from AST
+    list-accounts: func(ast: string) -> list<account-info>;
+
+    /// Get account balance at a specific date
+    get-balance: func(ast: string, account: string, as-of: option<date>) -> list<amount>;
+
+    /// Check if account exists
+    account-exists: func(ast: string, account: string) -> bool;
+}
+
+// =============================================================================
+// WORLD DEFINITION
+// =============================================================================
+
+/// Complete PTA tooling interface
+world pta-tools {
+    import parser;
+    import validator;
+    import formatter;
+    import query;
+    import converter;
+    import accounts;
+}
+
+/// Minimal parser-only interface
+world pta-parser {
+    import parser;
+}
+
+/// Parser and validator interface
+world pta-validator {
+    import parser;
+    import validator;
+}

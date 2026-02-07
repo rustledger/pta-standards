@@ -1,0 +1,170 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "ledger-to-beancount",
+  "description": "Ledger to Beancount format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts correctly",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "virtual-posting-lost",
+      "description": "Virtual postings are lost (warning)",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    (Budget:Food)  $-50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["virtual"]
+      },
+      "tags": ["virtual", "loss"]
+    },
+    {
+      "id": "commodity-symbol-converted",
+      "description": "Commodity symbols converted to codes",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["commodity", "symbol"]
+    },
+    {
+      "id": "needs-open-directives",
+      "description": "Open directives are generated",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "accounts": ["Expenses:Food", "Assets:Checking"]
+      },
+      "tags": ["account", "open"]
+    },
+    {
+      "id": "expression-evaluated",
+      "description": "Value expressions are evaluated",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Test\n    Expenses:Food  ($10 * 5)\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["expression"]
+    },
+    {
+      "id": "automated-lost",
+      "description": "Automated transactions cannot convert",
+      "source": {
+        "format": "ledger",
+        "inline": "= /Grocery/\n    (Budget:Food)  -1"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["automated"]
+      },
+      "tags": ["automated", "loss"]
+    },
+    {
+      "id": "periodic-lost",
+      "description": "Periodic transactions cannot convert",
+      "source": {
+        "format": "ledger",
+        "inline": "~ Monthly\n    Expenses:Rent  $1500\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success",
+        "warnings": ["periodic"]
+      },
+      "tags": ["periodic", "loss"]
+    },
+    {
+      "id": "date-format-converted",
+      "description": "Date format is converted to ISO",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["date", "format"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion converts",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Deposit\n    Assets:Checking  $100.00 = $1100.00\n    Income:Salary"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "lot-cost",
+      "description": "Lot cost converts to cost spec",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Buy Stock\n    Assets:Brokerage  10 AAPL {$150.00}\n    Assets:Checking  $-1500.00"
+      },
+      "target": {
+        "format": "beancount"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["lot", "cost"]
+    }
+  ]
+}

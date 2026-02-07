@@ -1,0 +1,139 @@
+name: Build Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'build/**'
+      - '.github/workflows/build-docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'build/**'
+      - '.github/workflows/build-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin pymdown-extensions
+
+      - name: Generate MkDocs configuration
+        run: |
+          cat > mkdocs.yml << 'EOF'
+          site_name: PTA Standards
+          site_description: Plain Text Accounting Format Specifications
+          repo_url: https://github.com/pta-standards/pta-standards
+          theme:
+            name: material
+            features:
+              - navigation.tabs
+              - navigation.sections
+              - navigation.expand
+              - search.highlight
+              - content.code.copy
+            palette:
+              - scheme: default
+                primary: indigo
+                accent: indigo
+          plugins:
+            - search
+            - awesome-pages
+          markdown_extensions:
+            - pymdownx.highlight
+            - pymdownx.superfences
+            - pymdownx.tabbed:
+                alternate_style: true
+            - admonition
+            - def_list
+            - tables
+            - toc:
+                permalink: true
+          nav:
+            - Home: README.md
+            - Core:
+              - Overview: core/README.md
+              - Glossary: core/glossary.md
+              - Bibliography: core/bibliography.md
+            - Formats:
+              - Beancount: formats/beancount/README.md
+              - Ledger: formats/ledger/README.md
+              - hledger: formats/hledger/README.md
+            - Tooling: tooling/README.md
+            - Tests: tests/README.md
+            - Security: security/README.md
+            - Conformance: conformance/README.md
+          EOF
+
+      - name: Build site
+        run: mkdocs build --strict
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  railroad:
+    name: Generate Railroad Diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install railroad-diagrams
+        run: npm install -g ebnf2railroad
+
+      - name: Generate diagrams
+        run: |
+          mkdir -p dist/railroad
+          for ebnf in $(find . -name '*.ebnf' -type f); do
+            name=$(basename "$ebnf" .ebnf)
+            dir=$(dirname "$ebnf")
+            echo "Generating railroad diagram for: $ebnf"
+            ebnf2railroad "$ebnf" -o "dist/railroad/${name}.svg" || echo "::warning::Failed to generate diagram for $name"
+          done
+
+      - name: Upload diagrams
+        uses: actions/upload-artifact@v4
+        with:
+          name: railroad-diagrams
+          path: dist/railroad/

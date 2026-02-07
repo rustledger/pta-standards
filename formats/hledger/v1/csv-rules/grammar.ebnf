@@ -1,0 +1,226 @@
+(* hledger CSV Rules EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This grammar defines the syntax for hledger CSV import rules files.
+ * Rules files specify how to transform CSV data into journal entries.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *)
+
+(* =========================================================================== *)
+(* TOP LEVEL                                                                   *)
+(* =========================================================================== *)
+
+file = { line, NEWLINE }, [ line ] ;
+
+line = rule
+     | conditional_block_start
+     | conditional_block_content
+     | comment_line
+     | empty_line ;
+
+empty_line = { WHITESPACE } ;
+
+comment_line = [ { WHITESPACE } ], ( ";" | "#" ), { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* RULES                                                                       *)
+(* =========================================================================== *)
+
+rule = source_rule
+     | field_rule
+     | transform_rule
+     | account_rule
+     | include_rule ;
+
+(* --------------------------------------------------------------------------- *)
+(* Source Rules                                                                *)
+(* --------------------------------------------------------------------------- *)
+
+source_rule = "skip", { WHITESPACE }, [ skip_value ]
+            | "source", { WHITESPACE }, source_pattern
+            | "separator", { WHITESPACE }, separator_char
+            | "newest-first"
+            | "intra-day-reversed" ;
+
+skip_value = number | "end" ;
+(* number = skip N lines, "end" = skip trailing lines *)
+
+source_pattern = { ANY - NEWLINE }- ;
+(* Glob pattern for source CSV files *)
+
+separator_char = single_char | quoted_char ;
+
+single_char = ANY - ( WHITESPACE | NEWLINE ) ;
+
+quoted_char = '"', ANY, '"' ;
+
+(* --------------------------------------------------------------------------- *)
+(* Field Rules                                                                 *)
+(* --------------------------------------------------------------------------- *)
+
+field_rule = "fields", { WHITESPACE }, field_list
+           | field_name, { WHITESPACE }, field_value ;
+
+field_list = field_name, { { WHITESPACE }, ",", { WHITESPACE }, field_name } ;
+
+field_name = "date" | "date2" | "status" | "code" | "description"
+           | "comment" | "account1" | "account2" | "amount"
+           | "amount-in" | "amount-out" | "currency" | "balance"
+           | identifier ;
+           (* identifier allows custom fields like %myfield *)
+
+field_value = value_template ;
+
+value_template = { template_part } ;
+
+template_part = literal_text
+              | field_ref
+              | regex_replace ;
+
+literal_text = { ANY - ( "%" | NEWLINE ) }- ;
+
+field_ref = "%", ( field_name | number | "default" )
+          | "%", "(", expression, ")" ;
+
+expression = { ANY - ")" }- ;
+
+regex_replace = field_ref, { WHITESPACE }, "/", pattern, "/", replacement, "/" ;
+
+pattern = { regex_char }- ;
+
+replacement = { ANY - "/" }- ;
+
+regex_char = ANY - ( "/" | NEWLINE )
+           | "\/" ;
+
+(* --------------------------------------------------------------------------- *)
+(* Transform Rules                                                             *)
+(* --------------------------------------------------------------------------- *)
+
+transform_rule = "date-format", { WHITESPACE }, date_format_spec
+               | "decimal-mark", { WHITESPACE }, decimal_char
+               | "currency", { WHITESPACE }, currency_symbol ;
+
+date_format_spec = { ANY - NEWLINE }- ;
+(* strftime-style format: %Y-%m-%d, %m/%d/%Y, etc. *)
+
+decimal_char = "." | "," ;
+
+currency_symbol = { ANY - ( WHITESPACE | NEWLINE ) }- ;
+
+(* --------------------------------------------------------------------------- *)
+(* Account Rules                                                               *)
+(* --------------------------------------------------------------------------- *)
+
+account_rule = "account1", { WHITESPACE }, account_value
+             | "account2", { WHITESPACE }, account_value ;
+
+account_value = value_template ;
+
+(* --------------------------------------------------------------------------- *)
+(* Include Rules                                                               *)
+(* --------------------------------------------------------------------------- *)
+
+include_rule = "include", { WHITESPACE }, file_path ;
+
+file_path = { ANY - NEWLINE }- ;
+
+(* =========================================================================== *)
+(* CONDITIONAL BLOCKS                                                          *)
+(* =========================================================================== *)
+
+conditional_block_start = "if", { WHITESPACE }, condition
+                        | "if", NEWLINE, { condition_line, NEWLINE } ;
+
+condition = regex_condition
+          | field_condition
+          | amount_condition ;
+
+condition_line = { WHITESPACE }, condition ;
+
+regex_condition = [ "!" ], "/", pattern, "/" ;
+(* Matches against description field by default *)
+
+field_condition = [ "!" ], field_name, { WHITESPACE }, comparison_op,
+                  { WHITESPACE }, value ;
+
+comparison_op = "=" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "=~" | "!~" ;
+
+amount_condition = [ "!" ], "amount", { WHITESPACE },
+                   ( amount_comparison | amount_sign ) ;
+
+amount_comparison = comparison_op, { WHITESPACE }, number ;
+
+amount_sign = "positive" | "negative" | "zero" ;
+
+conditional_block_content = WHITESPACE, { WHITESPACE }, rule
+                          | WHITESPACE, { WHITESPACE }, "&", condition ;
+                          (* & adds additional condition *)
+
+value = { ANY - NEWLINE }- ;
+
+(* =========================================================================== *)
+(* EXAMPLES                                                                    *)
+(* =========================================================================== *)
+
+(*
+ * Example rules file:
+ *
+ * # bank.csv.rules
+ * skip 1
+ * fields date, description, amount
+ * date-format %m/%d/%Y
+ * currency $
+ * account1 assets:bank:checking
+ *
+ * # Categorize by description
+ * if /WHOLE ?FOODS|TRADER JOE/
+ *   account2 expenses:food:groceries
+ *
+ * if /AMAZON|AMZN/
+ *   account2 expenses:shopping
+ *
+ * if amount > 0
+ *   account2 income:unknown
+ *
+ * if amount < 0
+ *   account2 expenses:unknown
+ *)
+
+(* =========================================================================== *)
+(* PRIMITIVES                                                                  *)
+(* =========================================================================== *)
+
+identifier = letter, { letter | digit | "-" | "_" } ;
+
+letter = ASCII_ALPHA ;
+
+number = [ "-" ], digit, { digit }, [ ".", { digit }- ] ;
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ASCII_ALPHA = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+            | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+            | "U" | "V" | "W" | "X" | "Y" | "Z"
+            | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+            | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+            | "u" | "v" | "w" | "x" | "y" | "z" ;

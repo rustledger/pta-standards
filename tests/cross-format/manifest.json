@@ -1,0 +1,21 @@
+{
+  "$schema": "../harness/manifest.schema.json",
+  "format": "cross-format",
+  "version": "1",
+  "description": "Cross-format conversion verification tests",
+  "test_directories": [
+    "beancount-to-ledger",
+    "beancount-to-hledger",
+    "ledger-to-hledger",
+    "ledger-to-beancount",
+    "hledger-to-ledger",
+    "hledger-to-beancount"
+  ],
+  "metadata": {
+    "created": "2024-02-07",
+    "spec_version": "draft"
+  },
+  "configuration": {
+    "decimal_tolerance": "0.01"
+  }
+}

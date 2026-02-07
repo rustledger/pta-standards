@@ -1,0 +1,169 @@
+name: Test Case Proposal
+description: Propose a new conformance test case
+title: "[Test]: "
+labels: ["test-case", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to propose new test cases for the PTA conformance test suite.
+        Good test cases cover edge cases, validate specific specification requirements,
+        or reproduce issues found in real-world usage.
+
+  - type: dropdown
+    id: format
+    attributes:
+      label: Format
+      description: Which format is this test case for?
+      options:
+        - Beancount v3
+        - Beancount v2
+        - Ledger
+        - hledger
+        - Cross-format
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Test Category
+      description: What type of test is this?
+      options:
+        - Syntax - Valid Input
+        - Syntax - Invalid Input
+        - Validation - Pass
+        - Validation - Fail
+        - Booking/Cost Tracking
+        - Balance Assertions
+        - Query/BQL
+        - Cross-format Conversion
+        - Regression
+        - Edge Case
+        - Unicode/Encoding
+    validations:
+      required: true
+
+  - type: input
+    id: spec-reference
+    attributes:
+      label: Specification Reference
+      description: Which part of the specification does this test verify?
+      placeholder: "e.g., formats/beancount/v3/spec/costs.md, Section 2.1"
+    validations:
+      required: false
+
+  - type: input
+    id: test-id
+    attributes:
+      label: Suggested Test ID
+      description: A unique identifier for this test case
+      placeholder: "e.g., costs-negative-price-001"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Test Description
+      description: What does this test verify?
+      placeholder: "This test verifies that negative prices in cost specifications are rejected..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: input
+    attributes:
+      label: Test Input
+      description: The input for this test case
+      render: text
+      placeholder: |
+        option "operating_currency" "USD"
+
+        2024-01-01 open Assets:Bank USD
+        2024-01-01 open Expenses:Food
+
+        2024-01-15 * "Test transaction"
+          Assets:Bank  -100 USD
+          Expenses:Food  100 USD
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Outcome
+      description: What should happen when this input is processed?
+      placeholder: |
+        Expected: Parse success, Validation failure
+        Error should contain: "negative price not allowed"
+    validations:
+      required: true
+
+  - type: textarea
+    id: json
+    attributes:
+      label: Test Case JSON (if available)
+      description: The test case in the standard JSON format
+      render: json
+      placeholder: |
+        {
+          "id": "costs-negative-price-001",
+          "description": "Negative prices should be rejected",
+          "input": "...",
+          "expected": {
+            "parse": true,
+            "validate": false,
+            "error_contains": "negative price"
+          },
+          "tags": ["costs", "validation"]
+        }
+    validations:
+      required: false
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this test case needed?
+      placeholder: |
+        - Covers an edge case not currently tested
+        - Reproduces a real-world issue
+        - Validates a recent specification change
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementations
+    attributes:
+      label: Current Implementation Behavior
+      description: How do existing implementations handle this input?
+      placeholder: |
+        - Python beancount: Rejects with error
+        - rustledger: Accepts (bug)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: attributes
+    attributes:
+      label: Test Attributes
+      options:
+        - label: This is a regression test for a specific bug
+        - label: This test may have different expected results per implementation
+        - label: This test requires a specific option or configuration
+        - label: This is a performance-sensitive test case
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have verified this test input is syntactically correct (for valid tests)
+          required: false
+        - label: I have checked that a similar test case does not already exist
+          required: true
+        - label: I am willing to submit a PR with this test case
+          required: false

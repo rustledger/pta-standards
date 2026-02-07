@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/beancount/bql/ast.json",
+  "title": "BQL AST",
+  "description": "Abstract Syntax Tree schema for Beancount Query Language",
+  "type": "object",
+  "required": ["type"],
+  "oneOf": [
+    { "$ref": "#/$defs/SelectStatement" },
+    { "$ref": "#/$defs/BalancesStatement" },
+    { "$ref": "#/$defs/JournalStatement" },
+    { "$ref": "#/$defs/PrintStatement" }
+  ],
+  "$defs": {
+    "SelectStatement": {
+      "type": "object",
+      "required": ["type", "columns"],
+      "properties": {
+        "type": {
+          "const": "SELECT"
+        },
+        "distinct": {
+          "type": "boolean",
+          "default": false
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "minItems": 1
+        },
+        "from": {
+          "$ref": "#/$defs/FromClause"
+        },
+        "where": {
+          "$ref": "#/$defs/Expression"
+        },
+        "groupBy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Expression"
+          }
+        },
+        "having": {
+          "$ref": "#/$defs/Expression"
+        },
+        "orderBy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrderByItem"
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "flatten": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "BalancesStatement": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "BALANCES"
+        },
+        "from": {
+          "$ref": "#/$defs/FromClause"
+        },
+        "where": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "JournalStatement": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "JOURNAL"
+        },
+        "account": {
+          "type": "string"
+        },
+        "from": {
+          "$ref": "#/$defs/FromClause"
+        },
+        "where": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "PrintStatement": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "PRINT"
+        },
+        "from": {
+          "$ref": "#/$defs/FromClause"
+        },
+        "where": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "Column": {
+      "type": "object",
+      "required": ["expression"],
+      "properties": {
+        "expression": {
+          "$ref": "#/$defs/Expression"
+        },
+        "alias": {
+          "type": "string"
+        }
+      }
+    },
+    "FromClause": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "$ref": "#/$defs/Expression"
+        },
+        "open": {
+          "type": "boolean",
+          "description": "OPEN ON clause"
+        },
+        "close": {
+          "type": "boolean",
+          "description": "CLOSE ON clause"
+        },
+        "clear": {
+          "type": "boolean",
+          "description": "CLEAR clause"
+        }
+      }
+    },
+    "OrderByItem": {
+      "type": "object",
+      "required": ["expression"],
+      "properties": {
+        "expression": {
+          "$ref": "#/$defs/Expression"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["ASC", "DESC"],
+          "default": "ASC"
+        }
+      }
+    },
+    "Expression": {
+      "oneOf": [
+        { "$ref": "#/$defs/Literal" },
+        { "$ref": "#/$defs/Identifier" },
+        { "$ref": "#/$defs/FunctionCall" },
+        { "$ref": "#/$defs/BinaryOp" },
+        { "$ref": "#/$defs/UnaryOp" },
+        { "$ref": "#/$defs/Wildcard" }
+      ]
+    },
+    "Literal": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": {
+          "const": "literal"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" }
+          ]
+        },
+        "dataType": {
+          "type": "string",
+          "enum": ["string", "number", "date", "boolean", "null", "account", "currency"]
+        }
+      }
+    },
+    "Identifier": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": {
+          "const": "identifier"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "FunctionCall": {
+      "type": "object",
+      "required": ["type", "name", "arguments"],
+      "properties": {
+        "type": {
+          "const": "function"
+        },
+        "name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Expression"
+          }
+        }
+      }
+    },
+    "BinaryOp": {
+      "type": "object",
+      "required": ["type", "operator", "left", "right"],
+      "properties": {
+        "type": {
+          "const": "binary"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "AND", "OR", "~", "IN", "NOT IN"]
+        },
+        "left": {
+          "$ref": "#/$defs/Expression"
+        },
+        "right": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "UnaryOp": {
+      "type": "object",
+      "required": ["type", "operator", "operand"],
+      "properties": {
+        "type": {
+          "const": "unary"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["NOT", "-"]
+        },
+        "operand": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "Wildcard": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "wildcard"
+        }
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@
   "test_directories": [
     "syntax/valid",
     "syntax/invalid",
+    "syntax/edge-cases",
     "validation",
     "booking",
     "bql",

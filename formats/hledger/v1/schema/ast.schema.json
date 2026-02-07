@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/hledger/v1/ast.schema.json",
+  "title": "hledger AST Schema",
+  "description": "JSON Schema for hledger journal file abstract syntax tree",
+  "type": "object",
+  "required": ["version", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    },
+    "metadata": {
+      "$ref": "#/$defs/FileMetadata"
+    }
+  },
+  "$defs": {
+    "FileMetadata": {
+      "type": "object",
+      "properties": {
+        "filename": { "type": "string" },
+        "parse_time_ms": { "type": "number" },
+        "line_count": { "type": "integer" },
+        "entry_count": { "type": "integer" }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "required": ["line", "column"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 0 },
+        "filename": { "type": "string" },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "end_column": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/$defs/Transaction" },
+        { "$ref": "#/$defs/AccountDirective" },
+        { "$ref": "#/$defs/CommodityDirective" },
+        { "$ref": "#/$defs/PayeeDirective" },
+        { "$ref": "#/$defs/TagDirective" },
+        { "$ref": "#/$defs/IncludeDirective" },
+        { "$ref": "#/$defs/DecimalMarkDirective" },
+        { "$ref": "#/$defs/PeriodicTransaction" },
+        { "$ref": "#/$defs/TransactionModifier" },
+        { "$ref": "#/$defs/Comment" }
+      ]
+    },
+    "Transaction": {
+      "type": "object",
+      "required": ["type", "date", "postings"],
+      "properties": {
+        "type": { "const": "transaction" },
+        "date": { "$ref": "#/$defs/Date" },
+        "date2": { "$ref": "#/$defs/Date" },
+        "status": { "$ref": "#/$defs/Status" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" },
+          "minItems": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Tag" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Date": {
+      "type": "string",
+      "pattern": "^\\d{4}[-/.]\\d{2}[-/.]\\d{2}$",
+      "description": "Date in YYYY-MM-DD, YYYY/MM/DD, or YYYY.MM.DD format"
+    },
+    "Status": {
+      "type": "string",
+      "enum": ["unmarked", "pending", "cleared"],
+      "description": "Transaction/posting status: unmarked (none), pending (!), cleared (*)"
+    },
+    "Posting": {
+      "type": "object",
+      "required": ["account"],
+      "properties": {
+        "status": { "$ref": "#/$defs/Status" },
+        "account": { "type": "string" },
+        "is_virtual": { "type": "boolean", "default": false },
+        "is_balanced_virtual": { "type": "boolean", "default": false },
+        "amount": { "$ref": "#/$defs/Amount" },
+        "price": { "$ref": "#/$defs/PriceAnnotation" },
+        "balance_assertion": { "$ref": "#/$defs/BalanceAssertion" },
+        "balance_assignment": { "$ref": "#/$defs/Amount" },
+        "comment": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Tag" }
+        },
+        "posting_date": { "$ref": "#/$defs/Date" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Amount": {
+      "type": "object",
+      "required": ["quantity", "commodity"],
+      "properties": {
+        "quantity": { "$ref": "#/$defs/Decimal" },
+        "commodity": { "type": "string" },
+        "style": { "$ref": "#/$defs/AmountStyle" }
+      }
+    },
+    "AmountStyle": {
+      "type": "object",
+      "properties": {
+        "commodity_side": {
+          "type": "string",
+          "enum": ["left", "right"]
+        },
+        "commodity_spaced": { "type": "boolean" },
+        "decimal_mark": {
+          "type": "string",
+          "enum": [".", ","]
+        },
+        "digit_groups": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "Decimal": {
+      "oneOf": [
+        { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" },
+        { "type": "number" }
+      ],
+      "description": "Decimal number as string for precision or number"
+    },
+    "PriceAnnotation": {
+      "type": "object",
+      "required": ["amount"],
+      "properties": {
+        "per_unit": { "type": "boolean", "default": true },
+        "amount": { "$ref": "#/$defs/Amount" }
+      }
+    },
+    "BalanceAssertion": {
+      "type": "object",
+      "required": ["amount"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/Amount" },
+        "inclusive": { "type": "boolean", "default": false }
+      }
+    },
+    "Tag": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
+        "value": { "type": "string" }
+      }
+    },
+    "AccountDirective": {
+      "type": "object",
+      "required": ["type", "account"],
+      "properties": {
+        "type": { "const": "account" },
+        "account": { "type": "string" },
+        "account_type": {
+          "type": "string",
+          "enum": ["Asset", "Liability", "Equity", "Revenue", "Expense", "Cash"]
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "note": { "type": "string" },
+        "default": { "type": "boolean" },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "CommodityDirective": {
+      "type": "object",
+      "required": ["type", "commodity"],
+      "properties": {
+        "type": { "const": "commodity" },
+        "commodity": { "type": "string" },
+        "format": { "$ref": "#/$defs/Amount" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "PayeeDirective": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "payee" },
+        "name": { "type": "string" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "TagDirective": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "tag" },
+        "name": { "type": "string" },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "IncludeDirective": {
+      "type": "object",
+      "required": ["type", "path"],
+      "properties": {
+        "type": { "const": "include" },
+        "path": { "type": "string" },
+        "is_glob": { "type": "boolean", "default": false },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "DecimalMarkDirective": {
+      "type": "object",
+      "required": ["type", "mark"],
+      "properties": {
+        "type": { "const": "decimal_mark" },
+        "mark": {
+          "type": "string",
+          "enum": [".", ","]
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "PeriodicTransaction": {
+      "type": "object",
+      "required": ["type", "period", "postings"],
+      "properties": {
+        "type": { "const": "periodic" },
+        "period": { "type": "string" },
+        "description": { "type": "string" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "TransactionModifier": {
+      "type": "object",
+      "required": ["type", "query", "postings"],
+      "properties": {
+        "type": { "const": "modifier" },
+        "query": { "type": "string" },
+        "postings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Posting" }
+        },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "comment" },
+        "text": { "type": "string" },
+        "is_block": { "type": "boolean", "default": false },
+        "location": { "$ref": "#/$defs/Location" }
+      }
+    }
+  }
+}

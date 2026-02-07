@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/hledger/timedot/ast.json",
+  "title": "Timedot AST",
+  "description": "Abstract Syntax Tree schema for hledger timedot format",
+  "type": "object",
+  "required": ["version", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Entry"
+      },
+      "description": "List of timedot entries"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceInfo"
+    }
+  },
+  "$defs": {
+    "Entry": {
+      "type": "object",
+      "required": ["date", "activities"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Entry date in YYYY-MM-DD format"
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Activity"
+          },
+          "description": "List of activities for this date"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      }
+    },
+    "Activity": {
+      "type": "object",
+      "required": ["account", "duration"],
+      "properties": {
+        "account": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9:_-]*$",
+          "description": "Account name for the activity"
+        },
+        "duration": {
+          "$ref": "#/$defs/Duration"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags attached to this activity"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Optional comment"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      }
+    },
+    "Duration": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "dots"],
+          "properties": {
+            "type": {
+              "const": "dots"
+            },
+            "dots": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of dots (each dot = 0.25 hours)"
+            },
+            "hours": {
+              "type": "number",
+              "description": "Calculated hours value"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "hours"],
+          "properties": {
+            "type": {
+              "const": "numeric"
+            },
+            "hours": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Duration in hours"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "start", "end"],
+          "properties": {
+            "type": {
+              "const": "range"
+            },
+            "start": {
+              "type": "string",
+              "pattern": "^[0-9]{1,2}:[0-9]{2}$",
+              "description": "Start time (HH:MM)"
+            },
+            "end": {
+              "type": "string",
+              "pattern": "^[0-9]{1,2}:[0-9]{2}$",
+              "description": "End time (HH:MM)"
+            },
+            "hours": {
+              "type": "number",
+              "description": "Calculated duration in hours"
+            }
+          }
+        }
+      ]
+    },
+    "Location": {
+      "type": "object",
+      "required": ["line"],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Line number (1-based)"
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Column number (1-based)"
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endColumn": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "SourceInfo": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Source filename"
+        },
+        "encoding": {
+          "type": "string",
+          "default": "utf-8"
+        }
+      }
+    }
+  }
+}

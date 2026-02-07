@@ -1,0 +1,150 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "ledger-validation",
+  "description": "Ledger semantic validation tests",
+  "tests": [
+    {
+      "id": "balance-check-pass",
+      "description": "Transaction balances correctly",
+      "input": {"inline": "2024/01/15 Test\n    Assets:Checking  $100.00\n    Income:Salary  $-100.00"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["balance"]
+    },
+    {
+      "id": "balance-check-fail",
+      "description": "Transaction does not balance",
+      "input": {"inline": "2024/01/15 Test\n    Assets:Checking  $100.00\n    Income:Salary  $-99.00"},
+      "expected": {"parse": "success", "validate": "error", "error_contains": ["balance"]},
+      "tags": ["balance"]
+    },
+    {
+      "id": "balance-elided-single",
+      "description": "Single elided posting balances",
+      "input": {"inline": "2024/01/15 Test\n    Assets:Checking  $100.00\n    Income:Salary"},
+      "expected": {"validate": "success"},
+      "tags": ["balance", "elision"]
+    },
+    {
+      "id": "balance-assertion-pass",
+      "description": "Balance assertion succeeds",
+      "input": {"inline": "2024/01/01 Opening\n    Assets:Checking  $1000.00\n    Equity:Opening\n\n2024/01/15 Deposit\n    Assets:Checking  $100.00 = $1100.00\n    Income:Salary"},
+      "expected": {"validate": "success"},
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "balance-assertion-fail",
+      "description": "Balance assertion fails",
+      "input": {"inline": "2024/01/01 Opening\n    Assets:Checking  $1000.00\n    Equity:Opening\n\n2024/01/15 Deposit\n    Assets:Checking  $100.00 = $9999.00\n    Income:Salary"},
+      "expected": {"validate": "error", "error_contains": ["balance", "assertion"]},
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "virtual-unbalanced-ok",
+      "description": "Virtual postings don't need to balance",
+      "input": {"inline": "2024/01/15 Test\n    Assets:Checking  $100.00\n    Income:Salary  $-100.00\n    (Budget:Available)  $100.00"},
+      "expected": {"validate": "success"},
+      "tags": ["virtual", "balance"]
+    },
+    {
+      "id": "virtual-balanced-must-balance",
+      "description": "Balanced virtual postings must balance",
+      "input": {"inline": "2024/01/15 Test\n    Assets:Checking  $100.00\n    Income:Salary  $-100.00\n    [Reserve:Savings]  $50.00"},
+      "expected": {"validate": "error"},
+      "tags": ["virtual", "balance"]
+    },
+    {
+      "id": "multi-commodity-exchange",
+      "description": "Multi-commodity exchange with price",
+      "input": {"inline": "2024/01/15 Exchange\n    Assets:EUR  100 EUR @ $1.10\n    Assets:USD  $-110.00"},
+      "expected": {"validate": "success"},
+      "tags": ["commodity", "exchange"]
+    },
+    {
+      "id": "multi-commodity-no-price",
+      "description": "Multi-commodity without price fails",
+      "input": {"inline": "2024/01/15 Exchange\n    Assets:EUR  100 EUR\n    Assets:USD  $-110.00"},
+      "expected": {"validate": "error"},
+      "tags": ["commodity", "exchange"]
+    },
+    {
+      "id": "lot-cost-tracking",
+      "description": "Lot cost is tracked correctly",
+      "input": {"inline": "2024/01/15 Buy\n    Assets:Brokerage  10 AAPL @ $150.00\n    Assets:Checking  $-1500.00\n\n2024/06/15 Sell\n    Assets:Checking  $1600.00\n    Assets:Brokerage  -10 AAPL {$150.00} @ $160.00\n    Income:Gains  $-100.00"},
+      "expected": {"validate": "success"},
+      "tags": ["lot", "cost"]
+    },
+    {
+      "id": "lot-insufficient",
+      "description": "Selling more lots than owned",
+      "input": {"inline": "2024/01/15 Buy\n    Assets:Brokerage  5 AAPL @ $150.00\n    Assets:Checking  $-750.00\n\n2024/06/15 Sell\n    Assets:Checking  $1600.00\n    Assets:Brokerage  -10 AAPL {$150.00}\n    Income:Gains"},
+      "expected": {"validate": "error"},
+      "tags": ["lot"],
+      "skip": true,
+      "skip_reason": "Ledger allows negative lots by default"
+    },
+    {
+      "id": "assert-pass",
+      "description": "Assert directive succeeds",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $1000.00\n    Equity:Opening\n\nassert account(\"Assets:Checking\") == $1000"},
+      "expected": {"validate": "success"},
+      "tags": ["assert"]
+    },
+    {
+      "id": "assert-fail",
+      "description": "Assert directive fails",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $1000.00\n    Equity:Opening\n\nassert account(\"Assets:Checking\") == $9999"},
+      "expected": {"validate": "error", "error_contains": ["assert"]},
+      "tags": ["assert"]
+    },
+    {
+      "id": "check-warning",
+      "description": "Check directive produces warning",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $-100.00\n    Expenses:Overdraft\n\ncheck account(\"Assets:Checking\") >= $0"},
+      "expected": {"validate": "success"},
+      "tags": ["check"],
+      "skip": true,
+      "skip_reason": "Check produces warning, not error"
+    },
+    {
+      "id": "account-directive-enforcement",
+      "description": "Account directive with strict flag",
+      "input": {"inline": "account Assets:Checking\n\n2024/01/15 Test\n    Assets:Checking  $100\n    Assets:Undefined"},
+      "expected": {"validate": "error"},
+      "tags": ["account", "strict"],
+      "skip": true,
+      "skip_reason": "Requires --strict flag"
+    },
+    {
+      "id": "commodity-format-check",
+      "description": "Commodity format is enforced",
+      "input": {"inline": "commodity $\n    format $1,000.00\n\n2024/01/15 Test\n    Assets:A  $100.00\n    Assets:B"},
+      "expected": {"validate": "success"},
+      "tags": ["commodity", "format"]
+    },
+    {
+      "id": "date-ordering",
+      "description": "Transactions in date order",
+      "input": {"inline": "2024/01/15 First\n    Assets:A  $100\n    Assets:B\n\n2024/01/10 Second\n    Assets:A  $50\n    Assets:B"},
+      "expected": {"validate": "success"},
+      "tags": ["date", "order"],
+      "skip": true,
+      "skip_reason": "Ledger allows any order, sorts internally"
+    },
+    {
+      "id": "effective-date-validation",
+      "description": "Effective date is after actual date",
+      "input": {"inline": "2024/01/15=2024/01/10 Effective before actual\n    Assets:A  $100\n    Assets:B"},
+      "expected": {"validate": "success"},
+      "tags": ["date", "effective"],
+      "skip": true,
+      "skip_reason": "Not enforced by default"
+    },
+    {
+      "id": "bucket-auto-balance",
+      "description": "Bucket automatically balances single posting",
+      "input": {"inline": "bucket Assets:Checking\n\n2024/01/15 Test\n    Expenses:Food  $50.00"},
+      "expected": {"validate": "success"},
+      "tags": ["bucket"]
+    }
+  ]
+}

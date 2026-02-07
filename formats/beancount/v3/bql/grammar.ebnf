@@ -1,0 +1,332 @@
+(* Beancount Query Language (BQL) EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * BQL is a SQL-like query language for querying Beancount ledgers.
+ * It supports SELECT, BALANCES, JOURNAL, and PRINT statements.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *)
+
+(* =========================================================================== *)
+(* STATEMENTS                                                                  *)
+(* =========================================================================== *)
+
+statement = select_statement
+          | balances_statement
+          | journal_statement
+          | print_statement
+          | run_statement
+          | explain_statement ;
+
+(* --------------------------------------------------------------------------- *)
+(* SELECT Statement                                                            *)
+(* --------------------------------------------------------------------------- *)
+
+select_statement = "SELECT", [ "DISTINCT" ], select_list,
+                   [ from_clause ],
+                   [ where_clause ],
+                   [ group_by_clause ],
+                   [ having_clause ],
+                   [ order_by_clause ],
+                   [ limit_clause ],
+                   [ "FLATTEN" ] ;
+
+select_list = "*" | column_list ;
+
+column_list = column, { ",", column } ;
+
+column = expression, [ [ "AS" ], alias ] ;
+
+alias = identifier ;
+
+from_clause = "FROM", from_expression ;
+
+from_expression = identifier
+                | "OPEN", "ON", date
+                | "CLOSE", "ON", date
+                | "CLEAR" ;
+
+where_clause = "WHERE", expression ;
+
+group_by_clause = "GROUP", "BY", expression_list ;
+
+expression_list = expression, { ",", expression } ;
+
+having_clause = "HAVING", expression ;
+
+order_by_clause = "ORDER", "BY", order_list ;
+
+order_list = order_item, { ",", order_item } ;
+
+order_item = expression, [ "ASC" | "DESC" ] ;
+
+limit_clause = "LIMIT", integer ;
+
+(* --------------------------------------------------------------------------- *)
+(* BALANCES Statement                                                          *)
+(* --------------------------------------------------------------------------- *)
+
+balances_statement = "BALANCES", [ from_clause ], [ where_clause ] ;
+
+(* --------------------------------------------------------------------------- *)
+(* JOURNAL Statement                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+journal_statement = "JOURNAL", [ account_pattern ],
+                    [ from_clause ], [ where_clause ] ;
+
+account_pattern = account_name | string_literal ;
+
+(* --------------------------------------------------------------------------- *)
+(* PRINT Statement                                                             *)
+(* --------------------------------------------------------------------------- *)
+
+print_statement = "PRINT", [ from_clause ], [ where_clause ] ;
+
+(* --------------------------------------------------------------------------- *)
+(* RUN Statement                                                               *)
+(* --------------------------------------------------------------------------- *)
+
+run_statement = "RUN", string_literal ;
+
+(* --------------------------------------------------------------------------- *)
+(* EXPLAIN Statement                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+explain_statement = "EXPLAIN", statement ;
+
+(* =========================================================================== *)
+(* EXPRESSIONS                                                                 *)
+(* =========================================================================== *)
+
+expression = or_expression ;
+
+or_expression = and_expression, { "OR", and_expression } ;
+
+and_expression = not_expression, { "AND", not_expression } ;
+
+not_expression = [ "NOT" ], comparison_expression ;
+
+comparison_expression = additive_expression,
+                        [ comparison_operator, additive_expression ]
+                      | additive_expression, in_expression
+                      | additive_expression, between_expression ;
+
+comparison_operator = "=" | "==" | "!=" | "<>" | "<" | "<=" | ">" | ">="
+                    | "~" | "!~" ;
+                    (* ~ is regex match *)
+
+in_expression = [ "NOT" ], "IN", "(", expression_list, ")" ;
+
+between_expression = [ "NOT" ], "BETWEEN", additive_expression,
+                     "AND", additive_expression ;
+
+additive_expression = multiplicative_expression,
+                      { ( "+" | "-" ), multiplicative_expression } ;
+
+multiplicative_expression = unary_expression,
+                            { ( "*" | "/" ), unary_expression } ;
+
+unary_expression = [ "-" ], postfix_expression ;
+
+postfix_expression = primary_expression, { ".", identifier } ;
+
+primary_expression = literal
+                   | identifier
+                   | function_call
+                   | "(", expression, ")"
+                   | case_expression ;
+
+(* =========================================================================== *)
+(* LITERALS                                                                    *)
+(* =========================================================================== *)
+
+literal = null_literal
+        | boolean_literal
+        | integer_literal
+        | decimal_literal
+        | string_literal
+        | date_literal
+        | account_literal
+        | currency_literal ;
+
+null_literal = "NULL" ;
+
+boolean_literal = "TRUE" | "FALSE" ;
+
+integer_literal = [ "-" ], digit, { digit } ;
+
+decimal_literal = [ "-" ], { digit }, ".", { digit }- ;
+
+string_literal = '"', { string_char }, '"'
+               | "'", { string_char_single }, "'" ;
+
+string_char = ANY - ( '"' | "\" | NEWLINE )
+            | "\", escape_char ;
+
+string_char_single = ANY - ( "'" | "\" | NEWLINE )
+                   | "\", escape_char ;
+
+escape_char = "n" | "r" | "t" | "\" | '"' | "'" ;
+
+date_literal = digit, digit, digit, digit, "-",
+               digit, digit, "-",
+               digit, digit ;
+
+account_literal = account_type, { ":", account_component }- ;
+
+account_type = "Assets" | "Liabilities" | "Equity" | "Income" | "Expenses" ;
+
+account_component = ( ASCII_ALPHA_UPPER | digit ), { ASCII_ALPHANUMERIC | "-" } ;
+
+currency_literal = ASCII_ALPHA_UPPER, { ASCII_ALPHA_UPPER | digit | "." | "-" | "_" } ;
+
+(* =========================================================================== *)
+(* FUNCTION CALLS                                                              *)
+(* =========================================================================== *)
+
+function_call = function_name, "(", [ argument_list ], ")" ;
+
+function_name = identifier ;
+
+argument_list = expression, { ",", expression } ;
+
+(* =========================================================================== *)
+(* CASE EXPRESSION                                                             *)
+(* =========================================================================== *)
+
+case_expression = "CASE", [ expression ],
+                  { when_clause }-,
+                  [ else_clause ],
+                  "END" ;
+
+when_clause = "WHEN", expression, "THEN", expression ;
+
+else_clause = "ELSE", expression ;
+
+(* =========================================================================== *)
+(* BUILT-IN COLUMNS                                                            *)
+(* =========================================================================== *)
+
+(*
+ * Transaction columns:
+ *   id          - transaction ID
+ *   date        - transaction date
+ *   flag        - transaction flag (* or !)
+ *   payee       - payee string
+ *   narration   - narration string
+ *   tags        - set of tags
+ *   links       - set of links
+ *   filename    - source filename
+ *   lineno      - source line number
+ *
+ * Posting columns:
+ *   account     - account name
+ *   number      - amount number
+ *   currency    - amount currency
+ *   cost_number - cost number
+ *   cost_currency - cost currency
+ *   cost_date   - cost date
+ *   cost_label  - cost label
+ *   price       - price amount
+ *   weight      - weight (for average cost)
+ *   position    - position (inventory)
+ *   balance     - running balance
+ *)
+
+(* =========================================================================== *)
+(* BUILT-IN FUNCTIONS                                                          *)
+(* =========================================================================== *)
+
+(*
+ * Aggregation functions:
+ *   SUM(x)       - sum of values
+ *   COUNT(x)     - count of rows
+ *   FIRST(x)     - first value
+ *   LAST(x)      - last value
+ *   MIN(x)       - minimum value
+ *   MAX(x)       - maximum value
+ *
+ * Type functions:
+ *   UNITS(pos)   - get units from position
+ *   COST(pos)    - get cost from position
+ *   VALUE(pos)   - get value at date
+ *   CONVERT(amt, cur) - convert to currency
+ *   NUMBER(amt)  - extract number
+ *   CURRENCY(amt) - extract currency
+ *
+ * Date functions:
+ *   YEAR(date)   - year component
+ *   MONTH(date)  - month component
+ *   DAY(date)    - day component
+ *   QUARTER(date) - quarter (1-4)
+ *   WEEKDAY(date) - weekday (0-6)
+ *   TODAY()      - current date
+ *
+ * String functions:
+ *   LENGTH(s)    - string length
+ *   UPPER(s)     - uppercase
+ *   LOWER(s)     - lowercase
+ *   SUBSTR(s, start, len) - substring
+ *   COALESCE(x, y, ...) - first non-null
+ *   JOINSTR(sep, x, ...) - join with separator
+ *
+ * Account functions:
+ *   ROOT(acct, n) - root n levels
+ *   PARENT(acct)  - parent account
+ *   LEAF(acct)    - leaf name only
+ *   GREP(pattern, acct) - regex match
+ *   OPEN_DATE(acct) - account open date
+ *   CLOSE_DATE(acct) - account close date
+ *   META(key)    - metadata value
+ *   ENTRY_META(key) - entry metadata
+ *
+ * Logical functions:
+ *   ANY_META(key) - any metadata matches
+ *)
+
+(* =========================================================================== *)
+(* IDENTIFIERS                                                                 *)
+(* =========================================================================== *)
+
+identifier = letter, { letter | digit | "_" } ;
+
+letter = ASCII_ALPHA ;
+
+account_name = identifier, { ":", identifier } ;
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+integer = digit, { digit } ;
+
+date = digit, digit, digit, digit, "-", digit, digit, "-", digit, digit ;
+
+ASCII_ALPHA = ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER ;
+
+ASCII_ALPHA_UPPER = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+                  | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+                  | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+ASCII_ALPHA_LOWER = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+                  | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+                  | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+ASCII_ALPHANUMERIC = ASCII_ALPHA | digit ;

@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/errors/sarif-pta.json",
+  "title": "PTA SARIF Extension",
+  "description": "SARIF 2.1.0 extensions for PTA error reporting",
+  "$comment": "This schema defines PTA-specific extensions to SARIF. For the full SARIF schema, see https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "type": "object",
+  "required": ["$schema", "version", "runs"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "SARIF schema URI"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.1.0"
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Run"
+      },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "Run": {
+      "type": "object",
+      "required": ["tool", "results"],
+      "properties": {
+        "tool": {
+          "$ref": "#/$defs/Tool"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Result"
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Artifact"
+          }
+        },
+        "properties": {
+          "$ref": "#/$defs/PTARunProperties"
+        }
+      }
+    },
+    "Tool": {
+      "type": "object",
+      "required": ["driver"],
+      "properties": {
+        "driver": {
+          "$ref": "#/$defs/ToolComponent"
+        }
+      }
+    },
+    "ToolComponent": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tool name (e.g., 'bean-check', 'ledger', 'hledger')"
+        },
+        "version": {
+          "type": "string"
+        },
+        "informationUri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReportingDescriptor"
+          }
+        }
+      }
+    },
+    "ReportingDescriptor": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "PTA error code (e.g., 'E1001')"
+        },
+        "name": {
+          "type": "string"
+        },
+        "shortDescription": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" }
+          }
+        },
+        "fullDescription": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" }
+          }
+        },
+        "helpUri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "defaultConfiguration": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["none", "note", "warning", "error"]
+            }
+          }
+        },
+        "properties": {
+          "$ref": "#/$defs/PTARuleProperties"
+        }
+      }
+    },
+    "Result": {
+      "type": "object",
+      "required": ["ruleId", "message"],
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["none", "note", "warning", "error"],
+          "default": "warning"
+        },
+        "message": {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "text": { "type": "string" }
+          }
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        },
+        "relatedLocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        },
+        "fixes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Fix"
+          }
+        },
+        "properties": {
+          "$ref": "#/$defs/PTAResultProperties"
+        }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "properties": {
+        "physicalLocation": {
+          "type": "object",
+          "properties": {
+            "artifactLocation": {
+              "type": "object",
+              "properties": {
+                "uri": { "type": "string" },
+                "uriBaseId": { "type": "string" }
+              }
+            },
+            "region": {
+              "type": "object",
+              "properties": {
+                "startLine": { "type": "integer", "minimum": 1 },
+                "startColumn": { "type": "integer", "minimum": 1 },
+                "endLine": { "type": "integer", "minimum": 1 },
+                "endColumn": { "type": "integer", "minimum": 1 },
+                "snippet": {
+                  "type": "object",
+                  "properties": {
+                    "text": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Artifact": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "object",
+          "properties": {
+            "uri": { "type": "string" }
+          }
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "e.g., 'text/x-beancount'"
+        }
+      }
+    },
+    "Fix": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" }
+          }
+        },
+        "artifactChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "artifactLocation": {
+                "type": "object",
+                "properties": {
+                  "uri": { "type": "string" }
+                }
+              },
+              "replacements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "deletedRegion": {
+                      "type": "object",
+                      "properties": {
+                        "startLine": { "type": "integer" },
+                        "startColumn": { "type": "integer" },
+                        "endLine": { "type": "integer" },
+                        "endColumn": { "type": "integer" }
+                      }
+                    },
+                    "insertedContent": {
+                      "type": "object",
+                      "properties": {
+                        "text": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PTARunProperties": {
+      "type": "object",
+      "description": "PTA-specific run properties",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["beancount", "ledger", "hledger"]
+        },
+        "formatVersion": {
+          "type": "string"
+        },
+        "entryFile": {
+          "type": "string"
+        },
+        "includedFiles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "PTARuleProperties": {
+      "type": "object",
+      "description": "PTA-specific rule properties",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["parse", "validation", "style", "correctness", "consistency"]
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["beancount", "ledger", "hledger"]
+          },
+          "description": "Formats this rule applies to"
+        },
+        "fixable": {
+          "type": "boolean",
+          "description": "Whether this rule has an auto-fix"
+        }
+      }
+    },
+    "PTAResultProperties": {
+      "type": "object",
+      "description": "PTA-specific result properties",
+      "properties": {
+        "account": {
+          "type": "string",
+          "description": "Related account name"
+        },
+        "commodity": {
+          "type": "string",
+          "description": "Related commodity"
+        },
+        "transactionDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "expectedBalance": {
+          "type": "string"
+        },
+        "actualBalance": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

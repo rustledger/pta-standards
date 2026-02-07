@@ -1,0 +1,117 @@
+name: Specification Clarification
+description: Request clarification on an ambiguous or unclear part of the specification
+title: "[Clarification]: "
+labels: ["clarification", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request clarification on parts of the PTA specification
+        that are ambiguous, unclear, or seem contradictory.
+
+  - type: dropdown
+    id: format
+    attributes:
+      label: Format
+      description: Which format specification is this about?
+      options:
+        - Beancount
+        - Ledger
+        - hledger
+        - Core (applies to all formats)
+        - Cross-format compatibility
+    validations:
+      required: true
+
+  - type: input
+    id: section
+    attributes:
+      label: Specification Section
+      description: Which section of the specification needs clarification?
+      placeholder: "e.g., formats/beancount/v3/spec/costs.md, Section 3.2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-text
+    attributes:
+      label: Current Specification Text
+      description: Quote the relevant text from the specification
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: confusion
+    attributes:
+      label: What is Unclear
+      description: Explain what is ambiguous or confusing about this text
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Input
+      description: Provide an example that demonstrates the ambiguity
+      render: text
+      placeholder: |
+        ; This input could be interpreted in multiple ways:
+        2024-01-01 * "Example"
+          Assets:Bank  100 USD {10 EUR}
+    validations:
+      required: false
+
+  - type: textarea
+    id: interpretations
+    attributes:
+      label: Possible Interpretations
+      description: What are the different ways this could be interpreted?
+      placeholder: |
+        1. Interpretation A: The specification could mean...
+        2. Interpretation B: Alternatively, it could mean...
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementations
+    attributes:
+      label: Implementation Behavior
+      description: How do existing implementations handle this?
+      placeholder: |
+        - Python beancount: Does X
+        - Ledger CLI: Does Y
+        - hledger: Does Z
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Clarification
+      description: How would you suggest clarifying this text?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact Assessment
+      options:
+        - label: This affects parsing behavior
+        - label: This affects validation behavior
+        - label: This affects report output
+        - label: This could cause compatibility issues between implementations
+        - label: This needs test cases to verify the clarification
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues for similar clarification requests
+          required: true
+        - label: I have checked the glossary for relevant term definitions
+          required: false

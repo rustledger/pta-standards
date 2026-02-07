@@ -1,0 +1,152 @@
+(* Timedot EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * Timedot is a simple time-logging format used by hledger.
+ * Each line records time spent on activities using dots or numbers.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *)
+
+(* =========================================================================== *)
+(* TOP LEVEL                                                                   *)
+(* =========================================================================== *)
+
+file = { line, NEWLINE }, [ line ] ;
+
+line = date_line
+     | activity_line
+     | comment_line
+     | empty_line ;
+
+empty_line = { WHITESPACE } ;
+
+comment_line = [ { WHITESPACE } ], ( ";" | "#" | "*" ), { ANY - NEWLINE } ;
+
+(* =========================================================================== *)
+(* DATE LINES                                                                  *)
+(* =========================================================================== *)
+
+(* Date line starts a new day's entries *)
+date_line = date, [ { WHITESPACE }, description ], [ trailing_comment ] ;
+
+date = year, date_sep, month, date_sep, day
+     | year, date_sep, month
+     | month, date_sep, day
+     | day_of_week ;
+
+date_sep = "-" | "/" | "." ;
+
+year = digit, digit, digit, digit ;
+
+month = digit, [ digit ] ;
+
+day = digit, [ digit ] ;
+
+day_of_week = "monday" | "tuesday" | "wednesday" | "thursday"
+            | "friday" | "saturday" | "sunday"
+            | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun" ;
+
+description = { ANY - ( ";" | "#" | NEWLINE ) } ;
+
+(* =========================================================================== *)
+(* ACTIVITY LINES                                                              *)
+(* =========================================================================== *)
+
+(* Activity line records time for an account *)
+activity_line = account, [ { WHITESPACE }-, duration ], [ trailing_comment ] ;
+
+account = account_component, { ":", account_component } ;
+
+account_component = { ANY - ( ":" | WHITESPACE | NEWLINE | ";" | "#" ) }- ;
+
+(* =========================================================================== *)
+(* DURATION FORMATS                                                            *)
+(* =========================================================================== *)
+
+duration = dot_duration
+         | numeric_duration
+         | time_range ;
+
+(* Dots: each dot = 0.25 hours (15 minutes) *)
+dot_duration = { "." | "+" | "-" | "o" | "O" | "0" }- ;
+(*
+ * Dot meanings:
+ *   .    = 0.25 hours (15 min)
+ *   ..   = 0.50 hours (30 min)
+ *   .... = 1.00 hour
+ *   +    = same as .
+ *   -    = same as . (visual variety)
+ *   o/O/0 = same as . (visual variety)
+ *)
+
+(* Numeric: decimal hours *)
+numeric_duration = number, [ WHITESPACE, unit ] ;
+
+number = [ "-" ], integer_part, [ ".", fractional_part ] ;
+
+integer_part = digit, { digit } ;
+
+fractional_part = { digit }- ;
+
+unit = "h" | "hr" | "hrs" | "hour" | "hours"
+     | "m" | "min" | "mins" | "minute" | "minutes"
+     | "s" | "sec" | "secs" | "second" | "seconds" ;
+
+(* Time range: start-end *)
+time_range = time, { WHITESPACE }, "-", { WHITESPACE }, time ;
+
+time = hour, [ ":", minute, [ ":", second ] ]
+     | hour, [ ".", fraction ] ;
+
+hour = digit, [ digit ] ;
+
+minute = digit, digit ;
+
+second = digit, digit ;
+
+fraction = { digit }- ;
+
+(* =========================================================================== *)
+(* EXAMPLES                                                                    *)
+(* =========================================================================== *)
+
+(*
+ * Example timedot file:
+ *
+ * 2024-01-15 Monday
+ * fos:hledger  ....
+ * client:acme  .... ....
+ * admin:email  ..
+ *
+ * 2024-01-16
+ * fos:hledger  1.5h
+ * client:acme  2h
+ * admin        0.5
+ *
+ * 2024-01-17
+ * client:acme  9:00-12:00
+ * lunch        12:00-13:00
+ * client:acme  13:00-17:30
+ *)
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+trailing_comment = { WHITESPACE }, ( ";" | "#" ), { ANY - NEWLINE } ;
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;

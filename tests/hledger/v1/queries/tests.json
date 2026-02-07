@@ -1,0 +1,133 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "hledger-queries",
+  "description": "hledger query filter tests",
+  "tests": [
+    {
+      "id": "query-account-simple",
+      "description": "Simple account filter",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100\n    income:salary\n\n2024-01-16 Test\n    expenses:food  $50\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "account"]
+    },
+    {
+      "id": "query-account-regex",
+      "description": "Account filter with regex",
+      "input": {"inline": "2024-01-15 Test\n    assets:bank:checking  $100\n    assets:bank:savings  $200\n    income:salary"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "account", "regex"]
+    },
+    {
+      "id": "query-desc",
+      "description": "Description filter",
+      "input": {"inline": "2024-01-15 Grocery Store\n    expenses:food  $50\n    assets:checking\n\n2024-01-16 Gas Station\n    expenses:auto  $40\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "description"]
+    },
+    {
+      "id": "query-date-range",
+      "description": "Date range filter",
+      "input": {"inline": "2024-01-10 Before\n    expenses:a  $100\n    assets:b\n\n2024-01-20 During\n    expenses:a  $200\n    assets:b\n\n2024-01-30 After\n    expenses:a  $300\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "date"]
+    },
+    {
+      "id": "query-tag-exists",
+      "description": "Filter by tag existence",
+      "input": {"inline": "2024-01-15 With Tag\n    ; project: alpha\n    expenses:a  $100\n    assets:b\n\n2024-01-16 Without Tag\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "tag"]
+    },
+    {
+      "id": "query-tag-value",
+      "description": "Filter by tag value",
+      "input": {"inline": "2024-01-15 Alpha\n    ; project: alpha\n    expenses:a  $100\n    assets:b\n\n2024-01-16 Beta\n    ; project: beta\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "tag"]
+    },
+    {
+      "id": "query-status-cleared",
+      "description": "Filter cleared transactions",
+      "input": {"inline": "2024-01-15 * Cleared\n    expenses:a  $100\n    assets:b\n\n2024-01-16 ! Pending\n    expenses:a  $50\n    assets:b\n\n2024-01-17 Unmarked\n    expenses:a  $25\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "status"]
+    },
+    {
+      "id": "query-status-pending",
+      "description": "Filter pending transactions",
+      "input": {"inline": "2024-01-15 * Cleared\n    expenses:a  $100\n    assets:b\n\n2024-01-16 ! Pending\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "status"]
+    },
+    {
+      "id": "query-amount-positive",
+      "description": "Filter by positive amount",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food  $100\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "amount"]
+    },
+    {
+      "id": "query-amount-range",
+      "description": "Filter by amount range",
+      "input": {"inline": "2024-01-15 Small\n    expenses:a  $10\n    assets:b\n\n2024-01-16 Medium\n    expenses:a  $100\n    assets:b\n\n2024-01-17 Large\n    expenses:a  $1000\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "amount"]
+    },
+    {
+      "id": "query-payee",
+      "description": "Filter by payee",
+      "input": {"inline": "2024-01-15 * Acme Corp | payment\n    expenses:a  $100\n    assets:b\n\n2024-01-16 * Other Inc | payment\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "payee"]
+    },
+    {
+      "id": "query-note",
+      "description": "Filter by note",
+      "input": {"inline": "2024-01-15 * Payee | important note\n    expenses:a  $100\n    assets:b\n\n2024-01-16 * Payee | regular\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "note"]
+    },
+    {
+      "id": "query-code",
+      "description": "Filter by code/check number",
+      "input": {"inline": "2024-01-15 * (1001) Check One\n    expenses:a  $100\n    assets:b\n\n2024-01-16 * (1002) Check Two\n    expenses:a  $50\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "code"]
+    },
+    {
+      "id": "query-real",
+      "description": "Filter real (non-virtual) postings",
+      "input": {"inline": "2024-01-15 Test\n    expenses:a  $100\n    (budget:a)  $-100\n    assets:b"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "real"]
+    },
+    {
+      "id": "query-not",
+      "description": "Negated query",
+      "input": {"inline": "2024-01-15 Food\n    expenses:food  $50\n    assets:checking\n\n2024-01-16 Transport\n    expenses:transport  $30\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "not"]
+    },
+    {
+      "id": "query-and",
+      "description": "Combined query with AND",
+      "input": {"inline": "2024-01-15 * Tagged Food\n    ; category: food\n    expenses:food  $50\n    assets:checking\n\n2024-01-16 Untagged Food\n    expenses:food  $30\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "and"]
+    },
+    {
+      "id": "query-or",
+      "description": "Combined query with OR",
+      "input": {"inline": "2024-01-15 Food\n    expenses:food  $50\n    assets:checking\n\n2024-01-16 Transport\n    expenses:transport  $30\n    assets:checking\n\n2024-01-17 Utilities\n    expenses:utilities  $100\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "or"]
+    },
+    {
+      "id": "query-depth",
+      "description": "Query with account depth limit",
+      "input": {"inline": "2024-01-15 Test\n    expenses:food:grocery:produce  $20\n    expenses:food:restaurant  $50\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["query", "depth"]
+    }
+  ]
+}

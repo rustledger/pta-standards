@@ -1,0 +1,230 @@
+# hledger fuzzing dictionary
+# Tokens meaningful to the hledger parser
+
+# Directive keywords
+"account"
+"alias"
+"commodity"
+"decimal-mark"
+"include"
+"payee"
+"tag"
+"end"
+"apply"
+"comment"
+"D"
+"P"
+"Y"
+
+# Transaction states
+"*"
+"!"
+" "
+
+# Periodic transaction
+"~"
+"monthly"
+"weekly"
+"daily"
+"yearly"
+"quarterly"
+"every"
+"from"
+"to"
+"in"
+
+# Auto posting
+"="
+
+# Date formats
+"2024-01-01"
+"2024/01/01"
+"2024.01.01"
+"01-01"
+"01/01"
+
+# Secondary date
+"="
+"2024-01-01=2024-01-15"
+
+# Amount formats
+"$100"
+"$100.00"
+"100 USD"
+"100.00 EUR"
+"-$100"
+"$-100"
+"-100 USD"
+"1,000.00 USD"
+"1 000.00 EUR"
+"1.000,00 EUR"
+
+# Price annotations
+"@"
+"@@"
+
+# Numbers
+"0"
+"1"
+"-1"
+"100"
+"100.00"
+"1000"
+"1,000"
+"1,000.00"
+"1 000"
+"0.01"
+"0.001"
+
+# Common currencies
+"$"
+"USD"
+"EUR"
+"GBP"
+"CAD"
+"JPY"
+"CHF"
+"AAPL"
+"BTC"
+
+# Account names (lowercase convention)
+"assets"
+"assets:bank"
+"assets:bank:checking"
+"assets:cash"
+"liabilities"
+"liabilities:credit card"
+"equity"
+"equity:opening balances"
+"income"
+"income:salary"
+"expenses"
+"expenses:food"
+"expenses:food:groceries"
+
+# Virtual accounts
+"(budget:food)"
+"[savings:goal]"
+"(tracking)"
+"[reserve]"
+
+# Balance assertions/assignments
+"="
+"=*"
+"==*"
+"= $100"
+"=* $100"
+
+# Auto posting multipliers
+"*1"
+"*-1"
+"*0.5"
+"*0.10"
+
+# Tags
+"; tag:"
+"; tag: value"
+"; project:"
+"; project: alpha"
+
+# Comments
+";"
+"#"
+"*"
+"**"
+
+# Query terms
+"acct:"
+"desc:"
+"note:"
+"payee:"
+"amt:"
+"date:"
+"tag:"
+"code:"
+"status:"
+"real:"
+"depth:"
+"not:"
+
+# Periodic intervals
+"day"
+"week"
+"month"
+"quarter"
+"year"
+"days"
+"weeks"
+"months"
+"years"
+"1st"
+"2nd"
+"15th"
+"last"
+"monday"
+"tuesday"
+"friday"
+
+# Account subdirectives
+"    ; type:"
+"    ; type: Asset"
+"    ; type: Liability"
+"    ; type: Equity"
+"    ; type: Revenue"
+"    ; type: Expense"
+
+# Commodity format
+"format"
+"1,000.00"
+"1.000,00"
+"1 000,00"
+
+# Apply blocks
+"apply account"
+"end apply account"
+"apply tag"
+"end apply tag"
+
+# Whitespace
+" "
+"  "
+"    "
+"\t"
+"\n"
+
+# Code
+"(1234)"
+"(REF-001)"
+
+# Payee|note separator
+"|"
+
+# Edge cases
+""
+"  "
+"\n\n"
+"2024-01-01 *"
+"2024-01-01 !"
+"2024-01-01 * (123)"
+
+# Malformed
+"2024-13-01"
+"2024-01-32"
+"(unclosed"
+"[unclosed"
+"= ="
+
+# Unicode
+"café"
+"münchen"
+"東京"
+"€"
+"£"
+"¥"
+
+# Timedot (separate format)
+"...."
+".... ...."
+"0:30"
+"1:00"
+"8:00"

@@ -1,0 +1,153 @@
+{
+  "$schema": "../../../../harness/test-case.schema.json",
+  "suite": "ledger-syntax-invalid",
+  "description": "Invalid Ledger syntax that should fail parsing",
+  "tests": [
+    {
+      "id": "invalid-date-format",
+      "description": "Invalid date format",
+      "input": {"inline": "2024-13-45 Test\n    Assets:A  $100\n    Assets:B"},
+      "expected": {"parse": "error", "error_contains": ["date"]},
+      "tags": ["date"]
+    },
+    {
+      "id": "invalid-date-missing-year",
+      "description": "Date without year directive",
+      "input": {"inline": "01/15 Test\n    Assets:A  $100\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["date"],
+      "skip": true,
+      "skip_reason": "Behavior varies by implementation - some use current year"
+    },
+    {
+      "id": "unbalanced-transaction",
+      "description": "Transaction that doesn't balance",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $100\n    Assets:B  $50"},
+      "expected": {"parse": "error", "error_contains": ["balance"]},
+      "tags": ["balance"]
+    },
+    {
+      "id": "no-postings",
+      "description": "Transaction without any postings",
+      "input": {"inline": "2024/01/15 Empty transaction"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction"]
+    },
+    {
+      "id": "single-posting-no-bucket",
+      "description": "Single posting without bucket",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $100"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction", "posting"]
+    },
+    {
+      "id": "invalid-amount-format",
+      "description": "Invalid amount format",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $abc\n    Assets:B"},
+      "expected": {"parse": "error", "error_contains": ["amount"]},
+      "tags": ["amount"]
+    },
+    {
+      "id": "multiple-elided-amounts",
+      "description": "Multiple postings without amounts",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A\n    Assets:B\n    Assets:C  $100"},
+      "expected": {"parse": "error"},
+      "tags": ["posting", "amount"]
+    },
+    {
+      "id": "invalid-account-chars",
+      "description": "Invalid characters in account name",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A<B>  $100\n    Assets:C"},
+      "expected": {"parse": "error"},
+      "tags": ["account"]
+    },
+    {
+      "id": "unclosed-quote",
+      "description": "Unclosed quote in commodity",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  100 \"MUTUAL FUND\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["commodity"]
+    },
+    {
+      "id": "unclosed-parenthesis",
+      "description": "Unclosed parenthesis in virtual account",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $100\n    (Budget:Food  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["virtual"]
+    },
+    {
+      "id": "unclosed-bracket",
+      "description": "Unclosed bracket in balanced virtual",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $100\n    [Budget:Food  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["virtual"]
+    },
+    {
+      "id": "invalid-expression",
+      "description": "Invalid value expression",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  ($100 +)\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["expression"]
+    },
+    {
+      "id": "bad-lot-syntax",
+      "description": "Invalid lot specification",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  10 AAPL {{\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["lot"]
+    },
+    {
+      "id": "missing-payee",
+      "description": "Transaction line with only date",
+      "input": {"inline": "2024/01/15\n    Assets:A  $100\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["transaction"]
+    },
+    {
+      "id": "posting-wrong-indent",
+      "description": "Posting without proper indentation",
+      "input": {"inline": "2024/01/15 Test\nAssets:A  $100\nAssets:B  $-100"},
+      "expected": {"parse": "error"},
+      "tags": ["posting", "format"]
+    },
+    {
+      "id": "invalid-periodic-interval",
+      "description": "Invalid periodic transaction interval",
+      "input": {"inline": "~ Invalid Interval\n    Assets:A  $100\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["periodic"]
+    },
+    {
+      "id": "balance-assertion-wrong",
+      "description": "Balance assertion with wrong value",
+      "input": {"inline": "2024/01/15 Deposit\n    Assets:Checking  $100.00 = $9999.00\n    Income:Salary"},
+      "expected": {"validate": "error", "error_contains": ["balance"]},
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "duplicate-posting-account",
+      "description": "Same account in multiple postings without amounts",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  $100\n    Assets:A\n    Assets:B"},
+      "expected": {"parse": "error"},
+      "tags": ["posting"],
+      "skip": true,
+      "skip_reason": "Some implementations allow this"
+    },
+    {
+      "id": "circular-include",
+      "description": "Circular include reference",
+      "input": {"file": "circular-a.ledger"},
+      "expected": {"parse": "error", "error_contains": ["circular", "include"]},
+      "tags": ["include"],
+      "skip": true,
+      "skip_reason": "Requires file fixtures"
+    },
+    {
+      "id": "invalid-assert-expression",
+      "description": "Assert with invalid expression",
+      "input": {"inline": "assert invalid syntax here"},
+      "expected": {"parse": "error"},
+      "tags": ["assert", "expression"]
+    }
+  ]
+}

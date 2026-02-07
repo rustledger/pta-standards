@@ -1,0 +1,241 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "beancount-to-ledger",
+  "description": "Beancount to Ledger format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts correctly",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Grocery Store\" \"Weekly shopping\"\n  Expenses:Food  50.00 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"},
+          "Assets:Checking": {"USD": "-50.00"}
+        }
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "open-to-account",
+      "description": "Open directive converts to account directive",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Checking USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "account"]
+    },
+    {
+      "id": "transaction-with-tags",
+      "description": "Tags convert to Ledger metadata",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Test\" #project #travel\n  Expenses:Travel  100.00 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["tags", "metadata"]
+    },
+    {
+      "id": "transaction-with-links",
+      "description": "Links convert to Ledger metadata",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Invoice\" ^invoice-123\n  Assets:Receivables  500.00 USD\n  Income:Consulting"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["links", "metadata"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 balance Assets:Checking  1000.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "commodity-directive",
+      "description": "Commodity directive converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 commodity USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "commodity"]
+    },
+    {
+      "id": "price-directive",
+      "description": "Price directive converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 price AAPL 150.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "price"]
+    },
+    {
+      "id": "lot-with-cost",
+      "description": "Lot with cost basis converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Brokerage\n2024-01-01 open Assets:Checking\n\n2024-01-15 * \"Buy Stock\"\n  Assets:Brokerage  10 AAPL {150.00 USD}\n  Assets:Checking  -1500.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Assets:Brokerage": {"AAPL": "10"}
+        }
+      },
+      "tags": ["lot", "cost"]
+    },
+    {
+      "id": "lot-with-price",
+      "description": "Lot with price annotation converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Brokerage\n2024-01-01 open Assets:Checking\n\n2024-01-15 * \"Buy Stock\"\n  Assets:Brokerage  10 AAPL @ 150.00 USD\n  Assets:Checking  -1500.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["lot", "price"]
+    },
+    {
+      "id": "multi-currency",
+      "description": "Multi-currency transaction converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:USD\n2024-01-01 open Assets:EUR\n\n2024-01-15 * \"Exchange\"\n  Assets:EUR  100.00 EUR @ 1.10 USD\n  Assets:USD  -110.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["currency", "exchange"]
+    },
+    {
+      "id": "posting-metadata",
+      "description": "Posting metadata converts",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 * \"Test\"\n  Expenses:Food  50.00 USD\n    category: \"groceries\"\n  Assets:Checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["metadata", "posting"]
+    },
+    {
+      "id": "pad-directive",
+      "description": "Pad directive converts (with warning)",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Checking\n2024-01-01 open Equity:Opening\n\n2024-01-01 pad Assets:Checking Equity:Opening\n2024-01-02 balance Assets:Checking 1000.00 USD"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "pad"],
+      "skip": true,
+      "skip_reason": "Pad has no direct Ledger equivalent"
+    },
+    {
+      "id": "note-directive",
+      "description": "Note directive converts to comment",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 note Assets:Checking \"Account opened\""
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "note"]
+    },
+    {
+      "id": "event-directive",
+      "description": "Event directive converts to comment",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 event \"location\" \"New York\""
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "event"]
+    },
+    {
+      "id": "incomplete-flag",
+      "description": "Incomplete flag converts to pending",
+      "source": {
+        "format": "beancount",
+        "inline": "2024-01-15 ! \"Pending transaction\"\n  Expenses:Food  50.00 USD\n  Assets:Checking"
+      },
+      "target": {
+        "format": "ledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["flag", "pending"]
+    }
+  ]
+}

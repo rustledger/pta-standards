@@ -1,0 +1,238 @@
+(* Ledger Value Expressions EBNF Grammar *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This grammar defines the value expression language used in Ledger CLI.
+ * Value expressions are used in:
+ *   - Amount calculations
+ *   - Automated transaction queries
+ *   - Report filtering (--limit, --display)
+ *   - Formatting expressions
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *)
+
+(* =========================================================================== *)
+(* EXPRESSIONS                                                                 *)
+(* =========================================================================== *)
+
+expression = or_expr ;
+
+or_expr = and_expr, { ( "or" | "|" | "||" ), and_expr } ;
+
+and_expr = not_expr, { ( "and" | "&" | "&&" ), not_expr } ;
+
+not_expr = [ "not" | "!" ], comparison_expr ;
+
+comparison_expr = additive_expr,
+                  [ comparison_op, additive_expr ] ;
+
+comparison_op = "==" | "!=" | "<>" | "<" | "<=" | ">" | ">="
+              | "=~" | "!~" ;
+              (* =~ and !~ are regex match operators *)
+
+additive_expr = multiplicative_expr,
+                { ( "+" | "-" ), multiplicative_expr } ;
+
+multiplicative_expr = unary_expr,
+                      { ( "*" | "/" ), unary_expr } ;
+
+unary_expr = [ "-" ], postfix_expr ;
+
+postfix_expr = primary_expr, { member_access | function_call_suffix } ;
+
+member_access = ".", identifier ;
+
+function_call_suffix = "(", [ argument_list ], ")" ;
+
+argument_list = expression, { ",", expression } ;
+
+(* =========================================================================== *)
+(* PRIMARY EXPRESSIONS                                                         *)
+(* =========================================================================== *)
+
+primary_expr = literal
+             | identifier
+             | function_call
+             | parenthesized_expr
+             | query_expr ;
+
+literal = number_literal
+        | string_literal
+        | amount_literal
+        | date_literal
+        | boolean_literal
+        | regex_literal ;
+
+number_literal = [ "-" ], integer_part, [ ".", fractional_part ] ;
+
+integer_part = digit, { digit | "," } ;
+
+fractional_part = { digit }- ;
+
+string_literal = '"', { string_char }, '"'
+               | "'", { string_char_single }, "'" ;
+
+string_char = ANY - ( '"' | "\" | NEWLINE )
+            | "\", escape_char ;
+
+string_char_single = ANY - ( "'" | "\" | NEWLINE )
+                   | "\", escape_char ;
+
+escape_char = "n" | "r" | "t" | "\" | '"' | "'" | "0" ;
+
+amount_literal = [ commodity ], number_literal, [ commodity ] ;
+
+commodity = "$" | "£" | "€" | "¥"
+          | { ASCII_ALPHA }- ;
+
+date_literal = "[", date, "]" ;
+
+date = year, "-", month, "-", day
+     | year, "/", month, "/", day ;
+
+year = digit, digit, digit, digit ;
+
+month = digit, digit ;
+
+day = digit, digit ;
+
+boolean_literal = "true" | "false" | "yes" | "no" ;
+
+regex_literal = "/", { regex_char }, "/" ;
+
+regex_char = ANY - ( "/" | NEWLINE )
+           | "\/", ;
+
+parenthesized_expr = "(", expression, ")" ;
+
+(* =========================================================================== *)
+(* QUERY EXPRESSIONS                                                           *)
+(* =========================================================================== *)
+
+query_expr = "@", query_term
+           | "@@", query_term
+           | "payee=~", regex_literal
+           | "account=~", regex_literal
+           | "note=~", regex_literal
+           | "tag", "(", tag_name, ")"
+           | "has_tag", "(", tag_name, ")" ;
+
+query_term = { ANY - WHITESPACE }- ;
+
+(* =========================================================================== *)
+(* IDENTIFIERS & FUNCTIONS                                                     *)
+(* =========================================================================== *)
+
+identifier = letter, { letter | digit | "_" } ;
+
+letter = ASCII_ALPHA ;
+
+function_call = function_name, "(", [ argument_list ], ")" ;
+
+function_name = identifier ;
+
+(* =========================================================================== *)
+(* BUILT-IN VARIABLES                                                          *)
+(* =========================================================================== *)
+
+(*
+ * Common built-in variables:
+ *   account     - posting account
+ *   payee       - transaction payee
+ *   note        - posting note
+ *   amount      - posting amount
+ *   total       - running total
+ *   cost        - posting cost
+ *   market      - market value
+ *   gain        - capital gain
+ *   date        - transaction date
+ *   effective   - effective date
+ *   pending     - is pending (!)
+ *   cleared     - is cleared (*)
+ *   real        - is real posting (not virtual)
+ *   virtual     - is virtual posting
+ *   depth       - account depth
+ *   beg_pos     - beginning position
+ *   end_pos     - ending position
+ *   filename    - source filename
+ *   beg_line    - beginning line number
+ *   end_line    - ending line number
+ *)
+
+(* =========================================================================== *)
+(* BUILT-IN FUNCTIONS                                                          *)
+(* =========================================================================== *)
+
+(*
+ * Amount functions:
+ *   abs(x)          - absolute value
+ *   quantity(x)     - numeric quantity of amount
+ *   commodity(x)    - commodity of amount
+ *   floor(x)        - floor to integer
+ *   ceiling(x)      - ceiling to integer
+ *   round(x)        - round to integer
+ *   roundto(x,n)    - round to n decimal places
+ *   unround(x)      - remove rounding
+ *   price(x)        - price of amount
+ *   cost(x)         - cost of amount
+ *   market(x)       - market value
+ *   lot_date(x)     - lot acquisition date
+ *   lot_price(x)    - lot price
+ *
+ * Date functions:
+ *   today           - current date
+ *   now             - current datetime
+ *   year(d)         - year of date
+ *   month(d)        - month of date
+ *   day(d)          - day of date
+ *
+ * String functions:
+ *   format(fmt, x)  - format value
+ *   justify(x,w)    - justify to width
+ *   strip(x)        - strip whitespace
+ *   trim(x)         - trim whitespace
+ *   quoted(x)       - quote string
+ *   join(x)         - join values
+ *   code            - transaction code
+ *
+ * Logical functions:
+ *   if(c,t,f)       - conditional
+ *   is_seq(x)       - is sequence
+ *
+ * Aggregation functions:
+ *   sum(x)          - sum of values
+ *   min(x)          - minimum value
+ *   max(x)          - maximum value
+ *   mean(x)         - average value
+ *   count(x)        - count of items
+ *   total           - running total
+ *)
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ASCII_ALPHA = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+            | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+            | "U" | "V" | "W" | "X" | "Y" | "Z"
+            | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+            | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+            | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+tag_name = { ASCII_ALPHA | digit | "-" | "_" }- ;

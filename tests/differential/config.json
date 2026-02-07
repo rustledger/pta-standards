@@ -1,0 +1,202 @@
+{
+  "$schema": "./config.schema.json",
+  "version": "1.0.0",
+  "description": "Differential testing configuration for PTA implementations",
+
+  "groups": {
+    "beancount": {
+      "description": "Beancount-compatible implementations",
+      "reference": "beancount",
+      "implementations": ["beancount", "rustledger"],
+      "file_extension": ".beancount"
+    },
+    "ledger": {
+      "description": "Ledger-compatible implementations",
+      "reference": "ledger",
+      "implementations": ["ledger", "hledger"],
+      "file_extension": ".ledger"
+    },
+    "hledger": {
+      "description": "hledger-specific tests",
+      "reference": "hledger",
+      "implementations": ["hledger"],
+      "file_extension": ".journal"
+    }
+  },
+
+  "implementations": {
+    "beancount": {
+      "name": "Beancount (Python)",
+      "version_command": "bean-check --version",
+      "commands": {
+        "parse": "bean-check {file}",
+        "balance": "bean-report {file} balances",
+        "query": "bean-query {file} '{query}'"
+      },
+      "exit_codes": {
+        "success": 0,
+        "parse_error": 1,
+        "validation_error": 1
+      },
+      "output_format": "text"
+    },
+
+    "rustledger": {
+      "name": "rustledger",
+      "version_command": "rledger --version",
+      "commands": {
+        "parse": "rledger check {file}",
+        "balance": "rledger report {file} balances",
+        "query": "rledger query {file} '{query}'"
+      },
+      "exit_codes": {
+        "success": 0,
+        "parse_error": 1,
+        "validation_error": 1
+      },
+      "output_format": "text"
+    },
+
+    "ledger": {
+      "name": "Ledger",
+      "version_command": "ledger --version",
+      "commands": {
+        "parse": "ledger -f {file} bal --no-total > /dev/null",
+        "balance": "ledger -f {file} bal --no-total",
+        "register": "ledger -f {file} reg"
+      },
+      "exit_codes": {
+        "success": 0,
+        "error": 1
+      },
+      "output_format": "text"
+    },
+
+    "hledger": {
+      "name": "hledger",
+      "version_command": "hledger --version",
+      "commands": {
+        "parse": "hledger -f {file} check",
+        "balance": "hledger -f {file} bal --no-total",
+        "register": "hledger -f {file} reg"
+      },
+      "exit_codes": {
+        "success": 0,
+        "error": 1
+      },
+      "output_format": "text"
+    }
+  },
+
+  "comparisons": {
+    "parse": {
+      "description": "Compare parse success/failure",
+      "enabled": true,
+      "compare": {
+        "exit_code": true,
+        "has_errors": true,
+        "error_count": false
+      },
+      "normalize": {
+        "strip_ansi": true,
+        "strip_paths": true
+      }
+    },
+
+    "errors": {
+      "description": "Compare error detection",
+      "enabled": true,
+      "compare": {
+        "error_types": true,
+        "error_lines": true,
+        "error_messages": false
+      },
+      "tolerance": {
+        "line_offset": 0
+      }
+    },
+
+    "balance": {
+      "description": "Compare account balances",
+      "enabled": true,
+      "compare": {
+        "account_names": true,
+        "amounts": true,
+        "commodities": true
+      },
+      "normalize": {
+        "account_case": "lower",
+        "amount_format": "decimal",
+        "sort_accounts": true
+      },
+      "tolerance": {
+        "decimal_places": 8,
+        "amount_epsilon": "1e-8"
+      }
+    },
+
+    "query": {
+      "description": "Compare query results",
+      "enabled": true,
+      "compare": {
+        "row_count": true,
+        "column_names": true,
+        "values": true
+      },
+      "normalize": {
+        "whitespace": true,
+        "column_order": false
+      },
+      "tolerance": {
+        "decimal_places": 8
+      }
+    }
+  },
+
+  "inputs": {
+    "conformance": {
+      "description": "Use conformance test inputs",
+      "paths": [
+        "../beancount/v3/syntax/valid/files/",
+        "../beancount/v3/validation/files/",
+        "../ledger/v1/syntax/valid/files/",
+        "../hledger/v1/syntax/valid/files/"
+      ]
+    },
+
+    "fuzzing": {
+      "description": "Use fuzzer-generated corpus",
+      "paths": [
+        "../fuzzing/corpus/beancount/",
+        "../fuzzing/corpus/ledger/",
+        "../fuzzing/corpus/hledger/"
+      ]
+    },
+
+    "real_world": {
+      "description": "Use real-world ledger files",
+      "paths": [
+        "./corpus/real-world/"
+      ]
+    }
+  },
+
+  "output": {
+    "report_format": "json",
+    "report_file": "divergences/report.json",
+    "save_diverging_inputs": true,
+    "divergence_dir": "divergences/",
+    "verbose": false
+  },
+
+  "filters": {
+    "exclude_patterns": [
+      "**/skip/**",
+      "**/*.skip.*"
+    ],
+    "max_file_size": "1MB",
+    "timeout_seconds": 30
+  },
+
+  "known_divergences_file": "known-divergences.json"
+}

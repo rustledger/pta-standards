@@ -1,0 +1,221 @@
+{
+  "$schema": "./known-divergences.schema.json",
+  "version": "1.0.0",
+  "description": "Known and expected divergences between implementations",
+  "last_updated": "2024-01-15",
+
+  "divergences": [
+    {
+      "id": "precision-28-digits",
+      "title": "Decimal precision limit in rustledger",
+      "implementations": ["beancount", "rustledger"],
+      "type": "precision",
+      "severity": "low",
+      "description": "rustledger uses rust_decimal which has a maximum precision of 28 significant digits, while Python's decimal.Decimal has arbitrary precision. This causes differences when amounts have extreme precision (>28 digits).",
+      "dimension": "balance",
+      "examples": [
+        {
+          "input": "2024-01-01 * \"Test\"\n  Assets:A  0.7142857142857142857142857143 USD\n  Assets:B",
+          "beancount": "Assets:A: 0.7142857142857142857142857143 USD",
+          "rustledger": "Assets:A: 0.7142857142857142857142857 USD"
+        }
+      ],
+      "workaround": "Limit decimal precision to 28 digits in input files",
+      "tracking_issue": null,
+      "status": "accepted"
+    },
+
+    {
+      "id": "error-message-wording",
+      "title": "Error message text differs",
+      "implementations": ["beancount", "rustledger"],
+      "type": "intentional",
+      "severity": "info",
+      "description": "Error messages use different wording between implementations. The error detection and location is the same, only the human-readable message differs.",
+      "dimension": "errors.messages",
+      "examples": [
+        {
+          "error_type": "duplicate_account",
+          "beancount": "Duplicate account open",
+          "rustledger": "Account already opened"
+        }
+      ],
+      "workaround": "Compare error types and locations, not message text",
+      "status": "accepted"
+    },
+
+    {
+      "id": "ledger-hledger-periodic-syntax",
+      "title": "Periodic transaction syntax differences",
+      "implementations": ["ledger", "hledger"],
+      "type": "undocumented",
+      "severity": "medium",
+      "description": "Ledger and hledger have slightly different rules for periodic transaction syntax. Some valid Ledger periodic transactions are rejected by hledger.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "input": "~ Monthly from 2024/01\n  Expenses:Rent  $1500\n  Assets:Checking",
+          "ledger": "valid",
+          "hledger": "parse error"
+        }
+      ],
+      "workaround": "Use period expressions that work in both",
+      "status": "investigating"
+    },
+
+    {
+      "id": "ledger-hledger-value-expressions",
+      "title": "Value expression support differs",
+      "implementations": ["ledger", "hledger"],
+      "type": "intentional",
+      "severity": "high",
+      "description": "Ledger supports complex value expressions (arithmetic, functions) in amounts. hledger has limited support for this feature.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "input": "2024/01/15 Test\n  Expenses:Food  ($10 * 5)\n  Assets:Checking",
+          "ledger": "valid, evaluates to $50",
+          "hledger": "parse error"
+        }
+      ],
+      "workaround": "Pre-compute expressions for hledger compatibility",
+      "status": "accepted"
+    },
+
+    {
+      "id": "beancount-implicit-open",
+      "title": "Implicit account opening behavior",
+      "implementations": ["beancount", "ledger", "hledger"],
+      "type": "intentional",
+      "severity": "medium",
+      "description": "Beancount requires explicit 'open' directives for all accounts. Ledger and hledger implicitly create accounts on first use.",
+      "dimension": "errors",
+      "examples": [
+        {
+          "input": "2024-01-15 * \"Test\"\n  Expenses:Food  50.00 USD\n  Assets:Checking",
+          "beancount": "error: account not opened",
+          "ledger": "valid",
+          "hledger": "valid"
+        }
+      ],
+      "workaround": "Always include open directives for Beancount",
+      "status": "accepted"
+    },
+
+    {
+      "id": "virtual-posting-semantics",
+      "title": "Virtual posting behavior",
+      "implementations": ["ledger", "hledger", "beancount"],
+      "type": "intentional",
+      "severity": "high",
+      "description": "Ledger and hledger support virtual postings (unbalanced and balanced). Beancount does not have this concept.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "input": "2024/01/15 Test\n  Expenses:Food  $50\n  (Budget:Food)  $-50\n  Assets:Checking",
+          "ledger": "valid",
+          "hledger": "valid",
+          "beancount": "parse error"
+        }
+      ],
+      "workaround": "Use separate transactions or remove virtual postings for Beancount",
+      "status": "accepted"
+    },
+
+    {
+      "id": "commodity-position-prefix-suffix",
+      "title": "Commodity symbol position",
+      "implementations": ["beancount", "ledger", "hledger"],
+      "type": "intentional",
+      "severity": "low",
+      "description": "Beancount always places commodity after amount. Ledger/hledger allow both prefix ($50) and suffix (50 USD) notation.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "input": "Expenses:Food  $50.00",
+          "ledger": "valid",
+          "hledger": "valid",
+          "beancount": "must be '50.00 USD'"
+        }
+      ],
+      "workaround": "Use suffix notation for Beancount compatibility",
+      "status": "accepted"
+    },
+
+    {
+      "id": "date-format-slash-dash",
+      "title": "Date separator format",
+      "implementations": ["beancount", "ledger", "hledger"],
+      "type": "intentional",
+      "severity": "low",
+      "description": "Beancount uses dash separators (2024-01-15). Ledger traditionally uses slash (2024/01/15). hledger accepts both.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "ledger_style": "2024/01/15",
+          "beancount_style": "2024-01-15"
+        }
+      ],
+      "workaround": "Use appropriate format for each tool",
+      "status": "accepted"
+    },
+
+    {
+      "id": "balance-rounding-difference",
+      "title": "Rounding in balance interpolation",
+      "implementations": ["beancount", "rustledger"],
+      "type": "precision",
+      "severity": "low",
+      "description": "When interpolating missing amounts in multi-currency transactions, small rounding differences may occur in the last decimal place.",
+      "dimension": "balance",
+      "tolerance": "1e-8",
+      "examples": [
+        {
+          "note": "Differences typically in 8th decimal place or beyond"
+        }
+      ],
+      "workaround": "Use tolerance when comparing balances",
+      "status": "accepted"
+    },
+
+    {
+      "id": "tag-syntax-differences",
+      "title": "Tag/metadata syntax",
+      "implementations": ["beancount", "ledger", "hledger"],
+      "type": "intentional",
+      "severity": "medium",
+      "description": "Each format uses different syntax for tags and metadata. Beancount uses #tag and ^link, Ledger uses :tag:, hledger uses tag: style.",
+      "dimension": "parse",
+      "examples": [
+        {
+          "beancount": "2024-01-15 * \"Test\" #project ^link",
+          "ledger": "2024/01/15 * Test\n  ; :project:",
+          "hledger": "2024-01-15 * Test\n  ; project:"
+        }
+      ],
+      "workaround": "Convert tags during format conversion",
+      "status": "accepted"
+    }
+  ],
+
+  "severity_definitions": {
+    "info": "Cosmetic difference, no functional impact",
+    "low": "Minor difference, rarely affects users",
+    "medium": "Notable difference, may require workarounds",
+    "high": "Significant difference, affects compatibility"
+  },
+
+  "type_definitions": {
+    "precision": "Floating-point or decimal precision difference",
+    "intentional": "Deliberate design decision by implementation",
+    "undocumented": "Difference not clearly specified",
+    "bug": "Likely bug in one implementation"
+  },
+
+  "status_definitions": {
+    "accepted": "Known and accepted, no action planned",
+    "investigating": "Under investigation",
+    "fixing": "Fix in progress",
+    "wontfix": "Will not be fixed"
+  }
+}

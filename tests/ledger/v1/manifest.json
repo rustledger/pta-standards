@@ -1,0 +1,19 @@
+{
+  "$schema": "../../harness/manifest.schema.json",
+  "format": "ledger",
+  "version": "1",
+  "description": "Conformance test suite for Ledger CLI format",
+  "test_directories": [
+    "syntax/valid",
+    "syntax/invalid",
+    "validation",
+    "expressions",
+    "automated",
+    "reports"
+  ],
+  "metadata": {
+    "created": "2024-02-07",
+    "spec_version": "draft",
+    "reference_implementation": "ledger 3.3.2"
+  }
+}

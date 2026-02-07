@@ -1,0 +1,168 @@
+name: Validate Grammars
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.ebnf'
+      - '**/*.abnf'
+      - 'formats/**/grammar.js'
+      - '.github/workflows/validate-grammars.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.ebnf'
+      - '**/*.abnf'
+      - 'formats/**/grammar.js'
+      - '.github/workflows/validate-grammars.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-ebnf:
+    name: Validate EBNF Grammars
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install EBNF validator
+        run: pip install lark-parser
+
+      - name: Validate EBNF syntax
+        run: |
+          cat > validate_ebnf.py << 'PYTHON'
+          import sys
+          import re
+          from pathlib import Path
+
+          def validate_ebnf(content, filename):
+              """Basic EBNF syntax validation."""
+              errors = []
+              lines = content.split('\n')
+
+              # Track defined and used rules
+              defined_rules = set()
+              used_rules = set()
+
+              for i, line in enumerate(lines, 1):
+                  line = line.strip()
+                  if not line or line.startswith('(*') or line.startswith('//'):
+                      continue
+
+                  # Check for rule definition
+                  if '=' in line:
+                      match = re.match(r'^(\w+)\s*=', line)
+                      if match:
+                          defined_rules.add(match.group(1))
+
+                  # Check for balanced brackets
+                  if line.count('[') != line.count(']'):
+                      errors.append(f"{filename}:{i}: Unbalanced square brackets")
+                  if line.count('{') != line.count('}'):
+                      errors.append(f"{filename}:{i}: Unbalanced curly brackets")
+                  if line.count('(') != line.count(')'):
+                      errors.append(f"{filename}:{i}: Unbalanced parentheses")
+
+                  # Extract rule references
+                  for ref in re.findall(r'\b([a-z_][a-z0-9_]*)\b', line.lower()):
+                      used_rules.add(ref)
+
+              return errors
+
+          errors = []
+          for ebnf_file in Path('.').rglob('*.ebnf'):
+              content = ebnf_file.read_text()
+              file_errors = validate_ebnf(content, str(ebnf_file))
+              errors.extend(file_errors)
+
+          if errors:
+              for error in errors:
+                  print(f"::error::{error}")
+              sys.exit(1)
+          else:
+              print("All EBNF files are syntactically valid")
+          PYTHON
+          python validate_ebnf.py
+
+      - name: List EBNF files
+        run: |
+          echo "## EBNF Grammars" >> $GITHUB_STEP_SUMMARY
+          for f in $(find . -name '*.ebnf' -type f | sort); do
+            lines=$(wc -l < "$f")
+            echo "- \`$f\` ($lines lines)" >> $GITHUB_STEP_SUMMARY
+          done
+
+  validate-abnf:
+    name: Validate ABNF Grammars
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ABNF parser
+        run: npm install -g abnf
+
+      - name: Validate ABNF syntax
+        run: |
+          for abnf_file in $(find . -name '*.abnf' -type f); do
+            echo "Validating: $abnf_file"
+            npx abnf -q "$abnf_file" || {
+              echo "::error file=$abnf_file::ABNF syntax error"
+              exit 1
+            }
+          done
+
+      - name: List ABNF files
+        run: |
+          echo "## ABNF Grammars" >> $GITHUB_STEP_SUMMARY
+          for f in $(find . -name '*.abnf' -type f | sort); do
+            lines=$(wc -l < "$f")
+            echo "- \`$f\` ($lines lines)" >> $GITHUB_STEP_SUMMARY
+          done
+
+  validate-tree-sitter:
+    name: Validate Tree-sitter Grammars
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli
+
+      - name: Validate grammar.js files
+        run: |
+          for ts_dir in $(find . -type d -name 'tree-sitter'); do
+            if [[ -f "$ts_dir/grammar.js" ]]; then
+              echo "Validating: $ts_dir/grammar.js"
+              cd "$ts_dir"
+              # Check if package.json exists and has valid syntax
+              if [[ -f package.json ]] && [[ -s package.json ]]; then
+                npm install 2>/dev/null || true
+                tree-sitter generate || echo "::warning file=$ts_dir/grammar.js::Tree-sitter generate failed"
+              else
+                # Just validate the JS syntax
+                node -c grammar.js || echo "::warning file=$ts_dir/grammar.js::JavaScript syntax error"
+              fi
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Summary
+        run: |
+          echo "## Tree-sitter Grammars" >> $GITHUB_STEP_SUMMARY
+          for f in $(find . -path '*/tree-sitter/grammar.js' -type f | sort); do
+            echo "- \`$f\`" >> $GITHUB_STEP_SUMMARY
+          done

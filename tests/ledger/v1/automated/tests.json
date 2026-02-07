@@ -1,0 +1,140 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "ledger-automated",
+  "description": "Ledger automated transaction tests",
+  "tests": [
+    {
+      "id": "auto-simple-match",
+      "description": "Simple automated transaction matching payee",
+      "input": {"inline": "= /Grocery/\n    (Budget:Food)  -1\n\n2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "match"]
+    },
+    {
+      "id": "auto-account-match",
+      "description": "Automated transaction matching account",
+      "input": {"inline": "= expr account =~ /Expenses:Food/\n    (Budget:Food)  (amount * -1)\n\n2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "account"]
+    },
+    {
+      "id": "auto-percentage",
+      "description": "Automated transaction with percentage",
+      "input": {"inline": "= /Salary/\n    (Budget:Savings)  (amount * 0.10)\n    (Budget:Taxes)  (amount * 0.25)\n\n2024/01/15 * Salary Deposit\n    Assets:Checking  $5000.00\n    Income:Salary"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "percentage"]
+    },
+    {
+      "id": "auto-fixed-amount",
+      "description": "Automated transaction with fixed amount",
+      "input": {"inline": "= /Coffee/\n    (Expenses:Discretionary)  $5.00\n\n2024/01/15 * Coffee Shop\n    Expenses:Food  $4.50\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "fixed"]
+    },
+    {
+      "id": "auto-multiple-rules",
+      "description": "Multiple automated transaction rules",
+      "input": {"inline": "= /Grocery/\n    (Budget:Food)  (amount * -1)\n\n= /Restaurant/\n    (Budget:Dining)  (amount * -1)\n\n2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking\n\n2024/01/16 * Restaurant\n    Expenses:Dining  $30.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "multiple"]
+    },
+    {
+      "id": "auto-conditional",
+      "description": "Automated transaction with condition",
+      "input": {"inline": "= expr account =~ /Expenses/ & amount > $100\n    (Budget:Large)  (amount * -1)\n\n2024/01/15 * Big Purchase\n    Expenses:Shopping  $500.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "conditional"]
+    },
+    {
+      "id": "auto-tag-match",
+      "description": "Automated transaction matching tag",
+      "input": {"inline": "= expr has_tag(\"reimbursable\")\n    (Receivables:Employer)  amount\n\n2024/01/15 * Business Lunch\n    ; :reimbursable:\n    Expenses:Meals  $50.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "tag"]
+    },
+    {
+      "id": "auto-payee-match",
+      "description": "Automated transaction matching payee expression",
+      "input": {"inline": "= expr payee =~ /^Amazon/\n    (Tracking:Amazon)  amount\n\n2024/01/15 * Amazon.com Purchase\n    Expenses:Shopping  $100.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "payee"]
+    },
+    {
+      "id": "auto-date-match",
+      "description": "Automated transaction with date condition",
+      "input": {"inline": "= expr date >= [2024/01/01] & date < [2025/01/01]\n    (Tracking:2024)  0\n\n2024/06/15 * Mid-year\n    Expenses:General  $100.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "date"]
+    },
+    {
+      "id": "auto-commodity-specific",
+      "description": "Automated transaction for specific commodity",
+      "input": {"inline": "= expr commodity == \"AAPL\"\n    (Tracking:Stocks)  0\n\n2024/01/15 * Buy Stock\n    Assets:Brokerage  10 AAPL @ $150.00\n    Assets:Checking  $-1500.00"},
+      "expected": {"parse": "success"},
+      "tags": ["automated", "commodity"]
+    },
+    {
+      "id": "periodic-monthly",
+      "description": "Monthly periodic transaction",
+      "input": {"inline": "~ Monthly\n    Expenses:Rent  $1500.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "monthly"]
+    },
+    {
+      "id": "periodic-weekly",
+      "description": "Weekly periodic transaction",
+      "input": {"inline": "~ Weekly\n    Expenses:Groceries  $200.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "weekly"]
+    },
+    {
+      "id": "periodic-yearly",
+      "description": "Yearly periodic transaction",
+      "input": {"inline": "~ Yearly\n    Expenses:Insurance  $1200.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "yearly"]
+    },
+    {
+      "id": "periodic-quarterly",
+      "description": "Quarterly periodic transaction",
+      "input": {"inline": "~ Quarterly\n    Expenses:Taxes  $2000.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "quarterly"]
+    },
+    {
+      "id": "periodic-biweekly",
+      "description": "Biweekly periodic transaction",
+      "input": {"inline": "~ Biweekly\n    Assets:Checking  $2500.00\n    Income:Salary"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "biweekly"]
+    },
+    {
+      "id": "periodic-daily",
+      "description": "Daily periodic transaction",
+      "input": {"inline": "~ Daily\n    Expenses:Coffee  $5.00\n    Assets:Cash"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "daily"]
+    },
+    {
+      "id": "periodic-every-n-days",
+      "description": "Every N days periodic transaction",
+      "input": {"inline": "~ Every 14 days\n    Assets:Checking  $2500.00\n    Income:Salary"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "interval"]
+    },
+    {
+      "id": "periodic-from-date",
+      "description": "Periodic transaction starting from date",
+      "input": {"inline": "~ Monthly from 2024/01/01\n    Expenses:Subscription  $15.00\n    Assets:Checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "date"]
+    },
+    {
+      "id": "periodic-budgeting",
+      "description": "Periodic transaction for budgeting",
+      "input": {"inline": "~ Monthly\n    [Budget:Food]  $500.00\n    [Budget:Available]  $-500.00"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "budget", "virtual"]
+    }
+  ]
+}

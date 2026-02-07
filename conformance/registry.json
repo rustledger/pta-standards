@@ -1,0 +1,213 @@
+{
+  "$schema": "./registry.schema.json",
+  "version": "1.0.0",
+  "description": "Registry of PTA-certified implementations",
+  "last_updated": "2024-01-15",
+
+  "implementations": [
+    {
+      "id": "beancount-python",
+      "name": "Beancount",
+      "description": "The reference implementation of Beancount in Python",
+      "language": "Python",
+      "repository": "https://github.com/beancount/beancount",
+      "website": "https://beancount.github.io/",
+      "maintainer": "Martin Blais",
+      "license": "GPL-2.0",
+      "certifications": [
+        {
+          "format": "beancount",
+          "version": "v3",
+          "level": 3,
+          "date": "2024-01-01",
+          "note": "Reference implementation - defines the specification"
+        }
+      ],
+      "features": {
+        "parser": true,
+        "validator": true,
+        "query": true,
+        "plugins": true,
+        "web_ui": false
+      },
+      "status": "active"
+    },
+    {
+      "id": "fava",
+      "name": "Fava",
+      "description": "Web interface for Beancount",
+      "language": "Python",
+      "repository": "https://github.com/beancount/fava",
+      "website": "https://beancount.github.io/fava/",
+      "license": "MIT",
+      "certifications": [
+        {
+          "format": "beancount",
+          "version": "v3",
+          "level": 3,
+          "date": "2024-01-01",
+          "note": "Uses beancount as backend"
+        }
+      ],
+      "features": {
+        "parser": false,
+        "validator": false,
+        "query": true,
+        "plugins": false,
+        "web_ui": true
+      },
+      "status": "active"
+    },
+    {
+      "id": "ledger-cli",
+      "name": "Ledger",
+      "description": "The original plain text accounting tool",
+      "language": "C++",
+      "repository": "https://github.com/ledger/ledger",
+      "website": "https://ledger-cli.org/",
+      "maintainer": "John Wiegley",
+      "license": "BSD-3-Clause",
+      "certifications": [
+        {
+          "format": "ledger",
+          "version": "v1",
+          "level": 3,
+          "date": "2024-01-01",
+          "note": "Reference implementation - defines the specification"
+        }
+      ],
+      "features": {
+        "parser": true,
+        "validator": true,
+        "query": true,
+        "expressions": true,
+        "web_ui": false
+      },
+      "status": "active"
+    },
+    {
+      "id": "hledger",
+      "name": "hledger",
+      "description": "Plain text accounting tool in Haskell",
+      "language": "Haskell",
+      "repository": "https://github.com/simonmichael/hledger",
+      "website": "https://hledger.org/",
+      "maintainer": "Simon Michael",
+      "license": "GPL-3.0",
+      "certifications": [
+        {
+          "format": "hledger",
+          "version": "v1",
+          "level": 3,
+          "date": "2024-01-01",
+          "note": "Reference implementation - defines the specification"
+        },
+        {
+          "format": "ledger",
+          "version": "v1",
+          "level": 2,
+          "date": "2024-01-01",
+          "note": "Compatible with most Ledger files"
+        }
+      ],
+      "features": {
+        "parser": true,
+        "validator": true,
+        "query": true,
+        "web_ui": true
+      },
+      "status": "active"
+    },
+    {
+      "id": "rustledger",
+      "name": "rustledger",
+      "description": "Fast Beancount implementation in Rust",
+      "language": "Rust",
+      "repository": "https://github.com/rustledger/rustledger",
+      "license": "MIT",
+      "certifications": [
+        {
+          "format": "beancount",
+          "version": "v3",
+          "level": 2,
+          "date": "2024-01-15",
+          "pass_rate": "99.85%",
+          "note": "1 failure due to decimal precision limitation"
+        }
+      ],
+      "features": {
+        "parser": true,
+        "validator": true,
+        "query": true,
+        "plugins": true,
+        "web_ui": false,
+        "wasm": true
+      },
+      "status": "active"
+    },
+    {
+      "id": "beancount-parser-lima",
+      "name": "beancount-parser-lima",
+      "description": "TypeScript Beancount parser",
+      "language": "TypeScript",
+      "repository": "https://github.com/panta82/beancount-parser-lima",
+      "license": "MIT",
+      "certifications": [
+        {
+          "format": "beancount",
+          "version": "v3",
+          "level": 1,
+          "date": "2024-01-01",
+          "note": "Parser only, no validation"
+        }
+      ],
+      "features": {
+        "parser": true,
+        "validator": false,
+        "query": false,
+        "plugins": false,
+        "web_ui": false
+      },
+      "status": "active"
+    }
+  ],
+
+  "formats": {
+    "beancount": {
+      "name": "Beancount",
+      "versions": ["v3"],
+      "current": "v3",
+      "reference_implementation": "beancount-python"
+    },
+    "ledger": {
+      "name": "Ledger",
+      "versions": ["v1"],
+      "current": "v1",
+      "reference_implementation": "ledger-cli"
+    },
+    "hledger": {
+      "name": "hledger",
+      "versions": ["v1"],
+      "current": "v1",
+      "reference_implementation": "hledger"
+    }
+  },
+
+  "levels": {
+    "1": {
+      "name": "Core Syntax",
+      "description": "Correctly parses all valid syntax",
+      "requirements": ["100% syntax test pass rate"]
+    },
+    "2": {
+      "name": "Semantic Validation",
+      "description": "Validates semantic rules correctly",
+      "requirements": ["Level 1", "95%+ validation test pass rate"]
+    },
+    "3": {
+      "name": "Full Compatibility",
+      "description": "Matches reference implementation behavior",
+      "requirements": ["Level 2", "99%+ overall test pass rate"]
+    }
+  }
+}

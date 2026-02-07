@@ -1,0 +1,154 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "hledger-forecasting",
+  "description": "hledger periodic transactions and forecasting tests",
+  "tests": [
+    {
+      "id": "periodic-monthly",
+      "description": "Monthly periodic transaction",
+      "input": {"inline": "~ monthly\n    expenses:rent  $1500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "monthly"]
+    },
+    {
+      "id": "periodic-weekly",
+      "description": "Weekly periodic transaction",
+      "input": {"inline": "~ weekly\n    expenses:groceries  $200\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "weekly"]
+    },
+    {
+      "id": "periodic-daily",
+      "description": "Daily periodic transaction",
+      "input": {"inline": "~ daily\n    expenses:coffee  $5\n    assets:cash"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "daily"]
+    },
+    {
+      "id": "periodic-yearly",
+      "description": "Yearly periodic transaction",
+      "input": {"inline": "~ yearly\n    expenses:insurance  $1200\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "yearly"]
+    },
+    {
+      "id": "periodic-quarterly",
+      "description": "Quarterly periodic transaction",
+      "input": {"inline": "~ quarterly\n    expenses:taxes  $2000\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "quarterly"]
+    },
+    {
+      "id": "periodic-biweekly",
+      "description": "Biweekly periodic transaction",
+      "input": {"inline": "~ every 2 weeks\n    income:salary  $2500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "biweekly"]
+    },
+    {
+      "id": "periodic-from-date",
+      "description": "Periodic with start date",
+      "input": {"inline": "~ monthly from 2024-01-01\n    expenses:subscription  $15\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "date"]
+    },
+    {
+      "id": "periodic-until-date",
+      "description": "Periodic with end date",
+      "input": {"inline": "~ monthly from 2024-01 to 2024-12\n    expenses:lease  $500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "date"]
+    },
+    {
+      "id": "periodic-every-nth-day",
+      "description": "Every Nth day of month",
+      "input": {"inline": "~ every 15th day\n    expenses:mortgage  $2000\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "day"]
+    },
+    {
+      "id": "periodic-every-weekday",
+      "description": "Every specific weekday",
+      "input": {"inline": "~ every monday\n    expenses:gym  $0\n    (tracking:gym)  1"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "weekday"]
+    },
+    {
+      "id": "periodic-every-last-day",
+      "description": "Every last day of month",
+      "input": {"inline": "~ every last day of month\n    expenses:bills  $100\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "day"]
+    },
+    {
+      "id": "periodic-description",
+      "description": "Periodic with description",
+      "input": {"inline": "~ monthly  Rent Payment\n    expenses:rent  $1500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "description"]
+    },
+    {
+      "id": "periodic-virtual-budgeting",
+      "description": "Periodic for envelope budgeting",
+      "input": {"inline": "~ monthly\n    [budget:food]  $500\n    [budget:available]  $-500"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "budget", "virtual"]
+    },
+    {
+      "id": "periodic-multiple",
+      "description": "Multiple periodic transactions",
+      "input": {"inline": "~ monthly\n    expenses:rent  $1500\n    assets:checking\n\n~ weekly\n    expenses:groceries  $200\n    assets:checking\n\n~ yearly\n    expenses:insurance  $1200\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["periodic", "multiple"]
+    },
+    {
+      "id": "auto-basic",
+      "description": "Basic auto posting rule",
+      "input": {"inline": "= expenses:food\n    (budget:food)  *-1\n\n2024-01-15 Grocery\n    expenses:food  $50\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["auto"]
+    },
+    {
+      "id": "auto-regex",
+      "description": "Auto posting with regex match",
+      "input": {"inline": "= /^expenses:(food|dining)/\n    (budget:eating)  *-1\n\n2024-01-15 Restaurant\n    expenses:dining  $75\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "regex"]
+    },
+    {
+      "id": "auto-percentage",
+      "description": "Auto posting with percentage",
+      "input": {"inline": "= income\n    (savings:goal)  *0.10\n\n2024-01-15 Paycheck\n    assets:checking  $5000\n    income:salary"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "percentage"]
+    },
+    {
+      "id": "auto-fixed",
+      "description": "Auto posting with fixed amount",
+      "input": {"inline": "= expenses:coffee\n    (tracking:coffee-count)  1\n\n2024-01-15 Coffee Shop\n    expenses:coffee  $5\n    assets:cash"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "fixed"]
+    },
+    {
+      "id": "auto-multiple-postings",
+      "description": "Auto rule with multiple postings",
+      "input": {"inline": "= income:salary\n    (budget:savings)  *0.20\n    (budget:taxes)  *0.25\n    (budget:available)  *0.55\n\n2024-01-15 Paycheck\n    assets:checking  $5000\n    income:salary"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "multiple"]
+    },
+    {
+      "id": "auto-query-complex",
+      "description": "Auto rule with complex query",
+      "input": {"inline": "= expenses amt:>100\n    (tracking:large-expenses)  1\n\n2024-01-15 Big Purchase\n    expenses:shopping  $500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["auto", "query"]
+    },
+    {
+      "id": "forecast-flag",
+      "description": "Forecast generates future transactions",
+      "input": {"inline": "~ monthly from 2024-01 to 2024-03\n    expenses:rent  $1500\n    assets:checking"},
+      "expected": {"parse": "success"},
+      "tags": ["forecast"]
+    }
+  ]
+}

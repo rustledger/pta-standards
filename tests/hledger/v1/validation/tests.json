@@ -1,0 +1,128 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "hledger-validation",
+  "description": "hledger semantic validation tests",
+  "tests": [
+    {
+      "id": "balance-pass",
+      "description": "Transaction balances correctly",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00\n    income:salary  $-100.00"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["balance"]
+    },
+    {
+      "id": "balance-fail",
+      "description": "Transaction does not balance",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00\n    income:salary  $-99.00"},
+      "expected": {"parse": "success", "validate": "error"},
+      "tags": ["balance"]
+    },
+    {
+      "id": "balance-elided",
+      "description": "Elided amount is calculated",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00\n    income:salary"},
+      "expected": {"validate": "success"},
+      "tags": ["balance", "elision"]
+    },
+    {
+      "id": "virtual-unbalanced-ok",
+      "description": "Virtual postings don't need to balance",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00\n    income:salary  $-100.00\n    (budget:available)  $100.00"},
+      "expected": {"validate": "success"},
+      "tags": ["virtual", "balance"]
+    },
+    {
+      "id": "virtual-balanced-must-balance",
+      "description": "Balanced virtual postings must balance",
+      "input": {"inline": "2024-01-15 Test\n    assets:checking  $100.00\n    income:salary  $-100.00\n    [budget:savings]  $50.00"},
+      "expected": {"validate": "error"},
+      "tags": ["virtual", "balance"]
+    },
+    {
+      "id": "multi-commodity-exchange",
+      "description": "Multi-commodity with price",
+      "input": {"inline": "2024-01-15 Exchange\n    assets:eur  100.00 EUR @ $1.10\n    assets:usd  $-110.00"},
+      "expected": {"validate": "success"},
+      "tags": ["commodity", "exchange"]
+    },
+    {
+      "id": "multi-commodity-no-price",
+      "description": "Multi-commodity without price fails",
+      "input": {"inline": "2024-01-15 Exchange\n    assets:eur  100.00 EUR\n    assets:usd  $-110.00"},
+      "expected": {"validate": "error"},
+      "tags": ["commodity"]
+    },
+    {
+      "id": "strict-accounts-pass",
+      "description": "Declared accounts pass strict mode",
+      "input": {"inline": "account assets:checking\naccount income:salary\n\n2024-01-15 Test\n    assets:checking  $100\n    income:salary"},
+      "expected": {"validate": "success"},
+      "tags": ["strict", "account"]
+    },
+    {
+      "id": "strict-accounts-fail",
+      "description": "Undeclared accounts fail strict mode",
+      "input": {"inline": "account assets:checking\n\n2024-01-15 Test\n    assets:checking  $100\n    assets:unknown"},
+      "expected": {"validate": "error"},
+      "tags": ["strict", "account"],
+      "skip": true,
+      "skip_reason": "Requires --strict flag"
+    },
+    {
+      "id": "account-type-asset",
+      "description": "Account type declaration for assets",
+      "input": {"inline": "account assets:checking\n    ; type: Asset\n\n2024-01-15 Test\n    assets:checking  $100\n    income:salary"},
+      "expected": {"validate": "success"},
+      "tags": ["account", "type"]
+    },
+    {
+      "id": "date-ordering",
+      "description": "Transactions don't need date order",
+      "input": {"inline": "2024-01-20 Second\n    assets:a  $100\n    assets:b\n\n2024-01-15 First\n    assets:a  $50\n    assets:b"},
+      "expected": {"validate": "success"},
+      "tags": ["date"]
+    },
+    {
+      "id": "duplicate-payee-ok",
+      "description": "Duplicate payees are allowed",
+      "input": {"inline": "2024-01-15 Store\n    expenses:food  $50\n    assets:checking\n\n2024-01-16 Store\n    expenses:food  $30\n    assets:checking"},
+      "expected": {"validate": "success"},
+      "tags": ["payee"]
+    },
+    {
+      "id": "tag-value",
+      "description": "Tag with value",
+      "input": {"inline": "2024-01-15 Test\n    ; project: alpha\n    expenses:a  $100\n    assets:b"},
+      "expected": {"validate": "success"},
+      "tags": ["tag"]
+    },
+    {
+      "id": "tag-no-value",
+      "description": "Tag without value (boolean)",
+      "input": {"inline": "2024-01-15 Test\n    ; billable:\n    expenses:a  $100\n    assets:b"},
+      "expected": {"validate": "success"},
+      "tags": ["tag"]
+    },
+    {
+      "id": "alias-expansion",
+      "description": "Account alias is expanded",
+      "input": {"inline": "alias chk = assets:checking\n\n2024-01-15 Test\n    chk  $100\n    income:salary"},
+      "expected": {"validate": "success"},
+      "tags": ["alias"]
+    },
+    {
+      "id": "commodity-format-enforced",
+      "description": "Commodity format is used",
+      "input": {"inline": "commodity 1,000.00 EUR\n\n2024-01-15 Test\n    assets:a  1,000.00 EUR\n    assets:b"},
+      "expected": {"validate": "success"},
+      "tags": ["commodity", "format"]
+    },
+    {
+      "id": "inferred-commodity",
+      "description": "Commodity inferred from amounts",
+      "input": {"inline": "2024-01-15 Test\n    assets:a  100.00 EUR\n    assets:b  100.00 EUR\n    assets:c  -200.00 EUR"},
+      "expected": {"validate": "success"},
+      "tags": ["commodity"]
+    }
+  ]
+}

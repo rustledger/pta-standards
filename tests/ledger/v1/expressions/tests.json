@@ -1,0 +1,189 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "ledger-expressions",
+  "description": "Ledger value expression tests",
+  "tests": [
+    {
+      "id": "expr-arithmetic-add",
+      "description": "Addition in amount expression",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  ($50 + $50)\n    Assets:B  $-100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "expr-arithmetic-subtract",
+      "description": "Subtraction in amount expression",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  ($150 - $50)\n    Assets:B  $-100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "expr-arithmetic-multiply",
+      "description": "Multiplication in amount expression",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  ($25 * 4)\n    Assets:B  $-100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "expr-arithmetic-divide",
+      "description": "Division in amount expression",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  ($200 / 2)\n    Assets:B  $-100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "expr-nested",
+      "description": "Nested expression with parentheses",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (($50 + $30) * 2)\n    Assets:B  $-160"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "arithmetic"]
+    },
+    {
+      "id": "expr-define-simple",
+      "description": "Simple define and use",
+      "input": {"inline": "define rent=$1500\n\n2024/01/15 Rent Payment\n    Expenses:Rent  rent\n    Assets:Checking  -rent"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "define"]
+    },
+    {
+      "id": "expr-define-expression",
+      "description": "Define with expression",
+      "input": {"inline": "define weekly_hours=40\ndefine hourly_rate=$50\ndefine weekly_pay=(hourly_rate * weekly_hours)\n\n2024/01/15 Paycheck\n    Assets:Checking  weekly_pay\n    Income:Salary  -weekly_pay"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "define"]
+    },
+    {
+      "id": "expr-function-abs",
+      "description": "Absolute value function",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (abs($-100))\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-function-ceil",
+      "description": "Ceiling function",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (ceil($99.01))\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-function-floor",
+      "description": "Floor function",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (floor($99.99))\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-function-round",
+      "description": "Round function",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (round($99.50))\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-function-quantity",
+      "description": "Quantity function extracts number",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (quantity($100) * 2) USD\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-function-commodity",
+      "description": "Commodity function extracts currency",
+      "input": {"inline": "define my_amount=$100\ndefine my_currency=commodity(my_amount)"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function"]
+    },
+    {
+      "id": "expr-conditional",
+      "description": "Conditional expression (ternary)",
+      "input": {"inline": "2024/01/15 Test\n    Assets:A  (1 > 0 ? $100 : $50)\n    Assets:B"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "conditional"]
+    },
+    {
+      "id": "expr-comparison-eq",
+      "description": "Equality comparison",
+      "input": {"inline": "assert $100 == $100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-comparison-neq",
+      "description": "Inequality comparison",
+      "input": {"inline": "assert $100 != $50"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-comparison-lt",
+      "description": "Less than comparison",
+      "input": {"inline": "assert $50 < $100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-comparison-lte",
+      "description": "Less than or equal comparison",
+      "input": {"inline": "assert $100 <= $100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-comparison-gt",
+      "description": "Greater than comparison",
+      "input": {"inline": "assert $100 > $50"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-comparison-gte",
+      "description": "Greater than or equal comparison",
+      "input": {"inline": "assert $100 >= $100"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "comparison"]
+    },
+    {
+      "id": "expr-logical-and",
+      "description": "Logical AND",
+      "input": {"inline": "assert (1 > 0) & (2 > 1)"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "logical"]
+    },
+    {
+      "id": "expr-logical-or",
+      "description": "Logical OR",
+      "input": {"inline": "assert (1 > 0) | (0 > 1)"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "logical"]
+    },
+    {
+      "id": "expr-logical-not",
+      "description": "Logical NOT",
+      "input": {"inline": "assert !(0 > 1)"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "logical"]
+    },
+    {
+      "id": "expr-regex-match",
+      "description": "Regex matching",
+      "input": {"inline": "= expr account =~ /Expenses:Food/\n    (Budget:Food)  -1"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "regex"]
+    },
+    {
+      "id": "expr-account-function",
+      "description": "Account total function",
+      "input": {"inline": "2024/01/15 Opening\n    Assets:Checking  $1000\n    Equity:Opening\n\nassert account(\"Assets:Checking\") == $1000"},
+      "expected": {"parse": "success", "validate": "success"},
+      "tags": ["expression", "function", "account"]
+    },
+    {
+      "id": "expr-today-function",
+      "description": "Today function for current date",
+      "input": {"inline": "define recent=(today - 30)"},
+      "expected": {"parse": "success"},
+      "tags": ["expression", "function", "date"]
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pta-standards.org/schemas/linting/config.json",
+  "title": "PTA Linting Configuration",
+  "description": "Configuration schema for PTA journal linting tools",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Configuration schema version"
+    },
+    "extends": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ],
+      "description": "Base configuration(s) to extend"
+    },
+    "format": {
+      "type": "string",
+      "enum": ["beancount", "ledger", "hledger", "auto"],
+      "default": "auto",
+      "description": "Journal format to lint"
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/RuleConfig"
+      },
+      "description": "Individual rule configurations"
+    },
+    "severity": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Severity"
+      },
+      "description": "Override severity for rules"
+    },
+    "ignore": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "File patterns to ignore"
+    },
+    "include": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "File patterns to include"
+    },
+    "plugins": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional linting plugins to load"
+    },
+    "settings": {
+      "$ref": "#/$defs/GlobalSettings"
+    }
+  },
+  "$defs": {
+    "RuleConfig": {
+      "oneOf": [
+        { "type": "boolean" },
+        { "$ref": "#/$defs/Severity" },
+        {
+          "type": "array",
+          "items": [
+            { "$ref": "#/$defs/Severity" }
+          ],
+          "additionalItems": true,
+          "description": "Severity and rule-specific options"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "severity": { "$ref": "#/$defs/Severity" },
+            "options": { "type": "object" }
+          }
+        }
+      ]
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["off", "info", "warning", "error"],
+      "description": "Rule severity level"
+    },
+    "GlobalSettings": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "object",
+          "properties": {
+            "assetPrefix": {
+              "type": "string",
+              "default": "Assets",
+              "description": "Expected prefix for asset accounts"
+            },
+            "liabilityPrefix": {
+              "type": "string",
+              "default": "Liabilities",
+              "description": "Expected prefix for liability accounts"
+            },
+            "incomePrefix": {
+              "type": "string",
+              "default": "Income",
+              "description": "Expected prefix for income accounts"
+            },
+            "expensePrefix": {
+              "type": "string",
+              "default": "Expenses",
+              "description": "Expected prefix for expense accounts"
+            },
+            "equityPrefix": {
+              "type": "string",
+              "default": "Equity",
+              "description": "Expected prefix for equity accounts"
+            },
+            "maxDepth": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum account hierarchy depth"
+            }
+          }
+        },
+        "formatting": {
+          "type": "object",
+          "properties": {
+            "indentSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8,
+              "default": 2
+            },
+            "indentStyle": {
+              "type": "string",
+              "enum": ["space", "tab"],
+              "default": "space"
+            },
+            "amountAlignment": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Column to align amounts to"
+            },
+            "currencyPosition": {
+              "type": "string",
+              "enum": ["before", "after"],
+              "default": "after"
+            }
+          }
+        },
+        "dates": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "description": "Expected date format"
+            },
+            "allowFuture": {
+              "type": "boolean",
+              "default": true,
+              "description": "Allow future-dated transactions"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "requiredKeys": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Metadata keys required on all transactions"
+            },
+            "allowedKeys": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Only allow these metadata keys"
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": "1.0",
+      "extends": "recommended",
+      "rules": {
+        "no-unused-accounts": "error",
+        "consistent-payee-names": ["warning", { "caseSensitive": false }],
+        "transaction-balance": "error",
+        "sorted-transactions": "off"
+      },
+      "settings": {
+        "formatting": {
+          "indentSize": 2,
+          "amountAlignment": 50
+        }
+      }
+    }
+  ]
+}

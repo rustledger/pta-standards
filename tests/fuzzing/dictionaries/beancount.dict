@@ -1,0 +1,218 @@
+# Beancount fuzzing dictionary
+# Tokens meaningful to the Beancount parser
+
+# Directive keywords
+"open"
+"close"
+"commodity"
+"balance"
+"pad"
+"event"
+"note"
+"document"
+"price"
+"transaction"
+"txn"
+"query"
+"custom"
+"option"
+"plugin"
+"include"
+"pushtag"
+"poptag"
+"pushmeta"
+"popmeta"
+
+# Transaction flags
+"*"
+"!"
+"txn"
+"P"
+"S"
+"T"
+"C"
+"U"
+"R"
+"M"
+
+# Booking methods
+"STRICT"
+"FIFO"
+"LIFO"
+"HIFO"
+"AVERAGE"
+"NONE"
+
+# Date formats
+"2024-01-01"
+"2024-12-31"
+"2000-01-01"
+"1999-12-31"
+"2024-02-29"
+"2024-06-15"
+
+# Numbers
+"0"
+"1"
+"-1"
+"100"
+"-100"
+"1000"
+"1000000"
+"0.01"
+"0.001"
+"0.0001"
+"100.00"
+"-100.00"
+"1,000.00"
+"1.000,00"
+"1234567890"
+
+# Common currencies
+"USD"
+"EUR"
+"GBP"
+"JPY"
+"CNY"
+"CAD"
+"AUD"
+"CHF"
+"BTC"
+"ETH"
+
+# Stock symbols
+"AAPL"
+"GOOGL"
+"MSFT"
+"AMZN"
+"TSLA"
+"VTI"
+"VXUS"
+
+# Account type prefixes
+"Assets"
+"Liabilities"
+"Equity"
+"Income"
+"Expenses"
+
+# Common account names
+"Assets:Bank"
+"Assets:Bank:Checking"
+"Assets:Cash"
+"Assets:Brokerage"
+"Liabilities:Credit-Card"
+"Equity:Opening-Balances"
+"Income:Salary"
+"Expenses:Food"
+"Expenses:Food:Groceries"
+"Expenses:Food:Restaurant"
+
+# Cost specification
+"{"
+"}"
+"{{"
+"}}"
+"@"
+"@@"
+"#"
+
+# Metadata
+":"
+";"
+"#"
+"^"
+
+# Strings
+"\"\""
+"\"Test\""
+"\"Description\""
+"\"Payee\""
+"\"Narration\""
+
+# Tags and links
+"#tag"
+"#project"
+"^link"
+"^invoice"
+
+# Common options
+"title"
+"operating_currency"
+"account_previous_balances"
+"account_current_earnings"
+"booking_method"
+"inferred_tolerance_default"
+"inferred_tolerance_multiplier"
+"documents"
+"name_assets"
+"name_liabilities"
+"name_equity"
+"name_income"
+"name_expenses"
+
+# Whitespace
+" "
+"\t"
+"\n"
+"\r\n"
+"  "
+"\t\t"
+
+# Special characters
+"("
+")"
+"["
+"]"
+","
+"."
+"-"
+"+"
+"/"
+"_"
+"'"
+"`"
+
+# Unicode
+"é"
+"ñ"
+"ü"
+"中文"
+"日本語"
+"한국어"
+"€"
+"£"
+"¥"
+
+# Edge cases
+""
+" "
+"\n\n"
+";;;"
+"###"
+"2024-01-01 *"
+"2024-01-01 !"
+"2024-01-01 txn"
+
+# Malformed inputs (for negative testing)
+"2024-13-01"
+"2024-01-32"
+"2024-00-01"
+"open"
+"close "
+"  Assets"
+"Assets:"
+":Checking"
+"Assets::Checking"
+
+# Large numbers
+"999999999999"
+"0.00000000001"
+"1e10"
+"1E-10"
+
+# Comment markers
+"; comment"
+";; comment"
+"* org heading"
+"** subheading"

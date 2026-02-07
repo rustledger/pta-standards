@@ -1,0 +1,174 @@
+name: Validate Schemas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.schema.json'
+      - '**/*.proto'
+      - '.github/workflows/validate-schemas.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.schema.json'
+      - '**/*.proto'
+      - '.github/workflows/validate-schemas.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-json-schemas:
+    name: Validate JSON Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ajv-cli
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Validate JSON Schema syntax
+        run: |
+          for schema in $(find . -name '*.schema.json' -type f); do
+            # Skip empty files
+            if [[ ! -s "$schema" ]]; then
+              echo "::warning file=$schema::Schema file is empty"
+              continue
+            fi
+            echo "Validating: $schema"
+            # Check JSON syntax
+            python3 -m json.tool "$schema" > /dev/null || {
+              echo "::error file=$schema::Invalid JSON syntax"
+              exit 1
+            }
+            # Validate against JSON Schema meta-schema
+            ajv compile -s "$schema" --spec=draft2020 --strict=false || {
+              echo "::error file=$schema::Invalid JSON Schema"
+              exit 1
+            }
+          done
+
+      - name: Check schema references
+        run: |
+          cat > check_refs.py << 'PYTHON'
+          import json
+          import sys
+          from pathlib import Path
+
+          errors = []
+          for schema_file in Path('.').rglob('*.schema.json'):
+              if schema_file.stat().st_size == 0:
+                  continue
+              try:
+                  schema = json.loads(schema_file.read_text())
+              except json.JSONDecodeError:
+                  continue
+
+              def check_refs(obj, path=""):
+                  if isinstance(obj, dict):
+                      if "$ref" in obj:
+                          ref = obj["$ref"]
+                          if ref.startswith("#"):
+                              pass  # Internal reference
+                          elif ref.startswith("./") or ref.startswith("../"):
+                              ref_path = schema_file.parent / ref.split("#")[0]
+                              if not ref_path.exists():
+                                  errors.append(f"{schema_file}: Broken $ref to {ref}")
+                      for k, v in obj.items():
+                          check_refs(v, f"{path}/{k}")
+                  elif isinstance(obj, list):
+                      for i, v in enumerate(obj):
+                          check_refs(v, f"{path}[{i}]")
+
+              check_refs(schema)
+
+          for error in errors:
+              print(f"::error::{error}")
+          sys.exit(1 if errors else 0)
+          PYTHON
+          python3 check_refs.py
+
+      - name: Summary
+        run: |
+          echo "## JSON Schemas" >> $GITHUB_STEP_SUMMARY
+          for f in $(find . -name '*.schema.json' -type f | sort); do
+            if [[ -s "$f" ]]; then
+              echo "- \`$f\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- \`$f\` *(empty)*" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  validate-protobuf:
+    name: Validate Protocol Buffers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Validate proto files
+        run: |
+          for proto in $(find . -name '*.proto' -type f); do
+            # Skip empty files
+            if [[ ! -s "$proto" ]]; then
+              echo "::warning file=$proto::Proto file is empty"
+              continue
+            fi
+            echo "Validating: $proto"
+            protoc --proto_path=$(dirname "$proto") --descriptor_set_out=/dev/null "$proto" || {
+              echo "::error file=$proto::Invalid Protocol Buffer definition"
+              exit 1
+            }
+          done
+
+      - name: Summary
+        run: |
+          echo "## Protocol Buffers" >> $GITHUB_STEP_SUMMARY
+          for f in $(find . -name '*.proto' -type f | sort); do
+            if [[ -s "$f" ]]; then
+              echo "- \`$f\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- \`$f\` *(empty)*" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  generate-types:
+    name: Generate Type Definitions
+    runs-on: ubuntu-latest
+    needs: validate-json-schemas
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install json-schema-to-typescript
+        run: npm install -g json-schema-to-typescript
+
+      - name: Generate TypeScript types
+        run: |
+          mkdir -p dist/types
+          for schema in $(find . -name '*.schema.json' -type f); do
+            if [[ ! -s "$schema" ]]; then
+              continue
+            fi
+            name=$(basename "$schema" .schema.json)
+            echo "Generating TypeScript for: $schema"
+            json2ts "$schema" -o "dist/types/${name}.d.ts" --no-banner 2>/dev/null || true
+          done
+
+      - name: Upload generated types
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-types
+          path: dist/types/
+          if-no-files-found: ignore

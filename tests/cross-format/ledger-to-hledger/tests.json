@@ -1,0 +1,193 @@
+{
+  "$schema": "../../harness/test-case.schema.json",
+  "suite": "ledger-to-hledger",
+  "description": "Ledger to hledger format conversion tests",
+  "tests": [
+    {
+      "id": "simple-transaction",
+      "description": "Basic transaction converts with high fidelity",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Grocery Store\n    Expenses:Food  $50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["transaction", "basic"]
+    },
+    {
+      "id": "virtual-posting",
+      "description": "Virtual postings convert directly",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    (Budget:Food)  $-50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["virtual"]
+    },
+    {
+      "id": "balanced-virtual",
+      "description": "Balanced virtual postings convert directly",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    Expenses:Food  $50.00\n    [Budget:Food]  $-50.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["virtual", "balanced"]
+    },
+    {
+      "id": "periodic-transaction",
+      "description": "Periodic transaction converts",
+      "source": {
+        "format": "ledger",
+        "inline": "~ Monthly\n    Expenses:Rent  $1500\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["periodic"]
+    },
+    {
+      "id": "automated-transaction",
+      "description": "Automated transaction converts",
+      "source": {
+        "format": "ledger",
+        "inline": "= /Grocery/\n    (Budget:Food)  -1"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["automated"]
+    },
+    {
+      "id": "account-directive",
+      "description": "Account directive converts",
+      "source": {
+        "format": "ledger",
+        "inline": "account Assets:Checking\n    note My checking account"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "account"]
+    },
+    {
+      "id": "commodity-format",
+      "description": "Commodity format converts",
+      "source": {
+        "format": "ledger",
+        "inline": "commodity $\n    format $1,000.00"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["directive", "commodity"]
+    },
+    {
+      "id": "balance-assertion",
+      "description": "Balance assertion converts directly",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Deposit\n    Assets:Checking  $100.00 = $1100.00\n    Income:Salary"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["balance", "assertion"]
+    },
+    {
+      "id": "lot-price",
+      "description": "Lot price annotation converts",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Buy Stock\n    Assets:Brokerage  10 AAPL @ $150.00\n    Assets:Checking  $-1500.00"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["lot", "price"]
+    },
+    {
+      "id": "metadata-tags",
+      "description": "Metadata tags convert",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 * Test\n    ; :project:travel:\n    Expenses:Travel  $100.00\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["metadata", "tags"]
+    },
+    {
+      "id": "expression-amount-lost",
+      "description": "Value expressions are evaluated",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15 Test\n    Expenses:Food  ($10 * 5)\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success",
+        "balance": {
+          "Expenses:Food": {"USD": "50.00"}
+        }
+      },
+      "tags": ["expression", "evaluation"]
+    },
+    {
+      "id": "effective-date",
+      "description": "Effective date converts to secondary date",
+      "source": {
+        "format": "ledger",
+        "inline": "2024/01/15=2024/01/20 Future Payment\n    Expenses:Bills  $100\n    Assets:Checking"
+      },
+      "target": {
+        "format": "hledger"
+      },
+      "expected": {
+        "convert": "success"
+      },
+      "tags": ["date", "effective"]
+    }
+  ]
+}

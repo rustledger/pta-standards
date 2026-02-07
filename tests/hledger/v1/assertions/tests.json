@@ -1,0 +1,107 @@
+{
+  "$schema": "../../../harness/test-case.schema.json",
+  "suite": "hledger-assertions",
+  "description": "hledger balance assertion and assignment tests",
+  "tests": [
+    {
+      "id": "assertion-pass",
+      "description": "Balance assertion succeeds",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking  $1000.00\n    equity:opening\n\n2024-01-15 Deposit\n    assets:checking  $100.00 = $1100.00\n    income:salary"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion"]
+    },
+    {
+      "id": "assertion-fail",
+      "description": "Balance assertion fails",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking  $1000.00\n    equity:opening\n\n2024-01-15 Deposit\n    assets:checking  $100.00 = $9999.00\n    income:salary"},
+      "expected": {"validate": "error", "error_contains": ["balance", "assertion"]},
+      "tags": ["assertion"]
+    },
+    {
+      "id": "assertion-subaccount-inclusive",
+      "description": "Balance assertion includes subaccounts (=*)",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking:usd  $500.00\n    assets:checking:eur  500.00 EUR\n    equity:opening\n\n2024-01-15 Check\n    assets:checking:usd  $0 =* $500.00\n    income:dummy"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "subaccount"]
+    },
+    {
+      "id": "assertion-commodity-specific",
+      "description": "Assertion checks specific commodity only",
+      "input": {"inline": "2024-01-01 Opening\n    assets:multi  $100.00\n    assets:multi  50.00 EUR\n    equity:opening\n\n2024-01-15 Check USD only\n    assets:multi  $0 = $100.00\n    income:dummy"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "commodity"]
+    },
+    {
+      "id": "assertion-zero",
+      "description": "Assert zero balance",
+      "input": {"inline": "2024-01-01 In\n    assets:temp  $100.00\n    income:a\n\n2024-01-15 Out\n    expenses:a  $100.00 = $0\n    assets:temp"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "zero"],
+      "skip": true,
+      "skip_reason": "This tests expenses, needs different structure"
+    },
+    {
+      "id": "assignment-simple",
+      "description": "Balance assignment sets balance",
+      "input": {"inline": "2024-01-15 Adjustment\n    assets:checking  = $500.00\n    equity:adjustments"},
+      "expected": {"validate": "success"},
+      "tags": ["assignment"]
+    },
+    {
+      "id": "assignment-with-amount",
+      "description": "Balance assignment with explicit amount",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking  $1000.00\n    equity:opening\n\n2024-01-15 Adjust\n    assets:checking  $-500.00 = $500.00\n    equity:adjustments"},
+      "expected": {"validate": "success"},
+      "tags": ["assignment"]
+    },
+    {
+      "id": "assignment-infer-amount",
+      "description": "Assignment infers required amount",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking  $1000.00\n    equity:opening\n\n2024-01-15 Set Balance\n    assets:checking  = $1500.00\n    income:found-money"},
+      "expected": {"validate": "success"},
+      "tags": ["assignment", "infer"]
+    },
+    {
+      "id": "assertion-date-boundary",
+      "description": "Assertion checked at posting order",
+      "input": {"inline": "2024-01-15 First\n    assets:a  $100.00 = $100.00\n    income:b\n\n2024-01-15 Second\n    assets:a  $50.00 = $150.00\n    income:b"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "order"]
+    },
+    {
+      "id": "assertion-multiple-postings",
+      "description": "Multiple assertions in same transaction",
+      "input": {"inline": "2024-01-01 Opening\n    assets:a  $100.00\n    assets:b  $200.00\n    equity:opening\n\n2024-01-15 Check Both\n    assets:a  $0 = $100.00\n    assets:b  $0 = $200.00\n    income:dummy"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "multiple"]
+    },
+    {
+      "id": "assertion-after-elision",
+      "description": "Assertion after elided amount",
+      "input": {"inline": "2024-01-01 Opening\n    assets:checking  $1000.00\n    equity:opening\n\n2024-01-15 Expense\n    expenses:food  $50.00\n    assets:checking  = $950.00"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "elision"]
+    },
+    {
+      "id": "assertion-negative",
+      "description": "Assertion with negative balance",
+      "input": {"inline": "2024-01-15 Overdraft\n    expenses:emergency  $500.00\n    assets:checking  = $-500.00"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "negative"]
+    },
+    {
+      "id": "assertion-partial-commodity",
+      "description": "Assertion only checks stated commodity",
+      "input": {"inline": "2024-01-01 Multi\n    assets:wallet  $100.00\n    assets:wallet  50.00 EUR\n    equity:opening\n\n2024-01-15 Check EUR\n    assets:wallet  0 EUR = 50.00 EUR\n    income:dummy"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "commodity"]
+    },
+    {
+      "id": "assertion-total-star",
+      "description": "Total assertion with =*",
+      "input": {"inline": "2024-01-01 Parent\n    assets:bank:checking  $500.00\n    assets:bank:savings  $500.00\n    equity:opening\n\n2024-01-15 Check Total\n    assets:bank:checking  $0 =* $1000.00\n    income:dummy"},
+      "expected": {"validate": "success"},
+      "tags": ["assertion", "total"]
+    }
+  ]
+}

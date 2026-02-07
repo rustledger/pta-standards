@@ -1,0 +1,51 @@
+# PTA Standards Code Owners
+# These owners will be requested for review when changes are made to their areas.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything
+* @pta-standards/maintainers
+
+# Core specification
+/core/ @pta-standards/core-maintainers
+
+# Format-specific specifications
+/formats/beancount/ @pta-standards/beancount-maintainers
+/formats/ledger/ @pta-standards/ledger-maintainers
+/formats/hledger/ @pta-standards/hledger-maintainers
+
+# Grammars (EBNF, ABNF, tree-sitter)
+**/grammar/ @pta-standards/grammar-maintainers
+**/tree-sitter/ @pta-standards/grammar-maintainers
+*.ebnf @pta-standards/grammar-maintainers
+*.abnf @pta-standards/grammar-maintainers
+
+# Schemas (JSON Schema, Protocol Buffers)
+**/schema/ @pta-standards/schema-maintainers
+*.schema.json @pta-standards/schema-maintainers
+*.proto @pta-standards/schema-maintainers
+
+# Formal models (Alloy)
+**/formal/ @pta-standards/formal-maintainers
+*.als @pta-standards/formal-maintainers
+
+# Test suite
+/tests/ @pta-standards/test-maintainers
+
+# Tooling specifications
+/tooling/ @pta-standards/tooling-maintainers
+
+# Security specifications
+/security/ @pta-standards/security-maintainers
+
+# Conformance program
+/conformance/ @pta-standards/conformance-maintainers
+
+# Build and CI
+/build/ @pta-standards/infra-maintainers
+/.github/ @pta-standards/infra-maintainers
+
+# Documentation and governance
+/meta/ @pta-standards/governance
+/GOVERNANCE.md @pta-standards/governance
+/CONTRIBUTING.md @pta-standards/governance
+/CODE_OF_CONDUCT.md @pta-standards/governance

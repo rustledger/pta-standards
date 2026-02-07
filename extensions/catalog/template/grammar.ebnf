@@ -1,0 +1,189 @@
+(* Extension Grammar Template *)
+(* ISO/IEC 14977 Extended BNF notation *)
+(*
+ * This is a template for defining the grammar of a PTA extension.
+ * Replace the placeholder rules with your extension's actual syntax.
+ *
+ * Notation:
+ *   =     definition
+ *   ,     concatenation
+ *   |     alternation
+ *   [ ]   optional (0 or 1)
+ *   { }   repetition (0 or more)
+ *   { }- repetition (1 or more)
+ *   (* *) comment
+ *   " "   terminal string
+ *)
+
+(* =========================================================================== *)
+(* EXTENSION DIRECTIVE                                                         *)
+(* =========================================================================== *)
+
+(* Define the main syntax for your extension *)
+
+extension_directive = date, WHITESPACE, { WHITESPACE },
+                      extension_keyword, WHITESPACE, { WHITESPACE },
+                      extension_body,
+                      [ trailing_comment ],
+                      { NEWLINE, extension_metadata } ;
+
+extension_keyword = "extension-name" ;
+(* Replace with your extension's keyword *)
+
+extension_body = extension_arguments ;
+
+extension_arguments = argument, { WHITESPACE, { WHITESPACE }, argument } ;
+
+argument = string_argument
+         | number_argument
+         | account_argument
+         | currency_argument
+         | date_argument
+         | flag_argument ;
+
+string_argument = '"', { string_char }, '"' ;
+
+string_char = ANY - ( '"' | "\" | NEWLINE )
+            | "\", escape_char ;
+
+escape_char = "n" | "r" | "t" | "\" | '"' ;
+
+number_argument = [ "-" ], integer_part, [ ".", fractional_part ] ;
+
+integer_part = digit, { digit | "," } ;
+
+fractional_part = { digit }- ;
+
+account_argument = account_type, { ":", account_component }- ;
+
+account_type = "Assets" | "Liabilities" | "Equity" | "Income" | "Expenses" ;
+
+account_component = ( ASCII_ALPHA_UPPER | digit ), { ASCII_ALPHANUMERIC | "-" } ;
+
+currency_argument = ASCII_ALPHA_UPPER, { ASCII_ALPHA_UPPER | digit | "-" | "_" } ;
+
+date_argument = year, "-", month, "-", day ;
+
+year = digit, digit, digit, digit ;
+
+month = digit, digit ;
+
+day = digit, digit ;
+
+flag_argument = "*" | "!" | "?" | "#" ;
+
+(* =========================================================================== *)
+(* EXTENSION METADATA                                                          *)
+(* =========================================================================== *)
+
+extension_metadata = WHITESPACE, { WHITESPACE },
+                     metadata_key, ":", { WHITESPACE }, metadata_value,
+                     [ trailing_comment ] ;
+
+metadata_key = ASCII_ALPHA_LOWER, { ASCII_ALPHANUMERIC | "-" | "_" } ;
+
+metadata_value = string_argument
+               | number_argument
+               | account_argument
+               | currency_argument
+               | date_argument
+               | tag
+               | link ;
+
+tag = "#", { ASCII_ALPHANUMERIC | "-" | "_" | "/" }- ;
+
+link = "^", { ASCII_ALPHANUMERIC | "-" | "_" | "/" }- ;
+
+(* =========================================================================== *)
+(* EXTENSION-SPECIFIC SUB-DIRECTIVES                                           *)
+(* =========================================================================== *)
+
+(* If your extension has sub-directives on indented lines, define them here *)
+
+extension_subdirective = WHITESPACE, { WHITESPACE },
+                         subdirective_keyword, WHITESPACE,
+                         subdirective_body,
+                         [ trailing_comment ] ;
+
+subdirective_keyword = "sub-keyword" ;
+(* Replace with your sub-directive keywords *)
+
+subdirective_body = { argument } ;
+
+(* =========================================================================== *)
+(* INTEGRATION WITH BASE FORMAT                                                *)
+(* =========================================================================== *)
+
+(*
+ * To integrate with Beancount, your extension typically:
+ * 1. Uses the 'custom' directive as a fallback:
+ *
+ *    custom_fallback = date, WHITESPACE, "custom", WHITESPACE,
+ *                      '"', extension_keyword, '"', WHITESPACE,
+ *                      { custom_value, WHITESPACE } ;
+ *
+ *    custom_value = string_argument
+ *                 | date_argument
+ *                 | account_argument
+ *                 | number_argument
+ *                 | boolean ;
+ *
+ *    boolean = "TRUE" | "FALSE" ;
+ *
+ * 2. Or defines a new first-class directive (requires parser changes)
+ *
+ * Example custom directive fallback:
+ *
+ *    2024-01-01 custom "budget" "Expenses:Food" 500 USD "monthly"
+ *
+ * This allows the extension to work with standard Beancount parsers
+ * while providing richer semantics in extension-aware tools.
+ *)
+
+(* =========================================================================== *)
+(* EXAMPLES                                                                    *)
+(* =========================================================================== *)
+
+(*
+ * Example 1: Simple extension
+ *
+ *   2024-01-01 extension-name "value1" 100 USD
+ *     metadata-key: "metadata-value"
+ *
+ * Example 2: Extension with sub-directives
+ *
+ *   2024-01-01 extension-name Expenses:Food
+ *     limit: 500 USD
+ *     period: "monthly"
+ *     rollover: TRUE
+ *
+ * Example 3: Beancount custom directive fallback
+ *
+ *   2024-01-01 custom "extension-name" Expenses:Food 500 USD "monthly"
+ *)
+
+(* =========================================================================== *)
+(* CHARACTER CLASSES                                                           *)
+(* =========================================================================== *)
+
+trailing_comment = { WHITESPACE }, ";", { ANY - NEWLINE } ;
+
+WHITESPACE = " " | "\t" ;
+
+NEWLINE = "\r\n" | "\n" | "\r" ;
+
+ANY = ? any Unicode character ? ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ASCII_ALPHA = ASCII_ALPHA_UPPER | ASCII_ALPHA_LOWER ;
+
+ASCII_ALPHA_UPPER = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+                  | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+                  | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+ASCII_ALPHA_LOWER = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+                  | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+                  | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+ASCII_ALPHANUMERIC = ASCII_ALPHA | digit ;

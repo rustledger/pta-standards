@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PTA Extensions Registry",
+  "description": "Registry of community extensions to PTA formats",
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01",
+  "extensions": [
+    {
+      "id": "budgeting",
+      "name": "Budget Directives",
+      "description": "Directives for defining and tracking budgets",
+      "status": "experimental",
+      "formats": ["beancount"],
+      "specUrl": "https://pta-standards.org/extensions/catalog/budgeting/spec.md",
+      "repository": "https://github.com/example/pta-budgeting",
+      "maintainers": [],
+      "version": "0.1.0",
+      "syntax": {
+        "directives": ["budget", "envelope"],
+        "example": "2024-01-01 budget Expenses:Food 500 USD"
+      }
+    },
+    {
+      "id": "forecasting",
+      "name": "Forecasting Rules",
+      "description": "Rules for generating projected future transactions",
+      "status": "experimental",
+      "formats": ["hledger", "ledger"],
+      "specUrl": "https://pta-standards.org/extensions/catalog/forecasting/spec.md",
+      "repository": null,
+      "maintainers": [],
+      "version": "0.1.0",
+      "syntax": {
+        "directives": ["~"],
+        "example": "~ monthly\n  Expenses:Rent  1500 USD\n  Assets:Bank"
+      }
+    },
+    {
+      "id": "assertions-enhanced",
+      "name": "Enhanced Balance Assertions",
+      "description": "Extended balance assertion syntax with date ranges and tolerances",
+      "status": "proposal",
+      "formats": ["beancount", "ledger", "hledger"],
+      "specUrl": "https://pta-standards.org/extensions/catalog/assertions-enhanced/spec.md",
+      "repository": null,
+      "maintainers": [],
+      "version": "0.0.1"
+    }
+  ],
+  "statuses": {
+    "proposal": {
+      "description": "Under discussion, not yet implemented",
+      "stability": 0
+    },
+    "experimental": {
+      "description": "Implemented but may change",
+      "stability": 1
+    },
+    "stable": {
+      "description": "Stable API, backward compatible changes only",
+      "stability": 2
+    },
+    "deprecated": {
+      "description": "Being phased out, do not use for new projects",
+      "stability": -1
+    },
+    "graduated": {
+      "description": "Incorporated into core specification",
+      "stability": 3
+    }
+  },
+  "schema": {
+    "$id": "https://pta-standards.org/schemas/extensions/registry-entry.json",
+    "type": "object",
+    "required": ["id", "name", "description", "status", "formats"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$",
+        "description": "Unique extension identifier"
+      },
+      "name": {
+        "type": "string",
+        "description": "Human-readable extension name"
+      },
+      "description": {
+        "type": "string",
+        "description": "Brief description of the extension"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["proposal", "experimental", "stable", "deprecated", "graduated"]
+      },
+      "formats": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["beancount", "ledger", "hledger"]
+        },
+        "minItems": 1
+      },
+      "specUrl": {
+        "type": "string",
+        "format": "uri"
+      },
+      "repository": {
+        "type": ["string", "null"],
+        "format": "uri"
+      },
+      "maintainers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "github": { "type": "string" }
+          }
+        }
+      },
+      "version": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$"
+      },
+      "dependencies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "syntax": {
+        "type": "object",
+        "properties": {
+          "directives": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "metadata": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

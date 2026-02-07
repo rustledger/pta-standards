@@ -1,0 +1,99 @@
+name: Differential Testing
+
+on:
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      group:
+        description: 'Implementation group to test'
+        default: 'beancount'
+        type: choice
+        options:
+          - beancount
+          - ledger
+      limit:
+        description: 'Limit number of files to test'
+        default: '100'
+        type: string
+
+jobs:
+  differential-beancount:
+    name: Differential Test (Beancount)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.group == 'beancount' || github.event.inputs.group == ''
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install beancount
+        run: pip install beancount
+
+      # Note: rustledger would need to be installed here
+      # - name: Install rustledger
+      #   run: cargo install rustledger
+
+      - name: Run differential tests
+        run: |
+          cd tests/differential
+          python differential.py \
+            --config config.json \
+            --group beancount \
+            --limit ${{ github.event.inputs.limit || '100' }} \
+            --report divergences.json \
+            --verbose || true
+
+      - name: Upload divergence report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: differential-report
+          path: tests/differential/divergences.json
+
+      - name: Comment on divergences
+        if: failure()
+        run: |
+          echo "::warning::Divergences detected between implementations"
+          cat tests/differential/divergences.json | jq '.summary'
+
+  differential-ledger:
+    name: Differential Test (Ledger/hledger)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.group == 'ledger'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ledger and hledger
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ledger hledger
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run differential tests
+        run: |
+          cd tests/differential
+          python differential.py \
+            --config config.json \
+            --group ledger \
+            --limit ${{ github.event.inputs.limit || '100' }} \
+            --report divergences-ledger.json \
+            --verbose || true
+
+      - name: Upload divergence report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: differential-report-ledger
+          path: tests/differential/divergences-ledger.json
