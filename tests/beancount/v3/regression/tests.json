@@ -2,5 +2,539 @@
   "$schema": "../../harness/test-case.schema.json",
   "suite": "regression",
   "description": "Regression tests for fixed bugs and edge cases",
-  "tests": []
+  "tests": [
+    {
+      "id": "unicode-account-name",
+      "description": "Account with Unicode characters after ASCII start",
+      "spec_ref": "lexical.md#account",
+      "input": {
+        "inline": "2024-01-01 open Assets:Banque-Épargne USD\n2024-01-01 open Income:Salaire USD\n2024-01-15 * \"Dépôt\"\n  Assets:Banque-Épargne  100 USD\n  Income:Salaire\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["unicode", "accounts"]
+    },
+    {
+      "id": "unicode-narration",
+      "description": "Transaction with Unicode narration including emoji",
+      "spec_ref": "lexical.md#string",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Café ☕ et croissant 🥐\"\n  Expenses:Food  15 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["unicode", "strings"]
+    },
+    {
+      "id": "leap-year-date",
+      "description": "Transaction on Feb 29 in leap year",
+      "spec_ref": "lexical.md#date",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-02-29 * \"Leap day purchase\"\n  Expenses:Food  100 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["date", "edge-case"]
+    },
+    {
+      "id": "invalid-leap-year-date",
+      "description": "Feb 29 in non-leap year is invalid",
+      "spec_ref": "lexical.md#date",
+      "input": {
+        "inline": "2023-02-29 open Assets:Cash USD\n"
+      },
+      "expected": {
+        "parse": "error",
+        "error_contains": ["day", "out of range"]
+      },
+      "tags": ["date", "error"]
+    },
+    {
+      "id": "year-boundary-transaction",
+      "description": "Transactions spanning year boundary",
+      "spec_ref": "validation/balance.md",
+      "input": {
+        "inline": "2023-01-01 open Assets:Cash USD\n2023-01-01 open Expenses:Food USD\n2023-12-31 * \"Last day\"\n  Expenses:Food  50 USD\n  Assets:Cash\n2024-01-01 * \"First day\"\n  Expenses:Food  50 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["date", "edge-case"]
+    },
+    {
+      "id": "very-large-amount",
+      "description": "Transaction with very large amount",
+      "spec_ref": "amounts.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Investments USD\n2024-01-01 open Income:Gains USD\n2024-01-15 * \"Large transaction\"\n  Assets:Investments  999999999999.99 USD\n  Income:Gains\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["numbers", "edge-case"]
+    },
+    {
+      "id": "very-small-amount",
+      "description": "Transaction with very small amount",
+      "spec_ref": "amounts.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Crypto BTC\n2024-01-01 open Expenses:Fees BTC\n2024-01-15 * \"Tiny fee\"\n  Expenses:Fees  0.00000001 BTC\n  Assets:Crypto\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["numbers", "edge-case"]
+    },
+    {
+      "id": "number-with-grouping",
+      "description": "Amount with thousand separators",
+      "spec_ref": "lexical.md#number",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Salary USD\n2024-01-15 * \"Salary\"\n  Assets:Cash  1,234,567.89 USD\n  Income:Salary\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["numbers"]
+    },
+    {
+      "id": "multiline-narration",
+      "description": "Transaction with multi-line narration string",
+      "spec_ref": "lexical.md#string",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Purchase from\nMultiple\nLines\"\n  Expenses:Food  50 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["strings", "multiline"]
+    },
+    {
+      "id": "escaped-quotes-in-string",
+      "description": "String with escaped quotes",
+      "spec_ref": "lexical.md#string",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Restaurant \\\"The Best\\\" dinner\"\n  Expenses:Food  100 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["strings", "escape"]
+    },
+    {
+      "id": "escaped-backslash-in-string",
+      "description": "String with escaped backslash",
+      "spec_ref": "lexical.md#string",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Software USD\n2024-01-15 * \"C:\\\\Users\\\\Documents\"\n  Expenses:Software  50 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["strings", "escape"]
+    },
+    {
+      "id": "long-account-chain",
+      "description": "Deeply nested account hierarchy",
+      "spec_ref": "lexical.md#account",
+      "input": {
+        "inline": "2024-01-01 open Assets:US:BofA:Checking:Personal:Primary USD\n2024-01-01 open Income:Salary USD\n2024-01-15 * \"Deposit\"\n  Assets:US:BofA:Checking:Personal:Primary  1000 USD\n  Income:Salary\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["accounts"]
+    },
+    {
+      "id": "account-with-numbers",
+      "description": "Account component starting with number",
+      "spec_ref": "lexical.md#account",
+      "input": {
+        "inline": "2024-01-01 open Assets:401k USD\n2024-01-01 open Income:Salary USD\n2024-01-15 * \"401k contribution\"\n  Assets:401k  500 USD\n  Income:Salary\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["accounts"]
+    },
+    {
+      "id": "currency-with-special-chars",
+      "description": "Currency with allowed special characters",
+      "spec_ref": "lexical.md#currency",
+      "input": {
+        "inline": "2024-01-01 open Assets:Fund VTSAX\n2024-01-01 open Assets:Stock BRK.A\n2024-01-01 open Assets:Crypto BTC-USD\n2024-01-01 open Income:Dividends VTSAX\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["currency"]
+    },
+    {
+      "id": "multiple-currencies-transaction",
+      "description": "Transaction with multiple currencies",
+      "spec_ref": "posting.md#price",
+      "input": {
+        "inline": "2024-01-01 open Assets:USD USD\n2024-01-01 open Assets:EUR EUR\n2024-01-15 * \"Currency exchange\"\n  Assets:EUR  100 EUR @ 1.10 USD\n  Assets:USD  -110 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["currency", "price"]
+    },
+    {
+      "id": "balance-with-multiple-commodities",
+      "description": "Balance assertion with multiple commodities",
+      "spec_ref": "directives/balance.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Portfolio USD,EUR\n2024-01-01 open Income:Gains USD,EUR\n2024-01-15 * \"Deposit USD\"\n  Assets:Portfolio  100 USD\n  Income:Gains\n2024-01-16 * \"Deposit EUR\"\n  Assets:Portfolio  50 EUR\n  Income:Gains\n2024-01-17 balance Assets:Portfolio  100 USD\n2024-01-17 balance Assets:Portfolio  50 EUR\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["balance", "multi-commodity"]
+    },
+    {
+      "id": "cost-with-date-and-label",
+      "description": "Cost specification with date and label",
+      "spec_ref": "costs.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-15 * \"Buy stock\"\n  Assets:Stock  10 AAPL {150.00 USD, 2024-01-15, \"lot1\"}\n  Assets:Cash  -1500 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["costs", "lot"]
+    },
+    {
+      "id": "total-cost-specification",
+      "description": "Total cost with double braces",
+      "spec_ref": "costs.md#total-cost",
+      "input": {
+        "inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-15 * \"Buy stock with total cost\"\n  Assets:Stock  10 AAPL {{1500 USD}}\n  Assets:Cash  -1500 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["costs", "total"]
+    },
+    {
+      "id": "total-price-specification",
+      "description": "Total price with @@",
+      "spec_ref": "posting.md#total-price",
+      "input": {
+        "inline": "2024-01-01 open Assets:USD USD\n2024-01-01 open Assets:EUR EUR\n2024-01-15 * \"Currency exchange\"\n  Assets:EUR  100 EUR @@ 110 USD\n  Assets:USD  -110 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["price", "total"]
+    },
+    {
+      "id": "transaction-with-all-flags",
+      "description": "Transactions with different flags",
+      "spec_ref": "directives/transaction.md#flags",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Complete\"\n  Expenses:Food  10 USD\n  Assets:Cash\n2024-01-16 ! \"Incomplete\"\n  Expenses:Food  20 USD\n  Assets:Cash\n2024-01-17 txn \"Plain\"\n  Expenses:Food  30 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["transaction", "flags"]
+    },
+    {
+      "id": "posting-with-flag",
+      "description": "Individual posting with flag",
+      "spec_ref": "posting.md#posting-flag",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Transaction with flagged posting\"\n  ! Expenses:Food  10 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["posting", "flags"]
+    },
+    {
+      "id": "metadata-all-types",
+      "description": "Metadata with all value types",
+      "spec_ref": "metadata.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Test metadata\"\n  string-meta: \"text value\"\n  number-meta: 123.45\n  date-meta: 2024-01-15\n  bool-meta: TRUE\n  account-meta: Assets:Cash\n  currency-meta: USD\n  Expenses:Food  100 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["metadata"]
+    },
+    {
+      "id": "posting-metadata",
+      "description": "Metadata attached to posting",
+      "spec_ref": "metadata.md#posting-metadata",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Transaction\"\n  Expenses:Food  100 USD\n    receipt: \"path/to/receipt.pdf\"\n    category: \"groceries\"\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["metadata", "posting"]
+    },
+    {
+      "id": "pushtag-poptag",
+      "description": "Push and pop tag directives",
+      "spec_ref": "tags-links.md#pushtag",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\npushtag #vacation\n2024-01-15 * \"Dinner\"\n  Expenses:Food  50 USD\n  Assets:Cash\npoptag #vacation\n2024-01-16 * \"Not tagged\"\n  Expenses:Food  25 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["tags", "push-pop"]
+    },
+    {
+      "id": "pushmeta-popmeta",
+      "description": "Push and pop metadata directives",
+      "spec_ref": "metadata.md#pushmeta",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\npushmeta location: \"Paris\"\n2024-01-15 * \"Lunch\"\n  Expenses:Food  30 USD\n  Assets:Cash\npopmeta location:\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["metadata", "push-pop"]
+    },
+    {
+      "id": "pad-directive",
+      "description": "Pad directive with balance",
+      "spec_ref": "directives/pad.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Checking USD\n2024-01-01 open Equity:Opening USD\n2024-01-01 pad Assets:Checking Equity:Opening\n2024-01-02 balance Assets:Checking  1000 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["pad"]
+    },
+    {
+      "id": "event-directive",
+      "description": "Event directive",
+      "spec_ref": "directives/event.md",
+      "input": {
+        "inline": "2024-01-15 event \"location\" \"Paris, France\"\n2024-02-01 event \"location\" \"London, UK\"\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["event"]
+    },
+    {
+      "id": "query-directive",
+      "description": "Query directive",
+      "spec_ref": "directives/query.md",
+      "input": {
+        "inline": "2024-01-01 query \"monthly-expenses\" \"SELECT account, sum(position) WHERE account ~ 'Expenses' GROUP BY account\"\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["query"]
+    },
+    {
+      "id": "note-directive",
+      "description": "Note directive",
+      "spec_ref": "directives/note.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-15 note Assets:Cash \"Reviewed account balance\"\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["note"]
+    },
+    {
+      "id": "custom-directive",
+      "description": "Custom directive with various values",
+      "spec_ref": "directives/custom.md",
+      "input": {
+        "inline": "2024-01-15 custom \"budget\" Assets:Checking \"monthly\" 5000 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["custom"]
+    },
+    {
+      "id": "commodity-directive-with-metadata",
+      "description": "Commodity with metadata",
+      "spec_ref": "directives/commodity.md",
+      "input": {
+        "inline": "2024-01-01 commodity USD\n  name: \"US Dollar\"\n  precision: 2\n2024-01-01 commodity AAPL\n  name: \"Apple Inc.\"\n  asset-class: \"equity\"\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["commodity", "metadata"]
+    },
+    {
+      "id": "same-day-open-close",
+      "description": "Account opened and closed on same day",
+      "spec_ref": "validation/accounts.md",
+      "input": {
+        "inline": "2024-01-15 open Assets:Temp USD\n2024-01-15 close Assets:Temp\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["accounts", "edge-case"]
+    },
+    {
+      "id": "negative-price",
+      "description": "Negative price (valid for some instruments)",
+      "spec_ref": "directives/price.md",
+      "input": {
+        "inline": "2024-01-15 price OIL -5.00 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["price", "edge-case"]
+    },
+    {
+      "id": "zero-amount-posting",
+      "description": "Posting with zero amount",
+      "spec_ref": "posting.md",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Free sample\"\n  Expenses:Food  0 USD\n  Assets:Cash  0 USD\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["posting", "edge-case"]
+    },
+    {
+      "id": "expression-in-amount",
+      "description": "Arithmetic expression in amount",
+      "spec_ref": "amounts.md#expressions",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Split bill\"\n  Expenses:Food  (100 / 3) USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["amounts", "expression"]
+    },
+    {
+      "id": "comments-everywhere",
+      "description": "Comments in various positions",
+      "spec_ref": "lexical.md#comments",
+      "input": {
+        "inline": "; File header\n2024-01-01 open Assets:Cash USD  ; inline after open\n2024-01-01 open Expenses:Food USD\n\n; Before transaction\n2024-01-15 * \"Purchase\"  ; after narration\n  ; before posting\n  Expenses:Food  100 USD  ; after amount\n  Assets:Cash  ; elided amount\n; End of file\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["comments"]
+    },
+    {
+      "id": "blank-lines-and-whitespace",
+      "description": "Various whitespace patterns",
+      "spec_ref": "lexical.md#whitespace",
+      "input": {
+        "inline": "\n\n2024-01-01 open Assets:Cash USD\n\n\n2024-01-01 open Expenses:Food USD\n\n2024-01-15 * \"Purchase\"\n  Expenses:Food  100 USD\n  Assets:Cash\n\n\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["whitespace"]
+    },
+    {
+      "id": "tabs-for-indentation",
+      "description": "Tab characters for indentation",
+      "spec_ref": "lexical.md#indentation",
+      "input": {
+        "inline": "2024-01-01 open Assets:Cash USD\n2024-01-01 open Expenses:Food USD\n2024-01-15 * \"Purchase\"\n\tExpenses:Food  100 USD\n\tAssets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["whitespace", "tabs"]
+    },
+    {
+      "id": "date-slash-separator",
+      "description": "Date with slash separator",
+      "spec_ref": "lexical.md#date",
+      "input": {
+        "inline": "2024/01/01 open Assets:Cash USD\n2024/01/01 open Expenses:Food USD\n2024/01/15 * \"Purchase\"\n  Expenses:Food  100 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["date"]
+    },
+    {
+      "id": "single-digit-date-parts",
+      "description": "Date with single-digit month and day",
+      "spec_ref": "lexical.md#date",
+      "input": {
+        "inline": "2024-1-1 open Assets:Cash USD\n2024-1-5 open Expenses:Food USD\n2024-1-5 * \"Purchase\"\n  Expenses:Food  100 USD\n  Assets:Cash\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["date"]
+    },
+    {
+      "id": "org-mode-headers-ignored",
+      "description": "Org-mode style headers are ignored",
+      "spec_ref": "lexical.md#non-directive-lines",
+      "input": {
+        "inline": "* 2024 Finances\n\n** January\n\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Salary USD\n\n*** Week 1\n\n2024-01-05 * \"Salary\"\n  Assets:Cash  1000 USD\n  Income:Salary\n"
+      },
+      "expected": {
+        "parse": "success",
+        "validate": "success"
+      },
+      "tags": ["comments", "org-mode"]
+    }
+  ]
 }

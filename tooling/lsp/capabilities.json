@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Beancount LSP Server Capabilities",
+  "description": "Capabilities advertised by a conformant Beancount LSP server",
+  "type": "object",
+  "properties": {
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "textDocumentSync": {
+          "description": "Text document synchronization capabilities",
+          "oneOf": [
+            {"type": "number", "enum": [0, 1, 2]},
+            {
+              "type": "object",
+              "properties": {
+                "openClose": {"type": "boolean", "default": true},
+                "change": {"type": "number", "enum": [0, 1, 2], "default": 2},
+                "save": {
+                  "oneOf": [
+                    {"type": "boolean"},
+                    {
+                      "type": "object",
+                      "properties": {
+                        "includeText": {"type": "boolean", "default": false}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "completionProvider": {
+          "description": "Completion capabilities",
+          "type": "object",
+          "properties": {
+            "triggerCharacters": {
+              "type": "array",
+              "items": {"type": "string"},
+              "default": [":", "\"", "#", "^", " "]
+            },
+            "resolveProvider": {"type": "boolean", "default": true},
+            "workDoneProgress": {"type": "boolean"}
+          }
+        },
+        "hoverProvider": {
+          "description": "Hover capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "definitionProvider": {
+          "description": "Go to definition capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "referencesProvider": {
+          "description": "Find references capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "documentSymbolProvider": {
+          "description": "Document symbol capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "label": {"type": "string"},
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "workspaceSymbolProvider": {
+          "description": "Workspace symbol capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"},
+                "resolveProvider": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "codeActionProvider": {
+          "description": "Code action capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "codeActionKinds": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "default": ["quickfix", "refactor", "source.organizeImports", "source.fixAll"]
+                },
+                "resolveProvider": {"type": "boolean"},
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "documentFormattingProvider": {
+          "description": "Document formatting capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "documentRangeFormattingProvider": {
+          "description": "Document range formatting capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "renameProvider": {
+          "description": "Rename capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "prepareProvider": {"type": "boolean"},
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "foldingRangeProvider": {
+          "description": "Folding range capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "selectionRangeProvider": {
+          "description": "Selection range capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "semanticTokensProvider": {
+          "description": "Semantic tokens capabilities",
+          "type": "object",
+          "properties": {
+            "legend": {
+              "type": "object",
+              "properties": {
+                "tokenTypes": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "default": ["namespace", "class", "type", "number", "string", "keyword", "operator", "comment", "variable", "macro"]
+                },
+                "tokenModifiers": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "default": ["definition", "deprecated", "readonly"]
+                }
+              },
+              "required": ["tokenTypes", "tokenModifiers"]
+            },
+            "full": {
+              "oneOf": [
+                {"type": "boolean"},
+                {
+                  "type": "object",
+                  "properties": {
+                    "delta": {"type": "boolean"}
+                  }
+                }
+              ]
+            },
+            "range": {"type": "boolean"}
+          },
+          "required": ["legend"]
+        },
+        "inlayHintProvider": {
+          "description": "Inlay hint capabilities",
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "resolveProvider": {"type": "boolean"},
+                "workDoneProgress": {"type": "boolean"}
+              }
+            }
+          ]
+        },
+        "codeLensProvider": {
+          "description": "Code lens capabilities",
+          "type": "object",
+          "properties": {
+            "resolveProvider": {"type": "boolean"},
+            "workDoneProgress": {"type": "boolean"}
+          }
+        }
+      },
+      "required": ["textDocumentSync"]
+    },
+    "serverInfo": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"}
+      },
+      "required": ["name"]
+    }
+  },
+  "required": ["capabilities"]
+}
