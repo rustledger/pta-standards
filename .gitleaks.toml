@@ -1,0 +1,6 @@
+title = "PTA Standards Gitleaks Config"
+
+[allowlist]
+paths = [
+  "reference/sources/beancount/issues/.*\\.json$",
+]

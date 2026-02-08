@@ -29,3 +29,7 @@ venv/
 
 # Reference repos (cloned, not tracked)
 references/
+
+# MkDocs build output
+site/
+mkdocs.yml
