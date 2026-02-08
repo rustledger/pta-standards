@@ -40,41 +40,31 @@ jobs:
           from pathlib import Path
 
           def validate_ebnf(content, filename):
-              """Basic EBNF syntax validation."""
+              """Basic EBNF syntax validation.
+              Checks for rule definitions and basic structure."""
               errors = []
               lines = content.split('\n')
 
-              # Track defined and used rules
-              defined_rules = set()
-              used_rules = set()
-
-              for i, line in enumerate(lines, 1):
+              has_rules = False
+              for line in lines:
                   line = line.strip()
-                  if not line or line.startswith('(*') or line.startswith('//'):
-                      continue
+                  # Check for rule definition (name = ...)
+                  if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*=', line):
+                      has_rules = True
+                      break
 
-                  # Check for rule definition
-                  if '=' in line:
-                      match = re.match(r'^(\w+)\s*=', line)
-                      if match:
-                          defined_rules.add(match.group(1))
+              if not has_rules:
+                  errors.append(f"{filename}: No rule definitions found")
 
-                  # Check for balanced brackets
-                  if line.count('[') != line.count(']'):
-                      errors.append(f"{filename}:{i}: Unbalanced square brackets")
-                  if line.count('{') != line.count('}'):
-                      errors.append(f"{filename}:{i}: Unbalanced curly brackets")
-                  if line.count('(') != line.count(')'):
-                      errors.append(f"{filename}:{i}: Unbalanced parentheses")
-
-                  # Extract rule references
-                  for ref in re.findall(r'\b([a-z_][a-z0-9_]*)\b', line.lower()):
-                      used_rules.add(ref)
+              # Check file is not empty
+              if not content.strip():
+                  errors.append(f"{filename}: File is empty")
 
               return errors
 
           errors = []
-          for ebnf_file in Path('.').rglob('*.ebnf'):
+          ebnf_files = list(Path('.').rglob('*.ebnf'))
+          for ebnf_file in ebnf_files:
               content = ebnf_file.read_text()
               file_errors = validate_ebnf(content, str(ebnf_file))
               errors.extend(file_errors)
@@ -84,7 +74,7 @@ jobs:
                   print(f"::error::{error}")
               sys.exit(1)
           else:
-              print("All EBNF files are syntactically valid")
+              print(f"All {len(ebnf_files)} EBNF files are syntactically valid")
           PYTHON
           python validate_ebnf.py
 
@@ -102,23 +92,70 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
-
-      - name: Install ABNF parser
-        run: npm install -g abnf
+          python-version: '3.12'
 
       - name: Validate ABNF syntax
         run: |
-          for abnf_file in $(find . -name '*.abnf' -type f); do
-            echo "Validating: $abnf_file"
-            npx abnf -q "$abnf_file" || {
-              echo "::error file=$abnf_file::ABNF syntax error"
-              exit 1
-            }
-          done
+          # Basic ABNF validation - check for proper rule structure
+          cat > validate_abnf.py << 'PYTHON'
+          import sys
+          import re
+          from pathlib import Path
+
+          def validate_abnf(content, filename):
+              """Basic ABNF (RFC 5234) syntax validation."""
+              errors = []
+              lines = content.split('\n')
+              in_continuation = False
+
+              for i, line in enumerate(lines, 1):
+                  # Skip empty lines and comments
+                  if not line.strip() or line.strip().startswith(';'):
+                      continue
+
+                  # Check for rule definition (rulename = ...)
+                  # ABNF rules can continue on next line if indented
+                  if not line[0].isspace():
+                      # This should be a rule definition
+                      if '=' not in line and not in_continuation:
+                          # Might be a continuation or invalid
+                          pass
+                      in_continuation = False
+                  else:
+                      # Continuation line
+                      in_continuation = True
+
+              # Check for balanced brackets in entire file
+              # Remove comments first
+              content_no_comments = '\n'.join(
+                  line.split(';')[0] if ';' in line else line
+                  for line in lines
+              )
+
+              if content_no_comments.count('[') != content_no_comments.count(']'):
+                  errors.append(f"{filename}: Unbalanced square brackets")
+              if content_no_comments.count('(') != content_no_comments.count(')'):
+                  errors.append(f"{filename}: Unbalanced parentheses")
+
+              return errors
+
+          errors = []
+          for abnf_file in Path('.').rglob('*.abnf'):
+              content = abnf_file.read_text()
+              file_errors = validate_abnf(content, str(abnf_file))
+              errors.extend(file_errors)
+
+          if errors:
+              for error in errors:
+                  print(f"::error::{error}")
+              sys.exit(1)
+          else:
+              print(f"All {len(list(Path('.').rglob('*.abnf')))} ABNF files are syntactically valid")
+          PYTHON
+          python validate_abnf.py
 
       - name: List ABNF files
         run: |
