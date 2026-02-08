@@ -101,10 +101,10 @@ jobs:
             - Formats:
               - Beancount v3:
                 - Overview: formats/beancount/v3/README.md
-                - Syntax: formats/beancount/v3/syntax.md
-                - Validation: formats/beancount/v3/validation.md
-                - Booking: formats/beancount/v3/booking.md
-                - BQL: formats/beancount/v3/bql.md
+                - Syntax: formats/beancount/v3/spec/syntax.md
+                - Errors: formats/beancount/v3/spec/errors.md
+                - Booking: formats/beancount/v3/spec/booking.md
+                - BQL: formats/beancount/v3/bql/spec.md
               - Ledger: formats/ledger/README.md
               - hledger: formats/hledger/README.md
             - Tooling: tooling/README.md
