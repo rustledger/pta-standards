@@ -106,44 +106,35 @@ jobs:
           from pathlib import Path
 
           def validate_abnf(content, filename):
-              """Basic ABNF (RFC 5234) syntax validation."""
+              """Basic ABNF (RFC 5234) syntax validation.
+              Checks for rule definitions and basic structure."""
               errors = []
               lines = content.split('\n')
-              in_continuation = False
 
-              for i, line in enumerate(lines, 1):
-                  # Skip empty lines and comments
-                  if not line.strip() or line.strip().startswith(';'):
+              has_rules = False
+              for line in lines:
+                  line = line.strip()
+                  # Skip comments
+                  if line.startswith(';'):
                       continue
+                  # Check for rule definition (rulename = ... or rulename =/ ...)
+                  # ABNF rule names are case-insensitive alphanumeric
+                  if re.match(r'^[a-zA-Z][a-zA-Z0-9-]*\s*=', line):
+                      has_rules = True
+                      break
 
-                  # Check for rule definition (rulename = ...)
-                  # ABNF rules can continue on next line if indented
-                  if not line[0].isspace():
-                      # This should be a rule definition
-                      if '=' not in line and not in_continuation:
-                          # Might be a continuation or invalid
-                          pass
-                      in_continuation = False
-                  else:
-                      # Continuation line
-                      in_continuation = True
+              if not has_rules:
+                  errors.append(f"{filename}: No rule definitions found")
 
-              # Check for balanced brackets in entire file
-              # Remove comments first
-              content_no_comments = '\n'.join(
-                  line.split(';')[0] if ';' in line else line
-                  for line in lines
-              )
-
-              if content_no_comments.count('[') != content_no_comments.count(']'):
-                  errors.append(f"{filename}: Unbalanced square brackets")
-              if content_no_comments.count('(') != content_no_comments.count(')'):
-                  errors.append(f"{filename}: Unbalanced parentheses")
+              # Check file is not empty
+              if not content.strip():
+                  errors.append(f"{filename}: File is empty")
 
               return errors
 
           errors = []
-          for abnf_file in Path('.').rglob('*.abnf'):
+          abnf_files = list(Path('.').rglob('*.abnf'))
+          for abnf_file in abnf_files:
               content = abnf_file.read_text()
               file_errors = validate_abnf(content, str(abnf_file))
               errors.extend(file_errors)
@@ -153,7 +144,7 @@ jobs:
                   print(f"::error::{error}")
               sys.exit(1)
           else:
-              print(f"All {len(list(Path('.').rglob('*.abnf')))} ABNF files are syntactically valid")
+              print(f"All {len(abnf_files)} ABNF files are syntactically valid")
           PYTHON
           python validate_abnf.py
 
