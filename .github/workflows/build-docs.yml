@@ -68,9 +68,18 @@ jobs:
               - search.highlight
               - content.code.copy
             palette:
+              - scheme: slate
+                primary: indigo
+                accent: indigo
+                toggle:
+                  icon: material/brightness-4
+                  name: Switch to light mode
               - scheme: default
                 primary: indigo
                 accent: indigo
+                toggle:
+                  icon: material/brightness-7
+                  name: Switch to dark mode
           plugins:
             - search
           markdown_extensions:
