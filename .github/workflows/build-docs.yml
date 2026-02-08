@@ -45,7 +45,9 @@ jobs:
           cat > mkdocs.yml << 'EOF'
           site_name: PTA Standards
           site_description: Plain Text Accounting Format Specifications
-          repo_url: https://github.com/pta-standards/pta-standards
+          site_url: https://rustledger.github.io/pta-standards/
+          repo_url: https://github.com/rustledger/pta-standards
+          docs_dir: .
           theme:
             name: material
             features:
@@ -60,7 +62,6 @@ jobs:
                 accent: indigo
           plugins:
             - search
-            - awesome-pages
           markdown_extensions:
             - pymdownx.highlight
             - pymdownx.superfences
@@ -78,7 +79,12 @@ jobs:
               - Glossary: core/glossary.md
               - Bibliography: core/bibliography.md
             - Formats:
-              - Beancount: formats/beancount/README.md
+              - Beancount v3:
+                - Overview: formats/beancount/v3/README.md
+                - Syntax: formats/beancount/v3/syntax.md
+                - Validation: formats/beancount/v3/validation.md
+                - Booking: formats/beancount/v3/booking.md
+                - BQL: formats/beancount/v3/bql.md
               - Ledger: formats/ledger/README.md
               - hledger: formats/hledger/README.md
             - Tooling: tooling/README.md
