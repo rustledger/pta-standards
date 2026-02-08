@@ -73,17 +73,27 @@ enum OutputFormat {
 
 #[derive(Debug, Deserialize)]
 struct Manifest {
-    name: String,
+    format: String,
     version: String,
+    #[serde(default)]
+    description: Option<String>,
     test_directories: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct TestSuite {
-    name: String,
+    suite: String,
     #[serde(default)]
     description: Option<String>,
     tests: Vec<TestCase>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct TestInput {
+    #[serde(default)]
+    inline: Option<String>,
+    #[serde(default)]
+    file: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -91,9 +101,7 @@ struct TestCase {
     id: String,
     description: String,
     #[serde(default)]
-    input: Option<String>,
-    #[serde(default)]
-    input_file: Option<String>,
+    input: Option<TestInput>,
     expected: Expected,
     #[serde(default)]
     tags: Vec<String>,
@@ -106,11 +114,11 @@ struct TestCase {
 #[derive(Debug, Clone, Deserialize)]
 struct Expected {
     #[serde(default)]
-    parse: Option<bool>,
+    parse: Option<String>,  // "success" or "error"
     #[serde(default)]
-    validate: Option<bool>,
+    validate: Option<String>,  // "success" or "error"
     #[serde(default)]
-    error_contains: Option<String>,
+    error_contains: Option<Vec<String>>,
     #[serde(default)]
     error_count: Option<usize>,
     #[serde(default)]
@@ -338,13 +346,17 @@ impl TestRunner {
 
     fn get_test_input(&self, test: &TestCase, suite_dir: &Path) -> Result<String> {
         if let Some(ref input) = test.input {
-            Ok(input.clone())
-        } else if let Some(ref input_file) = test.input_file {
-            let path = suite_dir.join(input_file);
-            fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read input file: {}", path.display()))
+            if let Some(ref inline) = input.inline {
+                Ok(inline.clone())
+            } else if let Some(ref file) = input.file {
+                let path = suite_dir.join(file);
+                fs::read_to_string(&path)
+                    .with_context(|| format!("Failed to read input file: {}", path.display()))
+            } else {
+                anyhow::bail!("Test input has neither inline nor file")
+            }
         } else {
-            anyhow::bail!("Test has no input or input_file")
+            anyhow::bail!("Test has no input")
         }
     }
 
@@ -405,33 +417,36 @@ impl TestRunner {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
         // Check parse expectation
-        if let Some(expect_parse) = expected.parse {
-            if expect_parse != success {
+        if let Some(ref expect_parse) = expected.parse {
+            let expect_success = expect_parse == "success";
+            if expect_success != success {
                 return (
                     TestStatus::Fail,
-                    Some(if expect_parse {
+                    Some(if expect_success {
                         format!("Expected parse success, got error: {}", stderr)
                     } else {
                         "Expected parse error, but parsed successfully".to_string()
                     }),
                     Some(format!("parse: {}", expect_parse)),
-                    Some(format!("parse: {}", success)),
+                    Some(format!("parse: {}", if success { "success" } else { "error" })),
                 );
             }
         }
 
         // Check error_contains
-        if let Some(ref error_pattern) = expected.error_contains {
-            if !stderr.contains(error_pattern) {
-                return (
-                    TestStatus::Fail,
-                    Some(format!(
-                        "Expected error containing '{}', got: {}",
-                        error_pattern, stderr
-                    )),
-                    Some(format!("error contains: {}", error_pattern)),
-                    Some(format!("actual error: {}", stderr)),
-                );
+        if let Some(ref error_patterns) = expected.error_contains {
+            for error_pattern in error_patterns {
+                if !stderr.contains(error_pattern) {
+                    return (
+                        TestStatus::Fail,
+                        Some(format!(
+                            "Expected error containing '{}', got: {}",
+                            error_pattern, stderr
+                        )),
+                        Some(format!("error contains: {}", error_pattern)),
+                        Some(format!("actual error: {}", stderr)),
+                    );
+                }
             }
         }
 
