@@ -167,7 +167,7 @@ jobs:
           done
 
       - name: Upload generated types
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated-types
           path: dist/types/
