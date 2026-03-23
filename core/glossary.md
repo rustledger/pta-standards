@@ -283,10 +283,10 @@ Example: `@@ 120.00 CAD`
 Cost specification.
 Example: `{100 USD}`
 
-### `{{}}` (Double Braces)
+### `\{\{\}\}` (Double Braces)
 
 Total cost specification.
-Example: `{{1000 USD}}`
+Example: `\{\{1000 USD\}\}`
 
 ### `~` (Tilde)
 

@@ -244,7 +244,7 @@ When cost is specified, verify calculation:
 
 ```ledger
 2024/01/15 Buy Stock
-    Assets:Brokerage    10 AAPL {{$1500}}    ; Total cost
+    Assets:Brokerage    10 AAPL \{\{$1500\}\}    ; Total cost
     Assets:Cash        $-1500
     ; Per-unit: $1500 / 10 = $150 ✓
 ```

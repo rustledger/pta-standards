@@ -96,7 +96,7 @@ Root types: `Assets`, `Liabilities`, `Equity`, `Income`, `Expenses`
 {100.00 USD, 2024-01-15}        ; With date
 {100.00 USD, "lot-id"}          ; With label
 {100.00 + 9.95 USD}             ; With commission
-{{1000.00 USD}}                 ; Total cost
+\{\{1000.00 USD\}\}                 ; Total cost
 {*}                             ; Average cost merge
 {}                              ; Match any lot
 ```

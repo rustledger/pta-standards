@@ -651,7 +651,7 @@ The input syntax should allow the specification of cost as any combination of th
 
 -   The **cost per unit**, as an amount, such as “`500 USD`”
 
--   A **total cost**, to be automatically divided by the number of units, like this: `{... +9.95 USD}`. You should be able to use either cost per unit, total cost, or even combine the two, like this: `{500 + 9.95 USD}`. This is useful to enter commissions. This syntax also replaces the previous `{{`...`}}` syntax.
+-   A **total cost**, to be automatically divided by the number of units, like this: `{... +9.95 USD}`. You should be able to use either cost per unit, total cost, or even combine the two, like this: `{500 + 9.95 USD}`. This is useful to enter commissions. This syntax also replaces the previous `\{\{`...`\}\}` syntax.
 
 -   The **lot-date**, as a YYYY-MM-DD date, such as “`2014-06-20`”
 

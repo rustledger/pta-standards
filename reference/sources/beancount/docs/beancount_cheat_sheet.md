@@ -8,7 +8,7 @@ Expenses:Restaurant 101.23 USD</p><p>2015-05-30 ! "Cable Co" "Phone Bill" #tag Ë
 Expenses:Home:Phone 87.45 USD<br />
 Assets:Checking <em>; You may leave one amount out</em></p><h3 id="postings">Postings<a id="postings"></a></h3><p>... 123.45 USD <em>Simple</em><br />
 ... 10 GOOG <strong>{502.12 USD}</strong> <em>With per-unit cost<br />
-</em> ... 10 GOOG <strong>{{5021.20 USD}}</strong> <em>With total cost</em></p><p>... 10 GOOG <strong>{502.12 # 9.95 USD}</strong> <em>With both costs</em><br />
+</em> ... 10 GOOG <strong>\{\{5021.20 USD\}\}</strong> <em>With total cost</em></p><p>... 10 GOOG <strong>{502.12 # 9.95 USD}</strong> <em>With both costs</em><br />
 ... 1000.00 USD <strong>@ 1.10 CAD</strong> <em>With per-unit price</em><br />
 ... 10 GOOG {502.12 USD} @ 1.10 CAD <em>With cost &amp; price</em><br />
 ... 10 GOOG {502.12 USD, <strong>2014-05-12</strong>} <em>With date</em><br />

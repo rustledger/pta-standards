@@ -140,7 +140,7 @@ Transactions MUST balance: the sum of all posting weights MUST equal zero for ea
 |--------------|--------|
 | Simple amount | The amount |
 | With cost `{...}` | Units × cost per unit |
-| With total cost `{{...}}` | The total cost |
+| With total cost `\{\{...\}\}` | The total cost |
 | With price `@` | Units × price per unit |
 | With total price `@@` | The total price |
 
@@ -162,7 +162,7 @@ Costs track the acquisition price of commodities:
 Assets:Stock  10 AAPL {150.00 USD}
 
 ; Total cost
-Assets:Stock  10 AAPL {{1500.00 USD}}
+Assets:Stock  10 AAPL \{\{1500.00 USD\}\}
 
 ; Cost with date
 Assets:Stock  10 AAPL {150.00 USD, 2024-01-15}

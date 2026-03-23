@@ -49,7 +49,7 @@ Servers SHOULD provide inlay hints for:
 |-----------|---------|
 | Computed expression | `(100 / 3)` → `33.33` |
 | Elided amount | Show computed amount |
-| Total cost | `10 AAPL {{1500 USD}}` → `150.00 USD each` |
+| Total cost | `10 AAPL \{\{1500 USD\}\}` → `150.00 USD each` |
 | Currency conversion | `100 EUR @ 1.10 USD` → `= 110.00 USD` |
 
 ## Configuration

@@ -13,7 +13,7 @@ Cost basis records the acquisition price of commodities, essential for:
 
 ```
 cost_spec = "{" cost_components "}"
-          | "{{" cost_components "}}"
+          | "\{\{" cost_components "\}\}"
 
 cost_components = amount [date] [lot_note]
 ```
@@ -37,7 +37,7 @@ cost_components = amount [date] [lot_note]
 ### Syntax
 
 ```ledger
-    Assets:Brokerage    10 AAPL {{$1500.00}}
+    Assets:Brokerage    10 AAPL \{\{$1500.00\}\}
     ; Total cost: $1500 for all 10 shares
 ```
 

@@ -183,12 +183,12 @@ Records acquisition cost:
 ; Cost basis: $150 per share
 ```
 
-### Total Cost ({{}})
+### Total Cost (\{\{\}\})
 
 Records total acquisition cost:
 
 ```ledger
-10 AAPL {{$1500.00}}
+10 AAPL \{\{$1500.00\}\}
 ; Total cost: $1500 for all shares
 ```
 

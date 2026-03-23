@@ -20,7 +20,7 @@ AMOUNT {COST}
 ### Total Cost
 
 ```hledger
-AMOUNT {{TOTAL_COST}}
+AMOUNT \{\{TOTAL_COST\}\}
 ```
 
 ## Per-Unit Cost
@@ -51,7 +51,7 @@ Cost: $150 per share, total $1500.
 
 ```hledger
 2024-01-15 Buy Stock
-    assets:brokerage    10 AAPL {{$1500}}
+    assets:brokerage    10 AAPL \{\{$1500\}\}
     assets:cash        $-1500
 ```
 

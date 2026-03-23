@@ -10,7 +10,7 @@ A posting is a single line within a transaction that specifies a transfer of val
 posting = INDENT [flag] account [WHITESPACE amount [cost] [price]]
 
 flag   = "*" | "!"
-cost   = "{" cost_spec "}" | "{{" cost_spec "}}"
+cost   = "{" cost_spec "}" | "\{\{" cost_spec "\}\}"
 price  = "@" amount | "@@" amount
 ```
 
@@ -80,7 +80,7 @@ Records the acquisition cost of commodities:
 ```beancount
 2024-01-15 * "Buy stock"
   Assets:Brokerage   10 AAPL {150 USD}      ; Per-unit cost
-  Assets:Brokerage   10 AAPL {{1500 USD}}   ; Total cost
+  Assets:Brokerage   10 AAPL \{\{1500 USD\}\}   ; Total cost
   Assets:Cash       -1500 USD
 ```
 
@@ -148,7 +148,7 @@ The posting weight determines how it contributes to transaction balancing:
 |--------------|----------------|
 | Simple amount | amount |
 | With cost `{cost}` | units × cost |
-| With total cost `{{cost}}` | cost |
+| With total cost `\{\{cost\}\}` | cost |
 | With price `@ price` | units × price |
 | With total price `@@ price` | price |
 | Cost + Price | units × cost (price is informational) |
@@ -163,7 +163,7 @@ Assets:Checking  100 USD
 Assets:Stock  10 AAPL {150 USD}
 
 ; Total cost: weight = 1500 USD
-Assets:Stock  10 AAPL {{1500 USD}}
+Assets:Stock  10 AAPL \{\{1500 USD\}\}
 
 ; Price: weight = 100 × 1.10 = 110 USD
 Assets:EUR  100 EUR @ 1.10 USD

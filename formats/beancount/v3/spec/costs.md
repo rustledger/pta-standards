@@ -8,7 +8,7 @@ Cost specifications record the acquisition price of commodities, enabling cost b
 
 ```ebnf
 cost_spec = "{" cost_comp_list "}"      ; Per-unit cost
-          | "{{" cost_comp_list "}}"    ; Total cost
+          | "\{\{" cost_comp_list "\}\}"    ; Total cost
 
 cost_comp_list = cost_comp ("," cost_comp)*
 
@@ -31,13 +31,13 @@ Assets:Stock  10 AAPL {150 USD}
 
 The weight for balancing is: `units × cost = 10 × 150 = 1500 USD`
 
-### Total Cost `{{...}}`
+### Total Cost `\{\{...\}\}`
 
 Specifies the total cost for all units:
 
 ```beancount
 ; 10 shares for $1500 total = $150 each
-Assets:Stock  10 AAPL {{1500 USD}}
+Assets:Stock  10 AAPL \{\{1500 USD\}\}
 ```
 
 The weight for balancing is the total cost: `1500 USD`
@@ -279,7 +279,7 @@ Cost basis determines capital gains:
 ```beancount
 ; 7 shares for $1234.56 total
 2024-01-15 * "Odd lot purchase"
-  Assets:Stock  7 AAPL {{1234.56 USD}}
+  Assets:Stock  7 AAPL \{\{1234.56 USD\}\}
   Assets:Cash  -1234.56 USD
   ; Per-unit cost: 1234.56 / 7 = 176.3657... USD
 ```

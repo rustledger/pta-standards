@@ -390,7 +390,7 @@ Reserved keywords:
 | `@` | Price annotation |
 | `@@` | Total price annotation |
 | `{` `}` | Cost specification |
-| `{{` `}}` | Total cost specification |
+| `\{\{` `\}\}` | Total cost specification |
 | `~` | Tolerance operator |
 | `(` `)` | Expression grouping |
 | `+` | Addition |

@@ -16,7 +16,7 @@ Every transaction MUST balance: the sum of posting weights MUST equal zero for e
 |--------------|--------|
 | Simple amount | The amount |
 | With cost `{cost}` | units × cost |
-| With total cost `{{cost}}` | The total cost |
+| With total cost `\{\{cost\}\}` | The total cost |
 | With price `@ price` | units × price |
 | With total price `@@ price` | The total price |
 

@@ -141,7 +141,7 @@ One posting per commodity can omit amount:
 ### Total Cost
 
 ```ledger
-    Assets:Brokerage    10 AAPL {{$1500.00}}
+    Assets:Brokerage    10 AAPL \{\{$1500.00\}\}
     ; Total cost: $1500
 ```
 

@@ -18,7 +18,7 @@ The implementation MUST correctly tokenize:
 | Tags | `#travel`, `#project-2024` |
 | Links | `^invoice-001`, `^ref-123` |
 | Keywords | `open`, `close`, `balance`, `txn`, etc. |
-| Operators | `@`, `@@`, `{`, `}`, `{{`, `}}` |
+| Operators | `@`, `@@`, `{`, `}`, `\{\{`, `\}\}` |
 | Comments | `; comment text` |
 
 ### Syntax Parsing
@@ -66,7 +66,7 @@ Postings MUST be parsed with:
 |-----------|-------------|
 | Account | Required |
 | Amount | Optional (one may be elided) |
-| Cost spec | `{...}` or `{{...}}` |
+| Cost spec | `{...}` or `\{\{...\}\}` |
 | Price annotation | `@` or `@@` |
 | Metadata | Indented key-value pairs |
 
