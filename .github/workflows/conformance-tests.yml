@@ -45,7 +45,7 @@ jobs:
             --format json > results.json
 
       - name: Upload results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: beancount-results
           path: tests/harness/runners/python/results.json
