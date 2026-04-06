@@ -217,4 +217,4 @@ Ledger differs from hledger in:
 - [Lexical Specification](lexical.md) - Tokens and whitespace
 - [Syntax Specification](syntax.md) - Grammar rules
 - [Transaction Directive](directives/transaction.md) - Transaction format
-- [Value Expressions](expressions/spec.md) - Expression language
+- [Value Expressions](../expressions/spec.md) - Expression language

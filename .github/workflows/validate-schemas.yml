@@ -45,7 +45,14 @@ jobs:
               exit 1
             }
             # Validate against JSON Schema meta-schema
-            ajv compile -s "$schema" --spec=draft2020 --strict=false || {
+            # Detect schema draft version and use appropriate spec
+            DRAFT=$(python3 -c "import json; d=json.load(open('$schema')); print(d.get('\$schema',''))")
+            if echo "$DRAFT" | grep -q "draft-07"; then
+              AJV_SPEC="draft7"
+            else
+              AJV_SPEC="draft2020"
+            fi
+            ajv compile -s "$schema" --spec="$AJV_SPEC" --strict=false || {
               echo "::error file=$schema::Invalid JSON Schema"
               exit 1
             }

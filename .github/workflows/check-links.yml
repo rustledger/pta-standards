@@ -59,6 +59,10 @@ jobs:
               if [ -z "$target" ]; then
                 continue
               fi
+              # Skip placeholder/example links
+              if [[ "$target" == *"path/to/"* ]] || [[ "$target" == *"your/"* ]] || [[ "$target" == http* ]]; then
+                continue
+              fi
               if [[ "$target" == /* ]]; then
                 full_path=".$target"
               else
