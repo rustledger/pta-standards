@@ -260,4 +260,4 @@ ledger --pedantic -f journal.ledger
 ## See Also
 
 - [Transaction Directive](transaction.md)
-- [Value Expressions](../expressions/spec.md)
+- [Value Expressions](../../expressions/spec.md)
