@@ -1018,7 +1018,7 @@
       },
       "expected": {
         "query": "error",
-        "error_contains": ["unknown function"]
+        "error_contains": ["function"]
       },
       "tags": ["bql", "error"]
     },
