@@ -332,5 +332,5 @@ Validation FAILED (1 warning treated as error)
 ## See Also
 
 - [check](check.md) - Basic validation
-- [Error Codes](../../errors/README.md) - Standard error codes
-- [Linting Rules](../../linting/README.md) - Additional linting
+- [Error Codes](../../errors/spec.md) - Standard error codes
+- [Linting Rules](../../linting/spec.md) - Additional linting

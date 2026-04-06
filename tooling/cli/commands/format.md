@@ -382,5 +382,4 @@ $ echo '2024-01-15 * "Test"
 
 ## See Also
 
-- [Canonical Format](../../canonical/README.md) - Canonical formatting rules
-- [Style Guide](../../canonical/style-guide.md) - Recommended style
+- [Canonical Format](../../canonical/spec.md) - Canonical formatting rules

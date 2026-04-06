@@ -4,7 +4,11 @@
   "title": "PTA Standards Test Case",
   "description": "Schema for individual conformance test cases",
   "type": "object",
-  "required": ["id", "description", "input", "expected"],
+  "required": ["id", "description", "expected"],
+  "anyOf": [
+    {"required": ["input"]},
+    {"required": ["source"]}
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -94,6 +98,36 @@
     "skip_reason": {
       "type": "string",
       "description": "Reason for skipping (if skip is true)"
+    },
+    "source": {
+      "type": "object",
+      "description": "Source format input for cross-format conversion tests",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Source format name (e.g., 'beancount', 'ledger', 'hledger')"
+        },
+        "inline": {
+          "type": "string",
+          "description": "Inline source content"
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to source file"
+        }
+      },
+      "required": ["format"]
+    },
+    "target": {
+      "type": "object",
+      "description": "Target format for cross-format conversion tests",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Target format name (e.g., 'beancount', 'ledger', 'hledger')"
+        }
+      },
+      "required": ["format"]
     }
   }
 }

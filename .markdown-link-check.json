@@ -2,12 +2,9 @@
   "ignorePatterns": [
     { "pattern": "^#" },
     { "pattern": "^mailto:" },
-    { "pattern": "/$" },
-    { "pattern": "^https://reddit.com" },
-    { "pattern": "^https://mitpress.mit.edu" }
-  ],
-  "replacementPatterns": [
-    { "pattern": "^/", "replacement": "{{BASEURL}}/" }
+    { "pattern": "^[^h]" },
+    { "pattern": "^http://localhost" },
+    { "pattern": "^http://ofxhome" }
   ],
   "httpHeaders": [
     {

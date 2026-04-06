@@ -301,4 +301,4 @@ The `check` command performs:
 
 - [validate](validate.md) - Detailed validation with custom rules
 - [Exit Codes](../exit-codes.md) - Complete exit code reference
-- [Error Codes](../../errors/README.md) - Validation error codes
+- [Error Codes](../../errors/spec.md) - Validation error codes

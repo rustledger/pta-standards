@@ -42,7 +42,7 @@ jobs:
             if ! markdown-link-check --quiet --config .markdown-link-check.json "$file"; then
               failed=$((failed + 1))
             fi
-          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*')
+          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*' -not -path './reference/sources/beancount/docs/*')
 
           if [ "$failed" -gt 0 ]; then
             echo "::error::$failed file(s) contain broken external links"
@@ -69,7 +69,7 @@ jobs:
                 errors=$((errors + 1))
               fi
             done < <(grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null || true)
-          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*')
+          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*' -not -path './reference/sources/beancount/docs/*')
 
           if [ "$errors" -gt 0 ]; then
             echo "::error::Found $errors broken internal link(s)"
