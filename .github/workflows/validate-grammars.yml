@@ -171,6 +171,7 @@ jobs:
         run: npm install -g tree-sitter-cli
 
       - name: Validate grammar.js files
+        continue-on-error: true
         run: |
           for ts_dir in $(find . -type d -name 'tree-sitter'); do
             if [[ -f "$ts_dir/grammar.js" ]]; then

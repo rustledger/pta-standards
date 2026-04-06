@@ -45,7 +45,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pytest pytest-cov
+        run: |
+          pip install pytest pytest-cov
+          pip install git+https://github.com/beancount/beancount.git@master
+          pip install git+https://github.com/beancount/beanquery.git@master
 
       - name: Run unit tests with coverage
         run: |
