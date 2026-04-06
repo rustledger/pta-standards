@@ -196,7 +196,7 @@ All directives automatically receive:
 ## Duplicate Keys
 
 > **UNDEFINED**: The behavior for duplicate metadata keys is pending clarification.
-> See: [Pending Issue - Duplicate Metadata](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 Questions to resolve:
 - Should duplicate keys produce an error, warning, or be silently ignored?

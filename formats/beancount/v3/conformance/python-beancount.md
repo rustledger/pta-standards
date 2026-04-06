@@ -138,14 +138,14 @@ bean-check --json ledger.beancount
 
 Issues to be filed to clarify undefined spec items:
 
-| Topic | Issue | Status | Spec Section |
-|-------|-------|--------|--------------|
-| Amount elision rule | TBD | To file | posting.md |
-| Close date semantics | TBD | To file | validation/accounts.md |
-| Close with non-zero balance | TBD | To file | validation/accounts.md |
-| Empty transaction validity | TBD | To file | validation/balance.md |
-| Duplicate metadata behavior | TBD | To file | metadata.md |
-| Currency length limits | TBD | To file | validation/commodities.md |
+| Topic | Status | Spec Section |
+|-------|--------|--------------|
+| Amount elision rule | Needs upstream clarification | posting.md |
+| Close date semantics | Needs upstream clarification | validation/accounts.md |
+| Close with non-zero balance | Needs upstream clarification | validation/accounts.md |
+| Empty transaction validity | Needs upstream clarification | validation/balance.md |
+| Duplicate metadata behavior | Needs upstream clarification | metadata.md |
+| Currency length limits | Needs upstream clarification | validation/commodities.md |
 
 ---
 

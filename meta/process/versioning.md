@@ -89,7 +89,7 @@ option "pta_spec_version" "1.2.0"
 
 | Version | Status | Release Date | Notes |
 |---------|--------|--------------|-------|
-| 0.1.0 | Draft | TBD | Initial release |
+| 0.1.0 | Draft | Not yet released | Initial release |
 
 ## Related Documents
 

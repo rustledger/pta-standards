@@ -5,16 +5,19 @@ on:
     branches: [main]
     paths:
       - '**/*.md'
+      - '.markdown-link-check.json'
       - '.github/workflows/check-links.yml'
   pull_request:
     branches: [main]
     paths:
       - '**/*.md'
+      - '.markdown-link-check.json'
       - '.github/workflows/check-links.yml'
   schedule:
     # Run weekly to catch external link rot
     - cron: '0 0 * * 0'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   check-links:
@@ -31,68 +34,53 @@ jobs:
       - name: Install markdown-link-check
         run: npm install -g markdown-link-check
 
-      - name: Create link check config
+      - name: Check external links
         run: |
-          cat > .markdown-link-check.json << 'EOF'
-          {
-            "ignorePatterns": [
-              { "pattern": "^#" },
-              { "pattern": "^mailto:" }
-            ],
-            "replacementPatterns": [
-              { "pattern": "^/", "replacement": "{{BASEURL}}/" }
-            ],
-            "httpHeaders": [
-              {
-                "urls": ["https://github.com"],
-                "headers": {
-                  "Accept-Encoding": "gzip, deflate"
-                }
-              }
-            ],
-            "timeout": "10s",
-            "retryOn429": true,
-            "retryCount": 3,
-            "aliveStatusCodes": [200, 206, 301, 302, 308]
-          }
-          EOF
-
-      - name: Check internal links
-        run: |
-          find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' | while read file; do
+          failed=0
+          while IFS= read -r file; do
             echo "Checking: $file"
-            markdown-link-check --quiet --config .markdown-link-check.json "$file" || true
-          done
+            if ! markdown-link-check --quiet --config .markdown-link-check.json "$file"; then
+              failed=$((failed + 1))
+            fi
+          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*')
 
-      - name: Check for broken internal references
+          if [ "$failed" -gt 0 ]; then
+            echo "::error::$failed file(s) contain broken external links"
+            exit 1
+          fi
+
+      - name: Check internal references
         run: |
-          # Check for references to non-existent .md files
           errors=0
-          for file in $(find . -name '*.md' -not -path './.git/*'); do
+          while IFS= read -r file; do
             dir=$(dirname "$file")
-            # Extract relative .md links
-            grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null | while read link; do
+            while IFS= read -r link; do
               target=$(echo "$link" | sed 's/\](\([^)#]*\).*/\1/')
-              # Resolve relative path
+              if [ -z "$target" ]; then
+                continue
+              fi
               if [[ "$target" == /* ]]; then
                 full_path=".$target"
               else
                 full_path="$dir/$target"
               fi
-              if [[ ! -f "$full_path" ]]; then
-                echo "::warning file=$file::Broken link to $target"
+              if [ ! -f "$full_path" ]; then
+                echo "::error file=$file::Broken internal link to $target"
                 errors=$((errors + 1))
               fi
-            done
-          done
-          if [[ $errors -gt 0 ]]; then
-            echo "::warning::Found $errors broken internal links"
+            done < <(grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null || true)
+          done < <(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*')
+
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::Found $errors broken internal link(s)"
+            exit 1
           fi
+          echo "All internal links valid."
 
       - name: Summary
         if: always()
         run: |
+          total=$(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*' -not -path './.direnv/*' | wc -l)
           echo "## Link Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          total=$(find . -name '*.md' -not -path './.git/*' | wc -l)
-          echo "Checked **$total** markdown files." >> $GITHUB_STEP_SUMMARY
+          echo "Checked **$total** markdown files for broken links." >> $GITHUB_STEP_SUMMARY

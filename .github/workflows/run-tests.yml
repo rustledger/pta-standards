@@ -60,12 +60,11 @@ jobs:
         id: tests
         run: |
           cd tests/harness/runners/python
-          python runner.py --manifest ../../../beancount/v3/manifest.json --format json 2>runner_errors.txt | tee results.json
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json 2>runner_errors.txt | tee results.json || true
           if [ -s runner_errors.txt ]; then
             echo "Runner stderr:"
             cat runner_errors.txt
           fi
-        continue-on-error: true
 
       - name: Parse test results
         id: parse
@@ -162,12 +161,11 @@ jobs:
           cd tests/harness/runners/python
           # Use rustledger binary instead of beancount
           export RLEDGER_BIN="${GITHUB_WORKSPACE}/rustledger/target/release/rledger"
-          python runner.py --manifest ../../../beancount/v3/manifest.json --format json --impl rustledger 2>runner_errors.txt | tee results.json
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json --impl rustledger 2>runner_errors.txt | tee results.json || true
           if [ -s runner_errors.txt ]; then
             echo "Runner stderr:"
             cat runner_errors.txt
           fi
-        continue-on-error: true
 
       - name: Parse test results
         id: parse
@@ -222,56 +220,16 @@ jobs:
 
       - name: Update README with results
         run: |
-          DATE=$(date -u +"%Y-%m-%d")
-
-          # Create the results table
-          cat > /tmp/results.md << 'EOF'
-          <!-- CONFORMANCE-RESULTS-START -->
-          ## Conformance Test Results
-
-          Last updated: DATEPLACEHOLDER
-
-          | Implementation | Version | Passed | Failed | Skipped | Status |
-          |---------------|---------|--------|--------|---------|--------|
-          | Python beancount | BEANCOUNT_VERSION | BEANCOUNT_PASSED | BEANCOUNT_FAILED | BEANCOUNT_SKIPPED | BEANCOUNT_STATUS |
-          | Rustledger | RUSTLEDGER_VERSION | RUSTLEDGER_PASSED | RUSTLEDGER_FAILED | RUSTLEDGER_SKIPPED | RUSTLEDGER_STATUS |
-
-          Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
-          <!-- CONFORMANCE-RESULTS-END -->
-          EOF
-
-          # Replace placeholders
-          sed -i "s/DATEPLACEHOLDER/$DATE/g" /tmp/results.md
-          sed -i "s/BEANCOUNT_VERSION/${{ needs.beancount-v3.outputs.version }}/g" /tmp/results.md
-          sed -i "s/BEANCOUNT_PASSED/${{ needs.beancount-v3.outputs.passed }}/g" /tmp/results.md
-          sed -i "s/BEANCOUNT_FAILED/${{ needs.beancount-v3.outputs.failed }}/g" /tmp/results.md
-          sed -i "s/BEANCOUNT_SKIPPED/${{ needs.beancount-v3.outputs.skipped }}/g" /tmp/results.md
-          sed -i "s/RUSTLEDGER_VERSION/${{ needs.rustledger.outputs.version }}/g" /tmp/results.md
-          sed -i "s/RUSTLEDGER_PASSED/${{ needs.rustledger.outputs.passed }}/g" /tmp/results.md
-          sed -i "s/RUSTLEDGER_FAILED/${{ needs.rustledger.outputs.failed }}/g" /tmp/results.md
-          sed -i "s/RUSTLEDGER_SKIPPED/${{ needs.rustledger.outputs.skipped }}/g" /tmp/results.md
-
-          # Determine status badges
-          if [ "${{ needs.beancount-v3.outputs.failed }}" = "0" ]; then
-            sed -i "s/BEANCOUNT_STATUS/:white_check_mark:/g" /tmp/results.md
-          else
-            sed -i "s/BEANCOUNT_STATUS/:x:/g" /tmp/results.md
-          fi
-
-          if [ "${{ needs.rustledger.outputs.failed }}" = "0" ]; then
-            sed -i "s/RUSTLEDGER_STATUS/:white_check_mark:/g" /tmp/results.md
-          else
-            sed -i "s/RUSTLEDGER_STATUS/:x:/g" /tmp/results.md
-          fi
-
-          # Update README.md
-          if grep -q "CONFORMANCE-RESULTS-START" README.md; then
-            # Replace existing section
-            sed -i '/<!-- CONFORMANCE-RESULTS-START -->/,/<!-- CONFORMANCE-RESULTS-END -->/d' README.md
-          fi
-
-          # Append results before the last line or at end
-          cat /tmp/results.md >> README.md
+          python scripts/update_readme.py \
+            --readme README.md \
+            --beancount-version "${{ needs.beancount-v3.outputs.version }}" \
+            --beancount-passed "${{ needs.beancount-v3.outputs.passed }}" \
+            --beancount-failed "${{ needs.beancount-v3.outputs.failed }}" \
+            --beancount-skipped "${{ needs.beancount-v3.outputs.skipped }}" \
+            --rustledger-version "${{ needs.rustledger.outputs.version }}" \
+            --rustledger-passed "${{ needs.rustledger.outputs.passed }}" \
+            --rustledger-failed "${{ needs.rustledger.outputs.failed }}" \
+            --rustledger-skipped "${{ needs.rustledger.outputs.skipped }}"
 
       - name: Commit and push
         run: |

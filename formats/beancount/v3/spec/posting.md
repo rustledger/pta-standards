@@ -104,7 +104,7 @@ See [prices.md](prices.md) for full price annotation documentation.
 ### Rules
 
 > **UNDEFINED**: The exact elision rule is pending clarification.
-> See: [Pending Issue - Amount Elision Rule](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 **Option A (One per currency):**
 At most one posting per currency MAY omit its amount. Multiple currencies may each have one elided posting.

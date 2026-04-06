@@ -43,7 +43,7 @@ Key discussions that clarify spec behavior:
 
 | Topic | URL | Description |
 |-------|-----|-------------|
-| TBD | TBD | Add notable threads as found during validation |
+| *None catalogued yet* | — | Add notable threads as found during validation |
 
 ## Statistics
 

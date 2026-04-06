@@ -19,6 +19,9 @@ Each format directory contains:
 | `personal.{bean,journal,ledger}` | Personal finance example |
 | `business.{bean,journal,ledger}` | Small business example |
 | `investments.{bean,journal,ledger}` | Investment tracking example |
+| `healthcare.{bean,journal,ledger}` | Healthcare expenses with insurance reimbursements |
+| `multicurrency.{bean,journal,ledger}` | Multi-currency accounting with exchange rates |
+| `nonprofit.{bean,journal,ledger}` | Non-profit fund accounting with grants and donors |
 
 ## Running Examples
 

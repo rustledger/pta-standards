@@ -1,0 +1,125 @@
+; Non-profit organization accounting
+; Demonstrates: fund accounting, restricted/unrestricted funds, grants, donor tracking
+
+option "title" "Community Arts Foundation"
+option "operating_currency" "USD"
+
+; Asset accounts
+2024-01-01 open Assets:Bank:Operating
+2024-01-01 open Assets:Bank:Savings
+2024-01-01 open Assets:Receivable:Grants
+2024-01-01 open Assets:Receivable:Pledges
+
+; Revenue accounts
+2024-01-01 open Income:Donations:Unrestricted
+2024-01-01 open Income:Donations:Restricted
+2024-01-01 open Income:Grants:Federal
+2024-01-01 open Income:Grants:State
+2024-01-01 open Income:Events:Gala
+2024-01-01 open Income:Membership-Dues
+
+; Expense accounts
+2024-01-01 open Expenses:Programs:Youth-Arts
+2024-01-01 open Expenses:Programs:Community-Workshops
+2024-01-01 open Expenses:Programs:Exhibitions
+2024-01-01 open Expenses:Admin:Salaries
+2024-01-01 open Expenses:Admin:Office
+2024-01-01 open Expenses:Admin:Insurance
+2024-01-01 open Expenses:Fundraising:Events
+2024-01-01 open Expenses:Fundraising:Marketing
+
+; Liability accounts
+2024-01-01 open Liabilities:Deferred-Revenue
+
+; Opening balance
+2024-01-01 * "Opening balance"
+  Assets:Bank:Operating              25000.00 USD
+  Assets:Bank:Savings                50000.00 USD
+  Equity:Opening-Balances           -75000.00 USD
+
+2024-01-01 open Equity:Opening-Balances
+
+; Unrestricted individual donations
+2024-01-15 * "Jane Smith" "Annual donation"
+  Assets:Bank:Operating               5000.00 USD
+  Income:Donations:Unrestricted      -5000.00 USD
+
+2024-01-20 * "Multiple donors" "January online donations"
+  Assets:Bank:Operating               2350.00 USD
+  Income:Donations:Unrestricted      -2350.00 USD
+
+; Restricted grant — Youth Arts program
+2024-02-01 * "National Arts Council" "Youth Arts grant - Year 1" #grant-nac-2024
+  Assets:Receivable:Grants           40000.00 USD
+  Income:Grants:Federal             -40000.00 USD
+
+2024-02-15 * "National Arts Council" "Grant payment received" #grant-nac-2024
+  Assets:Bank:Operating              40000.00 USD
+  Assets:Receivable:Grants          -40000.00 USD
+
+; State grant for community workshops
+2024-03-01 * "State Arts Board" "Community Workshop grant"
+  Assets:Bank:Operating              15000.00 USD
+  Income:Grants:State               -15000.00 USD
+
+; Program expenses — Youth Arts (restricted funds)
+2024-02-20 * "Art Supplies Co" "Youth arts materials" #grant-nac-2024
+  Expenses:Programs:Youth-Arts        3200.00 USD
+  Assets:Bank:Operating              -3200.00 USD
+
+2024-03-15 * "Teaching Artists Collective" "Instructor fees Q1" #grant-nac-2024
+  Expenses:Programs:Youth-Arts        8500.00 USD
+  Assets:Bank:Operating              -8500.00 USD
+
+; Community workshop expenses
+2024-03-20 * "Community Center" "Workshop venue rental"
+  Expenses:Programs:Community-Workshops  1500.00 USD
+  Assets:Bank:Operating                 -1500.00 USD
+
+2024-04-01 * "Various" "Workshop supplies and materials"
+  Expenses:Programs:Community-Workshops  2800.00 USD
+  Assets:Bank:Operating                 -2800.00 USD
+
+; Administrative expenses
+2024-01-31 * "Payroll" "January staff salaries"
+  Expenses:Admin:Salaries             12000.00 USD
+  Assets:Bank:Operating              -12000.00 USD
+
+2024-02-28 * "Payroll" "February staff salaries"
+  Expenses:Admin:Salaries             12000.00 USD
+  Assets:Bank:Operating              -12000.00 USD
+
+2024-01-10 * "WeWork" "Office space January"
+  Expenses:Admin:Office                1800.00 USD
+  Assets:Bank:Operating               -1800.00 USD
+
+2024-01-15 * "NonProfit Insurance Co" "Annual liability insurance"
+  Expenses:Admin:Insurance             3600.00 USD
+  Assets:Bank:Operating               -3600.00 USD
+
+; Fundraising gala
+2024-04-15 * "Grand Hotel" "Spring gala venue and catering"
+  Expenses:Fundraising:Events          8500.00 USD
+  Assets:Bank:Operating               -8500.00 USD
+
+2024-04-20 * "Spring Gala" "Ticket sales and donations"
+  Assets:Bank:Operating               35000.00 USD
+  Income:Events:Gala                 -35000.00 USD
+
+; Membership dues
+2024-01-01 * "Various" "Q1 membership dues"
+  Assets:Bank:Operating                4800.00 USD
+  Income:Membership-Dues              -4800.00 USD
+
+; Exhibition expenses
+2024-05-01 * "Gallery Space" "Spring exhibition rental and setup"
+  Expenses:Programs:Exhibitions        5500.00 USD
+  Assets:Bank:Operating               -5500.00 USD
+
+; Transfer to savings
+2024-06-01 * "Transfer to reserve fund"
+  Assets:Bank:Savings                 10000.00 USD
+  Assets:Bank:Operating              -10000.00 USD
+
+; Mid-year balance assertions
+2024-06-30 balance Assets:Bank:Savings  60000.00 USD

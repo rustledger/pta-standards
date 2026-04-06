@@ -190,6 +190,6 @@ cp ledger-v2-backup.beancount ledger.beancount
 
 - **v3.0**: Current stable release
 - **v2.x**: Maintenance mode (security fixes only)
-- **v2 EOL**: TBD
+- **v2 EOL**: Not yet announced — check upstream beancount project for updates
 
 We recommend migrating to v3 for new features and continued support.

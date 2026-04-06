@@ -1,0 +1,64 @@
+; Multi-currency accounting with exchange rates
+; Demonstrates: commodities, price directives, currency conversion
+
+commodity $
+    note US Dollar
+    format $1,000.00
+
+commodity EUR
+    note Euro
+    format 1,000.00 EUR
+
+commodity GBP
+    note British Pound
+    format 1,000.00 GBP
+
+commodity JPY
+    note Japanese Yen
+    format 1,000 JPY
+
+; Opening balance
+2024/01/01 * Opening balance
+    Assets:Bank:US-Checking              $10,000.00
+    Equity:Opening-Balances
+
+; Convert USD to EUR
+2024/02/01 * Wise - Transfer USD to EUR
+    Assets:Bank:EU-Savings             2,700.00 EUR {$1.0741}
+    Expenses:Transfer-Fees                  $8.50
+    Assets:Bank:US-Checking
+
+; Receive GBP freelance payment
+2024/03/15 * UK Client Ltd - Freelance payment
+    Assets:Bank:UK-Account             3,000.00 GBP
+    Income:Freelance                  $-3,810.00
+
+; Convert GBP to USD
+2024/04/01 * Wise - Transfer GBP to USD
+    Assets:Bank:US-Checking              $1,900.00
+    Expenses:Transfer-Fees                  $5.25
+    Assets:Bank:UK-Account            -1,500.00 GBP {$1.2700}
+
+; Travel spending in JPY
+2024/05/10 * Hotel Tokyo - Hotel accommodation
+    Expenses:Travel                   45,000 JPY @ $0.006667
+    Assets:Bank:US-Checking
+
+2024/05/11 * Tokyo Metro - Transit pass
+    Expenses:Travel                    3,000 JPY @ $0.006667
+    Assets:Bank:US-Checking
+
+2024/05/12 * Restaurant Shibuya - Dinner
+    Expenses:Travel                    8,500 JPY @ $0.006667
+    Assets:Bank:US-Checking
+
+; EUR transfer back to USD with gain
+2024/06/15 * Wise - Transfer EUR to USD
+    Assets:Bank:US-Checking              $1,150.00
+    Assets:Bank:EU-Savings            -1,000.00 EUR {$1.0741} @ $1.1500
+    Income:Currency-Gains
+
+; Price history
+P 2024/06/30 EUR $1.0710
+P 2024/06/30 GBP $1.2640
+P 2024/06/30 JPY $0.006369

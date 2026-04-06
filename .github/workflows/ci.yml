@@ -25,18 +25,42 @@ jobs:
             echo "::warning::Found trailing whitespace in some files"
           fi
 
-  test:
-    name: Test
-    uses: ./.github/workflows/run-tests.yml
-
-  docs:
-    name: Documentation
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: Check for broken internal links
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pytest pytest-cov
+
+      - name: Run unit tests with coverage
         run: |
-          # Simple check for obviously broken markdown links
-          find formats -name '*.md' -exec grep -l '\]\(.*\.md\)' {} \; | head -5
-          echo "Link checking placeholder - implement with markdown-link-check"
+          pytest tests/harness/runners/python/tests/ -v \
+            --cov=tests/harness/runners/python \
+            --cov-report=term-missing \
+            --cov-report=html:coverage-html
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage-html/
+
+  test:
+    name: Test
+    uses: ./.github/workflows/run-tests.yml
+
+  lint-python:
+    name: Lint Python
+    uses: ./.github/workflows/lint-python.yml
+
+  check-links:
+    name: Check Links
+    uses: ./.github/workflows/check-links.yml
