@@ -30,7 +30,7 @@ class RustledgerExecutor(BaseExecutor):
         """
         try:
             result = subprocess.run(
-                [self.binary, "check", "--json", file_path],
+                [self.binary, "check", "--format", "json", file_path],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -40,8 +40,13 @@ class RustledgerExecutor(BaseExecutor):
             if result.stdout.strip():
                 try:
                     data = json.loads(result.stdout)
-                    errors = data.get("errors", [])
-                    return result.returncode == 0, errors, result.stdout
+                    # rustledger outputs {diagnostics: [...], error_count: N, warning_count: N}
+                    diagnostics = data.get("diagnostics", data.get("errors", []))
+                    error_diagnostics = [
+                        d for d in diagnostics if d.get("severity", "error") == "error"
+                    ]
+                    has_errors = data.get("error_count", len(error_diagnostics)) > 0
+                    return not has_errors, diagnostics, result.stdout
                 except json.JSONDecodeError:
                     # Non-JSON output, check return code
                     pass
@@ -67,7 +72,7 @@ class RustledgerExecutor(BaseExecutor):
         """
         try:
             result = subprocess.run(
-                [self.binary, "query", file_path, query, "--json"],
+                [self.binary, "query", file_path, query, "--format", "json"],
                 capture_output=True,
                 text=True,
                 timeout=30,
