@@ -162,6 +162,7 @@ jobs:
         run: npm install -g json-schema-to-typescript
 
       - name: Generate TypeScript types
+        continue-on-error: true
         run: |
           mkdir -p dist/types
           for schema in $(find . -name '*.schema.json' -type f); do
@@ -170,7 +171,7 @@ jobs:
             fi
             name=$(basename "$schema" .schema.json)
             echo "Generating TypeScript for: $schema"
-            json2ts "$schema" -o "dist/types/${name}.d.ts" --no-banner 2>/dev/null || true
+            json2ts "$schema" -o "dist/types/${name}.d.ts" --no-banner
           done
 
       - name: Upload generated types
