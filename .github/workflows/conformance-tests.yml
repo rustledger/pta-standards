@@ -135,7 +135,7 @@ jobs:
       - name: Get rustledger version
         id: version
         run: |
-          VERSION=$(cd rustledger && cargo pkgid | cut -d# -f2 | cut -d@ -f2)
+          VERSION=$(cd rustledger && cargo metadata --no-deps --format-version 1 | python3 -c "import sys,json; pkgs=json.load(sys.stdin)['packages']; print(pkgs[0]['version'] if pkgs else 'unknown')")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Rustledger version: $VERSION"
 
@@ -143,6 +143,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install git+https://github.com/beancount/beancount.git@master
+          pip install git+https://github.com/beancount/beanquery.git@master
 
       - name: Run conformance tests
         id: tests
