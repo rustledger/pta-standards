@@ -1,136 +1,280 @@
 name: Conformance Tests
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'tests/**'
-      - '.github/workflows/conformance-tests.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'tests/**'
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      update_readme:
+        description: 'Update README with results'
+        type: boolean
+        default: false
+  workflow_call:
 
 jobs:
-  beancount-tests:
-    name: Beancount v3 Tests
+  beancount-v3:
+    name: Beancount v3 (Python)
     runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.parse.outputs.total }}
+      passed: ${{ steps.parse.outputs.passed }}
+      failed: ${{ steps.parse.outputs.failed }}
+      skipped: ${{ steps.parse.outputs.skipped }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install beancount from main branch
         run: |
-          pip install beancount beanquery
+          pip install --upgrade pip
+          pip install git+https://github.com/beancount/beancount.git@master
+          pip install git+https://github.com/beancount/beanquery.git@master
+
+      - name: Get beancount version
+        id: version
+        run: |
+          VERSION=$(python -c "import beancount; print(beancount.__version__)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Beancount version: $VERSION"
 
       - name: Run conformance tests
+        id: tests
         run: |
           cd tests/harness/runners/python
-          python runner.py \
-            --manifest ../../../beancount/v3/manifest.json \
-            --format tap
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json 2>runner_errors.txt | tee results.json || true
+          if [ -s runner_errors.txt ]; then
+            echo "Runner stderr:"
+            cat runner_errors.txt
+          fi
 
-      - name: Run tests (JSON output)
+      - name: Parse test results
+        id: parse
         run: |
           cd tests/harness/runners/python
-          python runner.py \
-            --manifest ../../../beancount/v3/manifest.json \
-            --format json > results.json
+          if [ -s results.json ]; then
+            python -c "
+          import json
+          with open('results.json') as f:
+              data = json.load(f)
+          s = data['summary']
+          print(f\"total={s['total']}\")
+          print(f\"passed={s['passed']}\")
+          print(f\"failed={s['failed']}\")
+          print(f\"skipped={s['skipped']}\")
+          " >> $GITHUB_OUTPUT
+          else
+            echo "results.json is empty or missing"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Upload results
+      - name: Upload test results
         uses: actions/upload-artifact@v7
         with:
-          name: beancount-results
+          name: results-beancount
           path: tests/harness/runners/python/results.json
 
-  validate-schemas:
-    name: Validate JSON Schemas
+      - name: Create summary
+        run: |
+          echo "## Python Beancount (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
+
+  rustledger:
+    name: Rustledger
     runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.parse.outputs.total }}
+      passed: ${{ steps.parse.outputs.passed }}
+      failed: ${{ steps.parse.outputs.failed }}
+      skipped: ${{ steps.parse.outputs.skipped }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Checkout rustledger
+        uses: actions/checkout@v6
         with:
-          node-version: '20'
+          repository: rustledger/rustledger
+          path: rustledger
+          ref: main
 
-      - name: Install ajv-cli
-        run: npm install -g ajv-cli ajv-formats
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Validate test case schemas
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rustledger/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rustledger/Cargo.lock') }}
+
+      - name: Build rustledger
         run: |
-          # Validate all tests.json files against schema (draft-07)
-          errors=0
-          for f in $(find tests -name "tests.json"); do
-            echo "Validating $f..."
-            if ! ajv validate \
-              -s tests/harness/test-case.schema.json \
-              -d "$f" \
-              --spec=draft7 \
-              -c ajv-formats; then
-              errors=$((errors + 1))
-            fi
-          done
-          if [ "$errors" -gt 0 ]; then
-            echo "::error::$errors test file(s) failed schema validation"
-            exit 1
+          cd rustledger
+          cargo build --release
+
+      - name: Get rustledger version
+        id: version
+        run: |
+          VERSION=$(cd rustledger && cargo pkgid | cut -d# -f2 | cut -d@ -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Rustledger version: $VERSION"
+
+      - name: Set up Python for test runner
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run conformance tests
+        id: tests
+        run: |
+          cd tests/harness/runners/python
+          export RLEDGER_BIN="${GITHUB_WORKSPACE}/rustledger/target/release/rledger"
+          python runner.py --manifest ../../../beancount/v3/manifest.json --format json --impl rustledger 2>runner_errors.txt | tee results.json || true
+          if [ -s runner_errors.txt ]; then
+            echo "Runner stderr:"
+            cat runner_errors.txt
           fi
 
-      - name: Validate manifest schemas
+      - name: Parse test results
+        id: parse
         run: |
-          # Validate all manifest.json files (draft-07)
-          errors=0
-          for f in $(find tests -name "manifest.json"); do
-            echo "Validating $f..."
-            if ! ajv validate \
-              -s tests/harness/manifest.schema.json \
-              -d "$f" \
-              --spec=draft7 \
-              -c ajv-formats; then
-              errors=$((errors + 1))
-            fi
-          done
-          if [ "$errors" -gt 0 ]; then
-            echo "::error::$errors manifest file(s) failed schema validation"
-            exit 1
+          cd tests/harness/runners/python
+          if [ -s results.json ]; then
+            python -c "
+          import json
+          with open('results.json') as f:
+              data = json.load(f)
+          s = data['summary']
+          print(f\"total={s['total']}\")
+          print(f\"passed={s['passed']}\")
+          print(f\"failed={s['failed']}\")
+          print(f\"skipped={s['skipped']}\")
+          " >> $GITHUB_OUTPUT
+          else
+            echo "results.json is empty or missing"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
           fi
 
-  lint-markdown:
-    name: Lint Markdown
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: always()
         with:
-          node-version: '20'
+          name: results-rustledger
+          path: tests/harness/runners/python/results.json
 
-      - name: Install markdownlint
-        run: npm install -g markdownlint-cli
-
-      - name: Lint markdown files
+      - name: Create summary
         run: |
-          markdownlint '**/*.md' --ignore node_modules --ignore reference/sources/beancount/docs
+          echo "## Rustledger (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
 
-  check-links:
-    name: Check Links
+  update-readme:
+    name: Update README
+    needs: [beancount-v3, rustledger]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.update_readme == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update README with results
+        run: |
+          python scripts/update_readme.py \
+            --readme README.md \
+            --beancount-version "${{ needs.beancount-v3.outputs.version }}" \
+            --beancount-passed "${{ needs.beancount-v3.outputs.passed }}" \
+            --beancount-failed "${{ needs.beancount-v3.outputs.failed }}" \
+            --beancount-skipped "${{ needs.beancount-v3.outputs.skipped }}" \
+            --rustledger-version "${{ needs.rustledger.outputs.version }}" \
+            --rustledger-passed "${{ needs.rustledger.outputs.passed }}" \
+            --rustledger-failed "${{ needs.rustledger.outputs.failed }}" \
+            --rustledger-skipped "${{ needs.rustledger.outputs.skipped }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --staged --quiet || git commit -m "chore: update conformance test results [skip ci]"
+          git push
+
+  validate-test-schemas:
+    name: Validate Test Schemas
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: Check internal links
-        uses: lycheeverse/lychee-action@v2
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          args: --offline --include-fragments '**/*.md' --exclude-path reference/sources/beancount/docs
-          fail: true
+          python-version: '3.11'
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate test files against schema
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          from pathlib import Path
+
+          schema_path = Path('tests/harness/test-case.schema.json')
+          with open(schema_path) as f:
+              schema = json.load(f)
+
+          test_files = list(Path('tests').rglob('tests.json'))
+          errors = []
+
+          for test_file in test_files:
+              with open(test_file) as f:
+                  try:
+                      data = json.load(f)
+                      for test in data.get('tests', []):
+                          try:
+                              jsonschema.validate(test, schema)
+                          except jsonschema.ValidationError as e:
+                              errors.append(f'{test_file}:{test.get(\"id\", \"unknown\")}: {e.message}')
+                  except json.JSONDecodeError as e:
+                      errors.append(f'{test_file}: Invalid JSON - {e}')
+
+          if errors:
+              print('Schema validation errors:')
+              for err in errors:
+                  print(f'  - {err}')
+              exit(1)
+          else:
+              print(f'Validated {len(test_files)} test files successfully')
+          "

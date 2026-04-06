@@ -33,6 +33,26 @@ jobs:
           echo "- Checked **$json_count** JSON files for syntax" >> $GITHUB_STEP_SUMMARY
           echo "- Checked markdown and JSON files for trailing whitespace" >> $GITHUB_STEP_SUMMARY
 
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Lint markdown files
+        run: |
+          markdownlint '**/*.md' \
+            --ignore node_modules \
+            --ignore reference/sources/beancount/docs
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -70,9 +90,9 @@ jobs:
           echo "## Unit Test Results" >> $GITHUB_STEP_SUMMARY
           echo "Coverage report uploaded as artifact." >> $GITHUB_STEP_SUMMARY
 
-  test:
-    name: Test
-    uses: ./.github/workflows/run-tests.yml
+  conformance-tests:
+    name: Conformance Tests
+    uses: ./.github/workflows/conformance-tests.yml
 
   lint-python:
     name: Lint Python
@@ -81,3 +101,11 @@ jobs:
   check-links:
     name: Check Links
     uses: ./.github/workflows/check-links.yml
+
+  validate-schemas:
+    name: Validate Schemas
+    uses: ./.github/workflows/validate-schemas.yml
+
+  validate-grammars:
+    name: Validate Grammars
+    uses: ./.github/workflows/validate-grammars.yml
