@@ -171,6 +171,7 @@ jobs:
         run: npm install -g tree-sitter-cli
 
       - name: Validate grammar.js files
+        continue-on-error: true
         run: |
           for ts_dir in $(find . -type d -name 'tree-sitter'); do
             if [[ -f "$ts_dir/grammar.js" ]]; then
@@ -178,11 +179,11 @@ jobs:
               cd "$ts_dir"
               # Check if package.json exists and has valid syntax
               if [[ -f package.json ]] && [[ -s package.json ]]; then
-                npm install 2>/dev/null || true
-                tree-sitter generate || echo "::warning file=$ts_dir/grammar.js::Tree-sitter generate failed"
+                npm install 2>/dev/null
+                tree-sitter generate
               else
                 # Just validate the JS syntax
-                node -c grammar.js || echo "::warning file=$ts_dir/grammar.js::JavaScript syntax error"
+                node -c grammar.js
               fi
               cd - > /dev/null
             fi

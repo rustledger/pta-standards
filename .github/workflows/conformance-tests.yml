@@ -67,27 +67,41 @@ jobs:
 
       - name: Validate test case schemas
         run: |
-          # Validate all tests.json files against schema
+          # Validate all tests.json files against schema (draft-07)
+          errors=0
           for f in $(find tests -name "tests.json"); do
             echo "Validating $f..."
-            ajv validate \
+            if ! ajv validate \
               -s tests/harness/test-case.schema.json \
               -d "$f" \
-              --spec=draft2020-12 \
-              -c ajv-formats || true
+              --spec=draft7 \
+              -c ajv-formats; then
+              errors=$((errors + 1))
+            fi
           done
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::$errors test file(s) failed schema validation"
+            exit 1
+          fi
 
       - name: Validate manifest schemas
         run: |
-          # Validate all manifest.json files
+          # Validate all manifest.json files (draft-07)
+          errors=0
           for f in $(find tests -name "manifest.json"); do
             echo "Validating $f..."
-            ajv validate \
+            if ! ajv validate \
               -s tests/harness/manifest.schema.json \
               -d "$f" \
-              --spec=draft2020-12 \
-              -c ajv-formats || true
+              --spec=draft7 \
+              -c ajv-formats; then
+              errors=$((errors + 1))
+            fi
           done
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::$errors manifest file(s) failed schema validation"
+            exit 1
+          fi
 
   lint-markdown:
     name: Lint Markdown
@@ -106,7 +120,7 @@ jobs:
 
       - name: Lint markdown files
         run: |
-          markdownlint '**/*.md' --ignore node_modules || true
+          markdownlint '**/*.md' --ignore node_modules --ignore reference/sources/beancount/docs
 
   check-links:
     name: Check Links
@@ -118,5 +132,5 @@ jobs:
       - name: Check internal links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --offline --include-fragments '**/*.md'
-          fail: false
+          args: --offline --include-fragments '**/*.md' --exclude-path reference/sources/beancount/docs
+          fail: true

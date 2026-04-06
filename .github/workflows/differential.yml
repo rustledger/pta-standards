@@ -22,6 +22,7 @@ jobs:
   differential-beancount:
     name: Differential Test (Beancount)
     runs-on: ubuntu-latest
+    continue-on-error: true
     if: github.event.inputs.group == 'beancount' || github.event.inputs.group == ''
 
     steps:
@@ -48,7 +49,7 @@ jobs:
             --group beancount \
             --limit ${{ github.event.inputs.limit || '100' }} \
             --report divergences.json \
-            --verbose || true
+            --verbose
 
       - name: Upload divergence report
         uses: actions/upload-artifact@v7
@@ -57,15 +58,22 @@ jobs:
           name: differential-report
           path: tests/differential/divergences.json
 
-      - name: Comment on divergences
-        if: failure()
+      - name: Summary
+        if: always()
         run: |
-          echo "::warning::Divergences detected between implementations"
-          cat tests/differential/divergences.json | jq '.summary'
+          echo "## Differential Test (Beancount)" >> $GITHUB_STEP_SUMMARY
+          if [ -f tests/differential/divergences.json ]; then
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat tests/differential/divergences.json | jq '.summary' >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No summary available" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No divergence report generated." >> $GITHUB_STEP_SUMMARY
+          fi
 
   differential-ledger:
     name: Differential Test (Ledger/hledger)
     runs-on: ubuntu-latest
+    continue-on-error: true
     if: github.event.inputs.group == 'ledger'
 
     steps:
@@ -89,7 +97,7 @@ jobs:
             --group ledger \
             --limit ${{ github.event.inputs.limit || '100' }} \
             --report divergences-ledger.json \
-            --verbose || true
+            --verbose
 
       - name: Upload divergence report
         uses: actions/upload-artifact@v7
@@ -97,3 +105,15 @@ jobs:
         with:
           name: differential-report-ledger
           path: tests/differential/divergences-ledger.json
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Differential Test (Ledger/hledger)" >> $GITHUB_STEP_SUMMARY
+          if [ -f tests/differential/divergences-ledger.json ]; then
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat tests/differential/divergences-ledger.json | jq '.summary' >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No summary available" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No divergence report generated." >> $GITHUB_STEP_SUMMARY
+          fi

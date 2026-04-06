@@ -97,6 +97,17 @@ jobs:
             /usr/bin/time -f "%e seconds" bean-check medium.beancount 2>&1 | tail -1
           done
 
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Benchmark Results (Beancount)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Transactions |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| small.beancount | 100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| medium.beancount | 10,000 |" >> $GITHUB_STEP_SUMMARY
+          echo "| large.beancount | 100,000 |" >> $GITHUB_STEP_SUMMARY
+
   benchmark-comparison:
     name: Compare Implementations
     runs-on: ubuntu-latest
