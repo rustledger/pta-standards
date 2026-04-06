@@ -699,9 +699,7 @@ def get_previous_accounts(options):
     equity = options["name_equity"]
     account_previous_earnings = account.join(equity, options["account_previous_earnings"])
     account_previous_balances = account.join(equity, options["account_previous_balances"])
-    account_previous_conversions = account.join(
-        equity, options["account_previous_conversions"]
-    )
+    account_previous_conversions = account.join(equity, options["account_previous_conversions"])
     return (
         account_previous_earnings,
         account_previous_balances,
@@ -720,9 +718,7 @@ def get_current_accounts(options):
     """
     equity = options["name_equity"]
     account_current_earnings = account.join(equity, options["account_current_earnings"])
-    account_current_conversions = account.join(
-        equity, options["account_current_conversions"]
-    )
+    account_current_conversions = account.join(equity, options["account_current_conversions"])
     return (account_current_earnings, account_current_conversions)
 
 
@@ -758,9 +754,7 @@ def list_options():
                     )
                 )
                 oss.write("\n\n")
-        description = " ".join(
-            line.strip() for line in group.description.strip().splitlines()
-        )
+        description = " ".join(line.strip() for line in group.description.strip().splitlines())
         oss.write(textwrap.fill(description, initial_indent="  ", subsequent_indent="  "))
         oss.write("\n")
 

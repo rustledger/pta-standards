@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import argparse
 import re
-import sys
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 
 RESULTS_TEMPLATE = """\
 <!-- CONFORMANCE-RESULTS-START -->
@@ -48,7 +46,7 @@ def update_readme(
     rustledger_failed: str,
     rustledger_skipped: str,
 ) -> None:
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     section = RESULTS_TEMPLATE.format(
         date=date,

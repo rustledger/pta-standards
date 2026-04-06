@@ -599,9 +599,7 @@ def create_simple_posting_with_cost(
 NoneType: type = type(None)
 
 
-def sanity_check_types(
-    entry: Directive, allow_none_for_tags_and_links: bool = False
-) -> None:
+def sanity_check_types(entry: Directive, allow_none_for_tags_and_links: bool = False) -> None:
     """Check that the entry and its postings has all correct data types.
 
     Args:
@@ -622,13 +620,9 @@ def sanity_check_types(
         assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
         assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
         set_types = (
-            (NoneType, set, frozenset)
-            if allow_none_for_tags_and_links
-            else (set, frozenset)
+            (NoneType, set, frozenset) if allow_none_for_tags_and_links else (set, frozenset)
         )
-        assert isinstance(entry.tags, set_types), "Invalid tags type: {}".format(
-            type(entry.tags)
-        )
+        assert isinstance(entry.tags, set_types), "Invalid tags type: {}".format(type(entry.tags))
         assert isinstance(entry.links, set_types), "Invalid links type: {}".format(
             type(entry.links)
         )
@@ -667,9 +661,9 @@ def transaction_has_conversion(transaction: Transaction) -> bool:
       A boolean, true if this transaction contains at least one posting with a
       price conversion.
     """
-    assert isinstance(
-        transaction, Transaction
-    ), "Invalid type of entry for transaction: {}".format(transaction)
+    assert isinstance(transaction, Transaction), "Invalid type of entry for transaction: {}".format(
+        transaction
+    )
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True
@@ -684,11 +678,7 @@ def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
     Returns:
       A datetime instance.
     """
-    return (
-        posting_or_entry.txn
-        if isinstance(posting_or_entry, TxnPosting)
-        else posting_or_entry
-    )
+    return posting_or_entry.txn if isinstance(posting_or_entry, TxnPosting) else posting_or_entry
 
 
 # Sorting order of directives on the same day, by type:
@@ -819,9 +809,7 @@ def remove_account_postings(account: Account, entries: Directives) -> Directives
             any(posting.account == account for posting in entry.postings)
         ):
             entry = entry._replace(
-                postings=[
-                    posting for posting in entry.postings if posting.account != account
-                ]
+                postings=[posting for posting in entry.postings if posting.account != account]
             )
         new_entries.append(entry)
     return new_entries

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 # Add scripts dir to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / "scripts"))
 
-from update_readme import update_readme, status_emoji, MARKER_PATTERN
+from update_readme import status_emoji, update_readme
 
 
 class TestStatusEmoji:

@@ -196,13 +196,13 @@ def generate_beancount_file(
     lines = []
 
     # Header
-    lines.append(f'; Benchmark file generated with {transactions} transactions')
-    lines.append(f'; Accounts: {accounts}, Commodities: {commodities}')
-    lines.append(f'; Complexity: {complexity}')
-    lines.append('')
+    lines.append(f"; Benchmark file generated with {transactions} transactions")
+    lines.append(f"; Accounts: {accounts}, Commodities: {commodities}")
+    lines.append(f"; Complexity: {complexity}")
+    lines.append("")
     lines.append('option "title" "Benchmark Ledger"')
     lines.append('option "operating_currency" "USD"')
-    lines.append('')
+    lines.append("")
 
     # Generate accounts and commodities
     account_list = generate_accounts(accounts)
@@ -210,20 +210,20 @@ def generate_beancount_file(
 
     # Commodity declarations
     for comm in commodity_list:
-        lines.append(f'1900-01-01 commodity {comm}')
-    lines.append('')
+        lines.append(f"1900-01-01 commodity {comm}")
+    lines.append("")
 
     # Account declarations (day before start date)
     open_date = start_date - timedelta(days=1)
     for account in account_list:
-        lines.append(f'{open_date} open {account}')
-    lines.append('')
+        lines.append(f"{open_date} open {account}")
+    lines.append("")
 
     # Opening balance
     lines.append(f'{open_date} * "Opening Balance"')
-    lines.append(f'  Assets:Bank:Checking  10000.00 USD')
-    lines.append(f'  Equity:OpeningBalances')
-    lines.append('')
+    lines.append(f"  Assets:Bank:Checking  10000.00 USD")
+    lines.append(f"  Equity:OpeningBalances")
+    lines.append("")
 
     # Generate transactions
     current_date = start_date
@@ -241,9 +241,9 @@ def generate_beancount_file(
             txn = generate_transaction(current_date, account_list, commodity_list, complexity)
 
         lines.append(txn)
-        lines.append('')
+        lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def main():
@@ -251,19 +251,22 @@ def main():
         description="Generate benchmark ledger files",
     )
     parser.add_argument(
-        "--transactions", "-n",
+        "--transactions",
+        "-n",
         type=int,
         default=10000,
         help="Number of transactions (default: 10000)",
     )
     parser.add_argument(
-        "--accounts", "-a",
+        "--accounts",
+        "-a",
         type=int,
         default=100,
         help="Number of accounts (default: 100)",
     )
     parser.add_argument(
-        "--commodities", "-c",
+        "--commodities",
+        "-c",
         type=int,
         default=5,
         help="Number of commodities (default: 5)",
@@ -281,7 +284,8 @@ def main():
         help="Transaction complexity (default: medium)",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         help="Output file (default: stdout)",
     )

@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
 
-import sys
 sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
-from loader import TestCase
 from executors.base import BaseExecutor, TestResult
+from loader import TestCase
 
 
 class RustledgerExecutor(BaseExecutor):
@@ -105,20 +105,16 @@ class RustledgerExecutor(BaseExecutor):
             # Get input content and write to temp file
             if test.input.inline is not None:
                 content = test.input.inline
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".beancount", delete=False
-                ) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
                 file_path = temp_path
                 cleanup = True
             else:
-                file_path = test.input.get_file_path(test.base_path)
-                if file_path is None:
-                    return TestResult.failure(
-                        test, "No input file or inline content specified"
-                    )
-                file_path = str(file_path)
+                resolved_path = test.input.get_file_path(test.base_path)
+                if resolved_path is None:
+                    return TestResult.failure(test, "No input file or inline content specified")
+                file_path = str(resolved_path)
                 cleanup = False
 
             # Determine test type and execute
@@ -142,23 +138,22 @@ class RustledgerExecutor(BaseExecutor):
     ) -> TestResult:
         """Execute a parse/validation test."""
         try:
-            success, errors, raw = self._run_check(file_path)
+            success, errors, _raw = self._run_check(file_path)
             duration_ms = (time.perf_counter() - start_time) * 1000
 
             # Check parse result
             actual_parse = "success" if success else "error"
             expected_parse = test.expected.parse
 
-            if expected_parse is not None:
-                if actual_parse != expected_parse:
-                    error_msgs = [e.get("message", str(e)) for e in errors[:3]]
-                    return TestResult.failure(
-                        test,
-                        f"Expected parse={expected_parse}, got {actual_parse}",
-                        actual={"parse": actual_parse, "errors": error_msgs},
-                        expected={"parse": expected_parse},
-                        duration_ms=duration_ms,
-                    )
+            if expected_parse is not None and actual_parse != expected_parse:
+                error_msgs = [e.get("message", str(e)) for e in errors[:3]]
+                return TestResult.failure(
+                    test,
+                    f"Expected parse={expected_parse}, got {actual_parse}",
+                    actual={"parse": actual_parse, "errors": error_msgs},
+                    expected={"parse": expected_parse},
+                    duration_ms=duration_ms,
+                )
 
             # Check validation result
             expected_validate = test.expected.validate
@@ -177,15 +172,16 @@ class RustledgerExecutor(BaseExecutor):
             # Check error_contains if specified
             if test.expected.error_contains:
                 error_messages = [e.get("message", str(e)) for e in errors]
-                all_errors = " ".join(error_messages)
-                if test.expected.error_contains.lower() not in all_errors.lower():
-                    return TestResult.failure(
-                        test,
-                        f"Expected error containing '{test.expected.error_contains}'",
-                        actual={"errors": error_messages[:5]},
-                        expected={"error_contains": test.expected.error_contains},
-                        duration_ms=duration_ms,
-                    )
+                all_errors = " ".join(error_messages).lower()
+                for substring in test.expected.error_contains:
+                    if substring.lower() not in all_errors:
+                        return TestResult.failure(
+                            test,
+                            f"Expected error containing '{substring}'",
+                            actual={"errors": error_messages[:5]},
+                            expected={"error_contains": test.expected.error_contains},
+                            duration_ms=duration_ms,
+                        )
 
             return TestResult.success(test, duration_ms=duration_ms)
 
@@ -202,7 +198,7 @@ class RustledgerExecutor(BaseExecutor):
             if not query:
                 return TestResult.failure(test, "No query specified in input")
 
-            success, rows, errors, raw = self._run_query(file_path, query)
+            success, rows, errors, _raw = self._run_query(file_path, query)
             duration_ms = (time.perf_counter() - start_time) * 1000
 
             # Check query result
@@ -234,15 +230,16 @@ class RustledgerExecutor(BaseExecutor):
             # Check error_contains if specified
             if test.expected.error_contains:
                 error_messages = [e.get("message", str(e)) for e in errors]
-                all_errors = " ".join(error_messages)
-                if test.expected.error_contains.lower() not in all_errors.lower():
-                    return TestResult.failure(
-                        test,
-                        f"Expected error containing '{test.expected.error_contains}'",
-                        actual={"errors": error_messages[:5]},
-                        expected={"error_contains": test.expected.error_contains},
-                        duration_ms=duration_ms,
-                    )
+                all_errors = " ".join(error_messages).lower()
+                for substring in test.expected.error_contains:
+                    if substring.lower() not in all_errors:
+                        return TestResult.failure(
+                            test,
+                            f"Expected error containing '{substring}'",
+                            actual={"errors": error_messages[:5]},
+                            expected={"error_contains": test.expected.error_contains},
+                            duration_ms=duration_ms,
+                        )
 
             return TestResult.success(test, duration_ms=duration_ms)
 

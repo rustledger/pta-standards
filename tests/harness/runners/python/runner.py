@@ -13,15 +13,14 @@ from pathlib import Path
 # Add this directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from loader import load_all_tests, filter_tests, TestCase
 from executors.base import TestResult
-from executors.syntax import SyntaxExecutor
-from executors.validation import ValidationExecutor
 from executors.bql import BQLExecutor
 from executors.rustledger import RustledgerExecutor
-from reporters.tap import TAPReporter
+from executors.syntax import SyntaxExecutor
+from executors.validation import ValidationExecutor
+from loader import TestCase, filter_tests, load_all_tests
 from reporters.json_reporter import JSONReporter
-
+from reporters.tap import TAPReporter
 
 # Global to track implementation
 _implementation = "beancount"
@@ -178,6 +177,7 @@ Examples:
     results = run_tests(tests, fail_fast=args.fail_fast)
 
     # Report results
+    reporter: JSONReporter | TAPReporter
     if args.format == "json":
         reporter = JSONReporter(verbose=args.verbose)
     else:

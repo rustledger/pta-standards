@@ -71,7 +71,7 @@ class TestTestInput:
 
     def test_no_content_raises(self):
         ti = TestInput()
-        with pytest.raises(ValueError, match="inline.*file"):
+        with pytest.raises(ValueError, match=r"inline.*file"):
             ti.get_content(Path("."))
 
     def test_get_file_path_returns_none_for_inline(self):

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import time
+import sys
 import tempfile
+import time
 from pathlib import Path
 
 from beancount import loader
 
-import sys
 sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
-from loader import TestCase
 from executors.base import BaseExecutor, TestResult
+from loader import TestCase
 
 
 class SyntaxExecutor(BaseExecutor):
@@ -29,20 +29,16 @@ class SyntaxExecutor(BaseExecutor):
             if test.input.inline is not None:
                 content = test.input.inline
                 # Write to temp file for beancount loader
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".beancount", delete=False
-                ) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
-                entries, errors, options = loader.load_file(temp_path)
+                entries, errors, _options = loader.load_file(temp_path)
                 Path(temp_path).unlink()
             else:
                 file_path = test.input.get_file_path(test.base_path)
                 if file_path is None:
-                    return TestResult.failure(
-                        test, "No input file or inline content specified"
-                    )
-                entries, errors, options = loader.load_file(str(file_path))
+                    return TestResult.failure(test, "No input file or inline content specified")
+                entries, errors, _options = loader.load_file(str(file_path))
 
             duration_ms = (time.perf_counter() - start_time) * 1000
 
@@ -74,9 +70,7 @@ class SyntaxExecutor(BaseExecutor):
 
             # Check error_contains if specified
             if test.expected.error_contains:
-                success, msg = self.check_error_contains(
-                    errors, test.expected.error_contains
-                )
+                success, msg = self.check_error_contains(errors, test.expected.error_contains)
                 if not success:
                     return TestResult.failure(
                         test,

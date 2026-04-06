@@ -195,9 +195,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
             return False
         for position in self:
             units = position.units
-            if ramount.currency == units.currency and not same_sign(
-                ramount.number, units.number
-            ):
+            if ramount.currency == units.currency and not same_sign(ramount.number, units.number):
                 return True
         return False
 
@@ -371,13 +369,9 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
             units_amount = Amount(total_units, currency)
 
             if cost_currency:
-                total_cost = sum(
-                    convert.get_cost(position).number for position in positions
-                )
+                total_cost = sum(convert.get_cost(position).number for position in positions)
                 cost_number = (
-                    Decimal("Infinity")
-                    if total_units == ZERO
-                    else (total_cost / total_units)
+                    Decimal("Infinity") if total_units == ZERO else (total_cost / total_units)
                 )
                 min_date = None
                 for pos in positions:
@@ -417,9 +411,9 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
             assert isinstance(units, Amount), "Internal error: {!r} (type: {})".format(
                 units, type(units).__name__
             )
-            assert cost is None or isinstance(
-                cost, Cost
-            ), "Internal error: {!r} (type: {})".format(cost, type(cost).__name__)
+            assert cost is None or isinstance(cost, Cost), "Internal error: {!r} (type: {})".format(
+                cost, type(cost).__name__
+            )
 
         # Find the position.
         key = (units.currency, cost)
@@ -467,12 +461,12 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
           hints at how the lot was booked to this inventory.
         """
         if ASSERTS_TYPES:
-            assert hasattr(position, "units") and hasattr(
-                position, "cost"
-            ), "Invalid type for position: {}".format(position)
-            assert isinstance(
-                position.cost, (type(None), Cost)
-            ), "Invalid type for cost: {}".format(position.cost)
+            assert hasattr(position, "units") and hasattr(position, "cost"), (
+                "Invalid type for position: {}".format(position)
+            )
+            assert isinstance(position.cost, (type(None), Cost)), (
+                "Invalid type for cost: {}".format(position.cost)
+            )
         return self.add_amount(
             # Ignore the type errors, units could be None or cost a CostSpec
             position.units,  # type: ignore[arg-type]
@@ -525,9 +519,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
         new_inventory = Inventory()
         # We need to split the comma-separated positions but ignore commas
         # occurring within a {...cost...} specification.
-        position_strs = re.split(
-            r"([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*", string
-        )[1::2]
+        position_strs = re.split(r"([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*", string)[1::2]
         for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory

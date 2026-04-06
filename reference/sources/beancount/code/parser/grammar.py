@@ -243,9 +243,7 @@ class Builder(lexer.LexBuilder):
         # Also record the name of the processed file.
         self.options["filename"] = filename
 
-    def build_grammar_error(
-        self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
-    ):
+    def build_grammar_error(self, filename, lineno, exc_value, exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
@@ -276,9 +274,7 @@ class Builder(lexer.LexBuilder):
         """
         if not self.account_regexp.match(account):
             meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Invalid account name: {}".format(account))
-            )
+            self.errors.append(ParserError(meta, "Invalid account name: {}".format(account)))
         # Intern account names. This should reduces memory usage a
         # fair bit because these strings are repeated liberally.
         return self.accounts.setdefault(account, account)
@@ -315,9 +311,7 @@ class Builder(lexer.LexBuilder):
             self.tags.remove(tag)
         except ValueError:
             meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag))
-            )
+            self.errors.append(ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag)))
 
     def pushmeta(self, filename, lineno, key_value):
         """Set a metadata field on the current key-value pairs to be added to transactions.
@@ -543,9 +537,7 @@ class Builder(lexer.LexBuilder):
                     )
 
             else:
-                assert isinstance(
-                    comp, str
-                ), "Currency component is not string: '{}'".format(comp)
+                assert isinstance(comp, str), "Currency component is not string: '{}'".format(comp)
                 if label is None:
                     label = comp
                 else:
@@ -770,9 +762,7 @@ class Builder(lexer.LexBuilder):
         tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Note(meta, date, account, comment, tags, links)
 
-    def document(
-        self, filename, lineno, date, account, document_filename, tags_links, kvlist
-    ):
+    def document(self, filename, lineno, date, account, document_filename, tags_links, kvlist):
         """Process a document directive.
 
         Args:
@@ -788,9 +778,7 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno, kvlist)
         if not path.isabs(document_filename):
-            document_filename = path.abspath(
-                path.join(path.dirname(filename), document_filename)
-            )
+            document_filename = path.abspath(path.join(path.dirname(filename), document_filename))
         tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
 
@@ -1045,16 +1033,12 @@ class Builder(lexer.LexBuilder):
                         links.update(posting_or_kv.links)
                 else:
                     if last_posting is None:
-                        value = explicit_meta.setdefault(
-                            posting_or_kv.key, posting_or_kv.value
-                        )
+                        value = explicit_meta.setdefault(posting_or_kv.key, posting_or_kv.value)
                         if value is not posting_or_kv.value:
                             self.errors.append(
                                 ParserError(
                                     meta,
-                                    "Duplicate metadata field on entry: {}".format(
-                                        posting_or_kv
-                                    ),
+                                    "Duplicate metadata field on entry: {}".format(posting_or_kv),
                                 )
                             )
                     else:
@@ -1063,16 +1047,12 @@ class Builder(lexer.LexBuilder):
                             postings.pop(-1)
                             postings.append(last_posting)
 
-                        value = last_posting.meta.setdefault(
-                            posting_or_kv.key, posting_or_kv.value
-                        )
+                        value = last_posting.meta.setdefault(posting_or_kv.key, posting_or_kv.value)
                         if value is not posting_or_kv.value:
                             self.errors.append(
                                 ParserError(
                                     meta,
-                                    "Duplicate posting metadata field: {}".format(
-                                        posting_or_kv
-                                    ),
+                                    "Duplicate posting metadata field: {}".format(posting_or_kv),
                                 )
                             )
 

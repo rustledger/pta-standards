@@ -6,8 +6,8 @@ import io
 import json
 
 from executors.base import TestResult
-from reporters.tap import TAPReporter
 from reporters.json_reporter import JSONReporter
+from reporters.tap import TAPReporter
 
 
 def _make_results() -> tuple[list[TestResult], dict[str, str]]:

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import time
+import sys
 import tempfile
+import time
 from pathlib import Path
 
 from beancount import loader
 
-import sys
 sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
-from loader import TestCase
 from executors.base import BaseExecutor, TestResult
+from loader import TestCase
 
 
 class ValidationExecutor(BaseExecutor):
@@ -28,20 +28,16 @@ class ValidationExecutor(BaseExecutor):
             # Get input content
             if test.input.inline is not None:
                 content = test.input.inline
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".beancount", delete=False
-                ) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
-                entries, errors, options = loader.load_file(temp_path)
+                entries, errors, _options = loader.load_file(temp_path)
                 Path(temp_path).unlink()
             else:
                 file_path = test.input.get_file_path(test.base_path)
                 if file_path is None:
-                    return TestResult.failure(
-                        test, "No input file or inline content specified"
-                    )
-                entries, errors, options = loader.load_file(str(file_path))
+                    return TestResult.failure(test, "No input file or inline content specified")
+                entries, errors, _options = loader.load_file(str(file_path))
 
             duration_ms = (time.perf_counter() - start_time) * 1000
 
@@ -49,12 +45,8 @@ class ValidationExecutor(BaseExecutor):
             # In beancount, loader.load_file returns all errors combined
             # Parse errors typically have certain types
             parse_error_types = {"ParserError", "ParserSyntaxError", "LexerError"}
-            parse_errors = [
-                e for e in errors if type(e).__name__ in parse_error_types
-            ]
-            validation_errors = [
-                e for e in errors if type(e).__name__ not in parse_error_types
-            ]
+            parse_errors = [e for e in errors if type(e).__name__ in parse_error_types]
+            validation_errors = [e for e in errors if type(e).__name__ not in parse_error_types]
 
             # Check parse result first
             expected_parse = test.expected.parse
@@ -109,9 +101,7 @@ class ValidationExecutor(BaseExecutor):
 
             # Check error_contains if specified
             if test.expected.error_contains:
-                success, msg = self.check_error_contains(
-                    errors, test.expected.error_contains
-                )
+                success, msg = self.check_error_contains(errors, test.expected.error_contains)
                 if not success:
                     return TestResult.failure(
                         test,
@@ -124,6 +114,7 @@ class ValidationExecutor(BaseExecutor):
             # Check accounts if specified
             if test.expected.accounts:
                 from beancount.core import getters
+
                 actual_accounts = set(getters.get_accounts(entries))
                 expected_accounts = set(test.expected.accounts)
                 if not expected_accounts.issubset(actual_accounts):

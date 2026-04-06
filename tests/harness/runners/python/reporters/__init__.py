@@ -1,6 +1,6 @@
 """Test result reporters."""
 
-from .tap import TAPReporter
 from .json_reporter import JSONReporter
+from .tap import TAPReporter
 
-__all__ = ["TAPReporter", "JSONReporter"]
+__all__ = ["JSONReporter", "TAPReporter"]

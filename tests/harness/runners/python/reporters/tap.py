@@ -42,7 +42,7 @@ class TAPReporter:
                 if not result.passed and result.error_message:
                     # Escape the message for YAML
                     msg = result.error_message.replace("\n", "\\n")
-                    self.output.write(f"  message: \"{msg}\"\n")
+                    self.output.write(f'  message: "{msg}"\n')
 
                 if not result.passed and result.expected:
                     self.output.write(f"  expected: {result.expected}\n")
@@ -62,4 +62,6 @@ class TAPReporter:
         failed = sum(1 for r in results if not r.passed)
         skipped = sum(1 for r in results if r.skipped)
 
-        self.output.write(f"\n# Tests: {total}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}\n")
+        self.output.write(
+            f"\n# Tests: {total}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}\n"
+        )

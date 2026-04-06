@@ -24,6 +24,7 @@ class JSONReporter:
         failed = sum(1 for r in results if not r.passed)
         skipped = sum(1 for r in results if r.skipped)
 
+        results_list: list[dict] = []
         output = {
             "summary": {
                 "total": total,
@@ -31,7 +32,7 @@ class JSONReporter:
                 "failed": failed,
                 "skipped": skipped,
             },
-            "results": [],
+            "results": results_list,
         }
 
         for result in results:

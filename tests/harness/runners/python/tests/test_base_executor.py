@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from executors.base import TestResult, BaseExecutor
+from executors.base import BaseExecutor, TestResult
 from loader import TestCase, TestExpected, TestInput
 
 
@@ -69,23 +69,23 @@ class TestCheckErrorContains:
 
     def test_match_found(self):
         e = self.ConcreteExecutor()
-        ok, msg = e.check_error_contains(["Account not opened"], ["not opened"])
+        ok, _msg = e.check_error_contains(["Account not opened"], ["not opened"])
         assert ok is True
 
     def test_match_case_insensitive(self):
         e = self.ConcreteExecutor()
-        ok, msg = e.check_error_contains(["ACCOUNT NOT OPENED"], ["not opened"])
+        ok, _msg = e.check_error_contains(["ACCOUNT NOT OPENED"], ["not opened"])
         assert ok is True
 
     def test_match_not_found(self):
         e = self.ConcreteExecutor()
         ok, msg = e.check_error_contains(["something else"], ["not opened"])
         assert ok is False
-        assert "not opened" in msg
+        assert msg is not None and "not opened" in msg
 
     def test_multiple_substrings_all_match(self):
         e = self.ConcreteExecutor()
-        ok, msg = e.check_error_contains(
+        ok, _msg = e.check_error_contains(
             ["Account not opened; balance error"],
             ["not opened", "balance"],
         )
@@ -98,4 +98,4 @@ class TestCheckErrorContains:
             ["not opened", "balance"],
         )
         assert ok is False
-        assert "balance" in msg
+        assert msg is not None and "balance" in msg
