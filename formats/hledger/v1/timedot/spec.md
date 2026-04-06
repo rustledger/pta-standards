@@ -238,5 +238,5 @@ include time.timedot
 
 ## See Also
 
-- [Timeclock Format](../timeclock/spec.md)
+- Timeclock Format (planned)
 - [hledger Syntax](../spec/syntax.md)

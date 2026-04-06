@@ -8,9 +8,9 @@ This directory contains Architecture Decision Records (ADRs) documenting signifi
 |-----|-------|--------|
 | [0001](0001-three-separate-specs.md) | Three Separate Specs | Accepted |
 | [0002](0002-alloy-over-tlaplus.md) | Alloy over TLA+ | Accepted |
-| [0003](0003-ebnf-plus-abnf.md) | EBNF + ABNF Grammars | Accepted |
-| [0004](0004-json-schema-2020-12.md) | JSON Schema 2020-12 | Accepted |
-| [0005](0005-tree-sitter-primary.md) | Tree-sitter as Primary Editor Grammar | Accepted |
+| 0003 | EBNF + ABNF Grammars | Accepted |
+| 0004 | JSON Schema 2020-12 | Accepted |
+| 0005 | Tree-sitter as Primary Editor Grammar | Accepted |
 
 ## Format
 

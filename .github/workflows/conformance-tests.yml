@@ -34,14 +34,14 @@ jobs:
         run: |
           cd tests/harness/runners/python
           python runner.py \
-            --manifest ../../beancount/v3/manifest.json \
+            --manifest ../../../beancount/v3/manifest.json \
             --format tap
 
       - name: Run tests (JSON output)
         run: |
           cd tests/harness/runners/python
           python runner.py \
-            --manifest ../../beancount/v3/manifest.json \
+            --manifest ../../../beancount/v3/manifest.json \
             --format json > results.json
 
       - name: Upload results

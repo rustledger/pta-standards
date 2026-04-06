@@ -122,5 +122,5 @@ For each spec file:
 
 ## Related Files
 
-- [CHANGELOG.md](CHANGELOG.md) - Record of spec changes
-- [compliance.md](compliance.md) - Implementation compliance notes
+- [CHANGELOG.md](../../formats/beancount/CHANGELOG.md) - Record of spec changes
+- [compliance.md](../../formats/beancount/compliance.md) - Implementation compliance notes

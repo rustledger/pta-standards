@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-import time
+import sys
 import tempfile
+import time
 from pathlib import Path
 
 import beanquery
 
-import sys
 sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
-from loader import TestCase
+import builtins
+import contextlib
+
 from executors.base import BaseExecutor, TestResult
+from loader import TestCase
 
 
 class BQLExecutor(BaseExecutor):
@@ -29,9 +32,7 @@ class BQLExecutor(BaseExecutor):
             # BQL tests require a query
             query = test.input.query
             if query is None:
-                return TestResult.failure(
-                    test, "BQL test missing query in input"
-                )
+                return TestResult.failure(test, "BQL test missing query in input")
 
             # Determine the file path for beanquery connection
             # Note: beanquery requires absolute paths
@@ -44,16 +45,12 @@ class BQLExecutor(BaseExecutor):
                 dsn = f"beancount://{abs_path}"
             elif test.input.inline is not None:
                 content = test.input.inline
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".beancount", delete=False
-                ) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
                 dsn = f"beancount://{temp_path}"
             else:
-                return TestResult.failure(
-                    test, "BQL test requires input file or inline content"
-                )
+                return TestResult.failure(test, "BQL test requires input file or inline content")
 
             # Execute the query using beanquery
             result_rows = None
@@ -61,7 +58,9 @@ class BQLExecutor(BaseExecutor):
             try:
                 conn = beanquery.connect(dsn)
                 cursor = conn.execute(query)
-                result_columns = [col.name for col in cursor.description] if cursor.description else []
+                result_columns = (
+                    [col.name for col in cursor.description] if cursor.description else []
+                )
                 result_rows = list(cursor)
                 conn.close()
                 query_succeeded = True
@@ -128,7 +127,7 @@ class BQLExecutor(BaseExecutor):
                 if actual_columns != expected_columns:
                     return TestResult.failure(
                         test,
-                        f"Column mismatch",
+                        "Column mismatch",
                         actual={"columns": actual_columns},
                         expected={"columns": expected_columns},
                         duration_ms=duration_ms,
@@ -140,10 +139,8 @@ class BQLExecutor(BaseExecutor):
             duration_ms = (time.perf_counter() - start_time) * 1000
             # Clean up temp file on error
             if temp_path:
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     Path(temp_path).unlink()
-                except:
-                    pass
             return TestResult.failure(
                 test,
                 f"Executor error: {type(e).__name__}: {e}",

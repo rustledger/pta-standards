@@ -145,7 +145,7 @@ uppercase_end = [A-Z0-9]
 - MUST end with uppercase letter or digit (A-Z, 0-9)
 
 > **UNDEFINED**: Whether there is a maximum currency name length is pending clarification.
-> See: [Pending Issue - Currency Length](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 ### Valid Names
 

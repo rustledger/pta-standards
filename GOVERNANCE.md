@@ -41,7 +41,13 @@ Current maintainers:
 
 | Name | GitHub | Focus Area |
 |------|--------|------------|
-| TBD | @tbd | Core specification |
+| *Accepting nominations* | — | Core specification |
+
+> **Becoming a maintainer:** Contributors with a sustained track record of quality PRs,
+> reviews, or specification work may self-nominate or be nominated by opening an issue
+> with the `governance/nomination` label. Nominations are reviewed during the monthly
+> community meeting and require approval from at least two existing maintainers (or, during
+> bootstrap, lazy consensus after a 2-week comment period).
 
 ### Format Stewards
 
@@ -54,9 +60,14 @@ Each format specification has designated stewards who:
 
 | Format | Stewards |
 |--------|----------|
-| Beancount | TBD |
-| Ledger | TBD |
-| hledger | TBD |
+| Beancount | *Accepting nominations* |
+| Ledger | *Accepting nominations* |
+| hledger | *Accepting nominations* |
+
+> **Becoming a format steward:** Stewards should have deep expertise with the format and
+> its reference implementation. Nominate yourself or someone else by opening an issue with
+> the `governance/nomination` label. Steward nominations require approval from the TSC or,
+> during bootstrap, lazy consensus after a 2-week comment period.
 
 ### Technical Steering Committee (TSC)
 
@@ -155,4 +166,5 @@ See [LICENSE-DOCS](LICENSE-DOCS) and [LICENSE-CODE](LICENSE-CODE).
 
 | Date | Change |
 |------|--------|
-| 2024-XX-XX | Initial governance document |
+| 2024-01-01 | Initial governance document |
+| 2026-04-06 | Added nomination process for maintainers and stewards |

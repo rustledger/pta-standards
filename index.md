@@ -118,7 +118,7 @@ title: PTA Standards - Plain Text Accounting Specifications
     <div class="footer-links">
       <a href="https://github.com/rustledger/pta-standards">GitHub</a>
       <a href="/pta-standards/core/">Docs</a>
-      <a href="https://github.com/rustledger/pta-standards/discussions">Contact</a>
+      <a href="https://github.com/rustledger/pta-standards/issues">Contact</a>
     </div>
   </div>
 </footer>

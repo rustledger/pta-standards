@@ -261,4 +261,4 @@ const wasm = await WebAssembly.instantiateStreaming(
 ## See Also
 
 - [Tooling Overview](../README.md)
-- [Rust wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/)
+- [Rust wasm-bindgen](https://rustwasm.github.io/docs/wasm-bindgen/)

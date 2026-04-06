@@ -432,4 +432,4 @@ Some errors become warnings:
 
 - [Syntax Specification](syntax.md)
 - [Validation Rules](validation/balance.md)
-- [Value Expressions](expressions/spec.md)
+- [Value Expressions](../expressions/spec.md)

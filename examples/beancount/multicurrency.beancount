@@ -1,0 +1,62 @@
+; Multi-currency accounting with exchange rates
+; Demonstrates: commodities, price directives, cost basis, currency conversion
+
+option "title" "Multi-Currency Portfolio"
+option "operating_currency" "USD"
+
+2024-01-01 open Assets:Bank:US-Checking                   USD
+2024-01-01 open Assets:Bank:EU-Savings                     EUR
+2024-01-01 open Assets:Bank:UK-Account                     GBP
+2024-01-01 open Assets:Bank:JP-Account                     JPY
+2024-01-01 open Expenses:Travel
+2024-01-01 open Expenses:Transfer-Fees
+2024-01-01 open Income:Freelance
+2024-01-01 open Income:Currency-Gains
+
+; Opening balances
+2024-01-01 * "Opening balance"
+  Assets:Bank:US-Checking            10000.00 USD
+  Equity:Opening-Balances           -10000.00 USD
+
+2024-01-01 open Equity:Opening-Balances
+
+; Convert USD to EUR
+2024-02-01 * "Wise" "Transfer USD to EUR"
+  Assets:Bank:EU-Savings              2700.00 EUR {1.0741 USD, 2024-02-01}
+  Expenses:Transfer-Fees                 8.50 USD
+  Assets:Bank:US-Checking           -2908.57 USD
+
+; Receive GBP freelance payment
+2024-03-15 * "UK Client Ltd" "Freelance payment"
+  Assets:Bank:UK-Account              3000.00 GBP
+  Income:Freelance                   -3810.00 USD
+
+; Convert GBP to USD
+2024-04-01 * "Wise" "Transfer GBP to USD"
+  Assets:Bank:US-Checking             1900.00 USD
+  Expenses:Transfer-Fees                 5.25 USD
+  Assets:Bank:UK-Account             -1500.00 GBP {1.2700 USD, 2024-04-01}
+
+; Travel spending in JPY
+2024-05-10 * "Hotel Tokyo" "Hotel accommodation"
+  Expenses:Travel                    45000 JPY {0.006667 USD, 2024-05-10}
+  Assets:Bank:US-Checking             -300.02 USD
+
+2024-05-11 * "Tokyo Metro" "Transit pass"
+  Expenses:Travel                     3000 JPY {0.006667 USD, 2024-05-11}
+  Assets:Bank:US-Checking              -20.00 USD
+
+2024-05-12 * "Restaurant Shibuya" "Dinner"
+  Expenses:Travel                     8500 JPY {0.006667 USD, 2024-05-12}
+  Assets:Bank:US-Checking              -56.67 USD
+
+; EUR transfer back to USD with gain
+2024-06-15 * "Wise" "Transfer EUR to USD"
+  Assets:Bank:US-Checking             1150.00 USD
+  Assets:Bank:EU-Savings             -1000.00 EUR {1.0741 USD, 2024-02-01} @ 1.1500 USD
+  Income:Currency-Gains                -75.90 USD
+
+; Price directives for end-of-quarter valuation
+2024-06-30 price EUR  1.0710 USD
+2024-06-30 price GBP  1.2640 USD
+2024-06-30 price JPY  0.006369 USD

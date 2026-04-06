@@ -417,5 +417,5 @@ pta parse --format=json old-format.beancount \
 
 ## See Also
 
-- [AST Schema](../../schema/README.md) - AST structure documentation
+- [AST Schema](../../../formats/beancount/v3/schema/ast.schema.json) - AST structure documentation
 - [JSON Schema](../../../formats/beancount/v3/schema/ast.schema.json) - AST validation schema

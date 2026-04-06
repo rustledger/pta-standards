@@ -150,4 +150,4 @@ Thanks to all contributors: [names]
 
 - [Versioning](versioning.md) - Version numbering
 - [Breaking Changes](breaking-changes.md) - Breaking change policy
-- [CHANGELOG.md](../../CHANGELOG.md) - Release history
+- [Beancount CHANGELOG](../../formats/beancount/CHANGELOG.md) - Beancount release history

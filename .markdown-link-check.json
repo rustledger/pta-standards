@@ -1,0 +1,21 @@
+{
+  "ignorePatterns": [
+    { "pattern": "^#" },
+    { "pattern": "^mailto:" },
+    { "pattern": "^[^h]" },
+    { "pattern": "^http://localhost" },
+    { "pattern": "^http://ofxhome" }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com"],
+      "headers": {
+        "Accept-Encoding": "gzip, deflate"
+      }
+    }
+  ],
+  "timeout": "10s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "aliveStatusCodes": [200, 206, 301, 302, 308, 403]
+}

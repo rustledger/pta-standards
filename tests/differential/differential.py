@@ -10,9 +10,8 @@ import argparse
 import json
 import subprocess
 import sys
-import tempfile
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +20,7 @@ from typing import Any
 @dataclass
 class ImplResult:
     """Result from running an implementation."""
+
     success: bool
     exit_code: int
     stdout: str
@@ -33,6 +33,7 @@ class ImplResult:
 @dataclass
 class Divergence:
     """A detected divergence between implementations."""
+
     id: str
     input_file: str
     dimension: str
@@ -44,12 +45,13 @@ class Divergence:
 @dataclass
 class Config:
     """Differential testing configuration."""
+
     implementations: dict[str, dict]
     comparisons: dict[str, dict]
     groups: dict[str, dict]
 
     @classmethod
-    def load(cls, path: Path) -> "Config":
+    def load(cls, path: Path) -> Config:
         with open(path) as f:
             data = json.load(f)
         return cls(
@@ -59,7 +61,9 @@ class Config:
         )
 
 
-def run_implementation(impl_config: dict, input_file: Path, command_type: str = "parse") -> ImplResult:
+def run_implementation(
+    impl_config: dict, input_file: Path, command_type: str = "parse"
+) -> ImplResult:
     """Run an implementation on an input file."""
     cmd_template = impl_config.get("commands", {}).get(command_type)
     if not cmd_template:
@@ -111,16 +115,16 @@ def run_implementation(impl_config: dict, input_file: Path, command_type: str = 
 
 def normalize_output(output: str, config: dict) -> str:
     """Normalize implementation output for comparison."""
-    lines = output.strip().split('\n')
+    lines = output.strip().split("\n")
 
     if config.get("strip_paths", True):
         # Remove file paths from error messages
-        lines = [line.split(':')[-1] if ':' in line else line for line in lines]
+        lines = [line.split(":")[-1] if ":" in line else line for line in lines]
 
     if config.get("sort_accounts", True):
         lines = sorted(lines)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def compare_results(
@@ -144,11 +148,13 @@ def compare_results(
         impl_result = results[impl]
 
         # Compare exit codes if configured
-        if comparison_config.get("compare", {}).get("exit_code", True):
-            if ref_result.success != impl_result.success:
-                differences.append(
-                    f"Exit status differs: {reference}={ref_result.success}, {impl}={impl_result.success}"
-                )
+        if (
+            comparison_config.get("compare", {}).get("exit_code", True)
+            and ref_result.success != impl_result.success
+        ):
+            differences.append(
+                f"Exit status differs: {reference}={ref_result.success}, {impl}={impl_result.success}"
+            )
 
         # Compare error presence
         if comparison_config.get("compare", {}).get("has_errors", True):
@@ -244,7 +250,8 @@ def main():
         help="Output report to JSON file",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Verbose output",
     )
@@ -281,13 +288,10 @@ def main():
         sys.exit(1)
 
     # Find input files
-    if args.file:
-        input_files = [args.file]
-    else:
-        input_files = find_input_files(args.inputs, args.config.parent)
+    input_files = [args.file] if args.file else find_input_files(args.inputs, args.config.parent)
 
     if args.limit:
-        input_files = input_files[:args.limit]
+        input_files = input_files[: args.limit]
 
     if not input_files:
         print("No input files found", file=sys.stderr)
@@ -320,13 +324,15 @@ def main():
                     for diff in differences:
                         print(f"  - {diff}")
 
-                divergences.append(Divergence(
-                    id=f"div-{len(divergences)+1:03d}",
-                    input_file=str(input_file),
-                    dimension="parse",
-                    implementations={impl: "see details" for impl in impl_names},
-                    notes="; ".join(differences),
-                ))
+                divergences.append(
+                    Divergence(
+                        id=f"div-{len(divergences) + 1:03d}",
+                        input_file=str(input_file),
+                        dimension="parse",
+                        implementations={impl: "see details" for impl in impl_names},
+                        notes="; ".join(differences),
+                    )
+                )
         except Exception as e:
             errors += 1
             if args.verbose:

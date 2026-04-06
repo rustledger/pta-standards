@@ -153,7 +153,7 @@ Some tools also recognize `.bean` as an alternative.
 |----------------|----------|--------|
 | [beancount](https://github.com/beancount/beancount) | Python | Reference |
 | [rustledger](https://github.com/rustledger/rustledger) | Rust | Compatible |
-| [beancount-parser](https://github.com/beancount/beancount-parser) | Rust | Parser only |
+| [beancount-parser](https://github.com/jcornaz/beancount-parser) | Rust | Parser only |
 
 ## Resources
 

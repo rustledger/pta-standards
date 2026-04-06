@@ -244,8 +244,8 @@ Rate: 99.86%
 ```
 Last test run: 2026-02-07
 Implementation: Rustledger 0.5.x
-Tests passed: TBD (awaiting CI run)
-Tests failed: TBD
+Tests passed: See CI workflow results
+Tests failed: See CI workflow results
 Tests skipped: 9
 
 Skipped tests (same as Python):

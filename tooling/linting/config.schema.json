@@ -66,10 +66,10 @@
         { "$ref": "#/$defs/Severity" },
         {
           "type": "array",
-          "items": [
+          "prefixItems": [
             { "$ref": "#/$defs/Severity" }
           ],
-          "additionalItems": true,
+          "items": true,
           "description": "Severity and rule-specific options"
         },
         {

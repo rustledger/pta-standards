@@ -1,0 +1,84 @@
+; Non-profit organization accounting
+; Demonstrates: fund accounting, grants, donor tracking
+
+; Unrestricted individual donations
+2024-01-15 * Jane Smith | Annual donation
+    Assets:Bank:Operating              $5,000.00
+    Income:Donations:Unrestricted
+
+2024-01-20 * Multiple donors | January online donations
+    Assets:Bank:Operating              $2,350.00
+    Income:Donations:Unrestricted
+
+; Restricted grant — Youth Arts program
+2024-02-01 * National Arts Council | Youth Arts grant  ; :grant-nac-2024:
+    Assets:Receivable:Grants          $40,000.00
+    Income:Grants:Federal
+
+2024-02-15 * National Arts Council | Grant payment received  ; :grant-nac-2024:
+    Assets:Bank:Operating             $40,000.00
+    Assets:Receivable:Grants
+
+; State grant for community workshops
+2024-03-01 * State Arts Board | Community Workshop grant
+    Assets:Bank:Operating             $15,000.00
+    Income:Grants:State
+
+; Program expenses — Youth Arts
+2024-02-20 * Art Supplies Co | Youth arts materials  ; :grant-nac-2024:
+    Expenses:Programs:Youth-Arts       $3,200.00
+    Assets:Bank:Operating
+
+2024-03-15 * Teaching Artists Collective | Instructor fees Q1  ; :grant-nac-2024:
+    Expenses:Programs:Youth-Arts       $8,500.00
+    Assets:Bank:Operating
+
+; Community workshop expenses
+2024-03-20 * Community Center | Workshop venue rental
+    Expenses:Programs:Community-Workshops  $1,500.00
+    Assets:Bank:Operating
+
+2024-04-01 * Various | Workshop supplies and materials
+    Expenses:Programs:Community-Workshops  $2,800.00
+    Assets:Bank:Operating
+
+; Administrative expenses
+2024-01-31 * Payroll | January staff salaries
+    Expenses:Admin:Salaries           $12,000.00
+    Assets:Bank:Operating
+
+2024-02-28 * Payroll | February staff salaries
+    Expenses:Admin:Salaries           $12,000.00
+    Assets:Bank:Operating
+
+2024-01-10 * WeWork | Office space January
+    Expenses:Admin:Office              $1,800.00
+    Assets:Bank:Operating
+
+2024-01-15 * NonProfit Insurance Co | Annual liability insurance
+    Expenses:Admin:Insurance           $3,600.00
+    Assets:Bank:Operating
+
+; Fundraising gala
+2024-04-15 * Grand Hotel | Spring gala venue and catering
+    Expenses:Fundraising:Events        $8,500.00
+    Assets:Bank:Operating
+
+2024-04-20 * Spring Gala | Ticket sales and donations
+    Assets:Bank:Operating             $35,000.00
+    Income:Events:Gala
+
+; Membership dues
+2024-01-01 * Various | Q1 membership dues
+    Assets:Bank:Operating              $4,800.00
+    Income:Membership-Dues
+
+; Exhibition expenses
+2024-05-01 * Gallery Space | Spring exhibition rental and setup
+    Expenses:Programs:Exhibitions      $5,500.00
+    Assets:Bank:Operating
+
+; Transfer to savings
+2024-06-01 * Transfer to reserve fund
+    Assets:Bank:Savings               $10,000.00
+    Assets:Bank:Operating

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-import sys
 sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
 from loader import TestCase
 
@@ -86,6 +86,9 @@ class BaseExecutor(ABC):
 
         for substring in expected_substrings:
             if substring.lower() not in all_messages:
-                return False, f"Expected error containing '{substring}' not found in: {all_messages[:200]}"
+                return (
+                    False,
+                    f"Expected error containing '{substring}' not found in: {all_messages[:200]}",
+                )
 
         return True, None

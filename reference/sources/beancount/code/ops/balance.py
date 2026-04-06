@@ -77,13 +77,9 @@ def check(entries, options_map):
     # Add all children accounts of an asserted account to be calculated as well,
     # and pre-create these accounts, and only those (we're just being tight to
     # make sure).
-    asserted_match_list = [
-        account.parent_matcher(account_) for account_ in asserted_accounts
-    ]
+    asserted_match_list = [account.parent_matcher(account_) for account_ in asserted_accounts]
     for account_ in getters.get_accounts(entries):
-        if account_ in asserted_accounts or any(
-            match(account_) for match in asserted_match_list
-        ):
+        if account_ in asserted_accounts or any(match(account_) for match in asserted_match_list):
             realization.get_or_create(real_root, account_)
 
     # Get the Open directives for each account.
@@ -160,10 +156,7 @@ def check(entries, options_map):
                 check_errors.append(
                     BalanceError(
                         entry.meta,
-                        (
-                            "Balance failed for '{}': "
-                            "expected {} != accumulated {} ({} {})"
-                        ).format(
+                        ("Balance failed for '{}': expected {} != accumulated {} ({} {})").format(
                             entry.account,
                             expected_amount,
                             balance_amount,

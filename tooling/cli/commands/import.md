@@ -374,5 +374,5 @@ cat ledger.beancount new-transactions.beancount | pta check -
 ## See Also
 
 - [Import Formats](../../../imports/README.md) - Supported import formats
-- [CSV Rules](../../../imports/csv/README.md) - CSV import configuration
-- [OFX Spec](../../../imports/ofx/README.md) - OFX import details
+- [CSV Rules](../../../imports/csv/spec.md) - CSV import configuration
+- [OFX Spec](../../../imports/ofx/spec.md) - OFX import details

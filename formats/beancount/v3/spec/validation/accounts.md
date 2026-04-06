@@ -57,7 +57,7 @@ An account MUST NOT be opened twice without an intervening close. Opening an alr
 An account MUST NOT be used in postings AFTER its close date.
 
 > **UNDEFINED**: Whether posting ON the close date is allowed is pending clarification.
-> See: [Pending Issue - Close Date Semantics](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 **Example:**
 ```beancount
@@ -73,7 +73,7 @@ An account MUST NOT be used in postings AFTER its close date.
 ### Account Close with Non-Zero Balance
 
 > **UNDEFINED**: Whether closing an account with non-zero balance produces an error is pending clarification.
-> See: [Pending Issue - Close with Balance](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 **Example:**
 ```beancount

@@ -264,9 +264,7 @@ def validate_currency_constraints(entries, options_map):
 
     # Get all the open entries with currency constraints.
     open_map = {
-        entry.account: entry
-        for entry in entries
-        if isinstance(entry, Open) and entry.currencies
+        entry.account: entry for entry in entries if isinstance(entry, Open) and entry.currencies
     }
 
     errors = []
@@ -337,13 +335,9 @@ def validate_data_types(entries, options_map):
     errors = []
     for entry in entries:
         try:
-            data.sanity_check_types(
-                entry, options_map["allow_deprecated_none_for_tags_and_links"]
-            )
+            data.sanity_check_types(entry, options_map["allow_deprecated_none_for_tags_and_links"])
         except AssertionError as exc:
-            errors.append(
-                ValidationError(entry.meta, "Invalid data types: {}".format(exc), entry)
-            )
+            errors.append(ValidationError(entry.meta, "Invalid data types: {}".format(exc), entry))
     return errors
 
 

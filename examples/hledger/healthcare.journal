@@ -1,0 +1,56 @@
+; Healthcare expense tracking with insurance reimbursements
+; Demonstrates: tags, payees, multiple expense categories
+
+; Monthly insurance premium
+2024-01-05 * Blue Cross | Monthly health insurance premium
+    Expenses:Health:Insurance-Premiums       $450.00
+    Assets:Bank:Checking
+
+; Employer HSA contribution
+2024-01-15 * Employer | HSA contribution
+    Assets:HSA                               $250.00
+    Income:Employer:HSA-Contribution
+
+; Doctor visit — paid from HSA
+2024-02-10 * City Medical Center | Annual physical exam  ; :annual-checkup:
+    Expenses:Health:Medical                  $150.00
+    Assets:HSA
+
+; Dental cleaning
+2024-03-05 * Bright Smile Dental | Routine cleaning
+    Expenses:Health:Dental                    $85.00
+    Assets:Bank:Checking
+
+; Insurance reimbursement for dental
+2024-03-20 * Blue Cross | Dental reimbursement
+    ; claim: dental-claim-2024-03
+    Assets:Bank:Checking                      $60.00
+    Income:Insurance:Reimbursement
+
+; Prescription
+2024-04-02 * CVS Pharmacy | Monthly prescription
+    Expenses:Health:Pharmacy                  $25.00
+    Assets:HSA
+
+; Eye exam and new glasses
+2024-04-15 * Vision Works | Eye exam
+    Expenses:Health:Vision                    $75.00
+    Assets:Bank:Checking
+
+2024-04-15 * Vision Works | Prescription glasses
+    Expenses:Health:Vision                   $320.00
+    Assets:HSA
+
+; Specialist visit with copay
+2024-05-08 * Metro Dermatology | Specialist consultation
+    Expenses:Health:Medical                  $250.00
+    Assets:Bank:Checking
+
+; Partial insurance reimbursement
+2024-05-25 * Blue Cross | Dermatology reimbursement
+    Assets:Bank:Checking                     $175.00
+    Income:Insurance:Reimbursement
+
+; Balance assertion
+2024-06-01 * Balance assertion
+    Assets:HSA     = $-245.00

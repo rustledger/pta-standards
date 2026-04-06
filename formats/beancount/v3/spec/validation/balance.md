@@ -81,7 +81,7 @@ See [tolerances.md](../tolerances.md) for tolerance rules.
 ### Multiple Missing Amounts
 
 > **UNDEFINED**: The exact elision rule is pending clarification.
-> See: [Pending Issue - Amount Elision Rule](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 **Option A (One per currency):**
 At most one posting per currency MAY omit its amount.
@@ -195,7 +195,7 @@ Only one `pad` may precede each `balance` for a given account/currency. Multiple
 ### No Postings
 
 > **UNDEFINED**: Whether transactions with no postings should produce an error is pending clarification.
-> See: [Pending Issue - Empty Transactions](https://github.com/beancount/beancount/issues/TBD)
+> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
 
 ```beancount
 2024-01-15 * "Empty transaction"

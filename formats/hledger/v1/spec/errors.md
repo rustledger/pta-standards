@@ -368,4 +368,4 @@ All warnings become errors.
 ## See Also
 
 - [Syntax Specification](syntax.md)
-- [hledger Manual: Error Messages](https://hledger.org/errors.html)
+- [hledger Manual: Error Messages](https://hledger.org/hledger.html#error-messages)

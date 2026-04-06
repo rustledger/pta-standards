@@ -337,4 +337,4 @@ pta check --strict --format=json ledger.beancount > results.json
 
 - [Exit Codes](exit-codes.md) - Complete exit code reference
 - [Commands](commands/) - Individual command specifications
-- [Error Codes](../errors/README.md) - Validation error codes
+- [Error Codes](../errors/spec.md) - Validation error codes

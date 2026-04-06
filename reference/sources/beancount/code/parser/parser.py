@@ -163,9 +163,7 @@ def is_posting_incomplete(posting) -> bool:
         return True
     cost = posting.cost
     if cost is not None and (
-        cost.number_per is MISSING
-        or cost.number_total is MISSING
-        or cost.currency is MISSING
+        cost.number_per is MISSING or cost.number_total is MISSING or cost.currency is MISSING
     ):
         return True
     return False
@@ -296,9 +294,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
                 fun.__doc__, report_filename=filename, report_firstline=lineno, dedent=True
             )
 
-            if not allow_incomplete and any(
-                is_entry_incomplete(entry) for entry in entries
-            ):
+            if not allow_incomplete and any(is_entry_incomplete(entry) for entry in entries):
                 self.fail("parse_doc() may not use interpolation.")
 
             if expect_errors is not None:
