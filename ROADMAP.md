@@ -780,7 +780,7 @@ pta-spec/
 │   │   ├── ci.yml
 │   │   ├── validate-grammars.yml
 │   │   ├── validate-schemas.yml
-│   │   ├── run-tests.yml
+│   │   ├── conformance-tests.yml
 │   │   ├── run-alloy.yml
 │   │   ├── build-docs.yml
 │   │   └── check-links.yml
