@@ -488,7 +488,7 @@
       },
       "expected": {
         "query": "error",
-        "error_contains": ["error"]
+        "error_contains": ["syntax"]
       },
       "tags": ["bql", "error"]
     },
@@ -501,7 +501,7 @@
       },
       "expected": {
         "query": "error",
-        "error_contains": ["nonexistent_column"]
+        "error_contains": ["not found"]
       },
       "tags": ["bql", "error"]
     },
@@ -1018,7 +1018,7 @@
       },
       "expected": {
         "query": "error",
-        "error_contains": ["unknown function"]
+        "error_contains": ["no function matches"]
       },
       "tags": ["bql", "error"]
     },
