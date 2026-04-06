@@ -365,5 +365,5 @@ rules/
 
 ## See Also
 
-- [hledger Import Documentation](https://hledger.org/import.html)
+- [hledger Import Documentation](https://hledger.org/hledger.html#import)
 - [CSV Format Reference](https://hledger.org/csv.html)

@@ -25,7 +25,7 @@ Before self-certifying:
 
 2. **Set up the test environment**
    ```bash
-   git clone https://github.com/pta-standards/pta-standards.git
+   git clone https://github.com/rustledger/pta-standards.git
    cd pta-standards
    ```
 
@@ -197,7 +197,7 @@ Anyone can verify a certification:
 
 ```bash
 # Clone the test suite
-git clone https://github.com/pta-standards/pta-standards.git
+git clone https://github.com/rustledger/pta-standards.git
 cd pta-standards
 
 # Check out the test suite version used

@@ -51,7 +51,7 @@ Add to your project README:
 ```markdown
 # My Beancount Implementation
 
-[![PTA Conformance](https://img.shields.io/badge/PTA-Beancount_v3_L2-green)](https://github.com/pta-standards/pta-standards)
+[![PTA Conformance](https://img.shields.io/badge/PTA-Beancount_v3_L2-green)](https://github.com/rustledger/pta-standards)
 
 A fast Beancount parser written in Rust.
 ```
@@ -192,7 +192,7 @@ echo "https://img.shields.io/badge/PTA-${FORMAT}_v${VERSION}_L3-brightgreen"
 
 [![CI](https://github.com/user/rustledger/actions/workflows/ci.yml/badge.svg)](...)
 [![Crates.io](https://img.shields.io/crates/v/rustledger)](...)
-[![PTA Conformance](https://img.shields.io/badge/PTA-Beancount_v3_L2-green)](https://github.com/pta-standards/pta-standards/blob/main/certifications/rustledger.json)
+[![PTA Conformance](https://img.shields.io/badge/PTA-Beancount_v3_L2-green)](https://github.com/rustledger/pta-standards/blob/main/certifications/rustledger.json)
 
 A fast Beancount implementation in Rust.
 

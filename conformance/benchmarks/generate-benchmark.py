@@ -217,7 +217,8 @@ def generate_beancount_file(
     open_date = start_date - timedelta(days=1)
     for account in account_list:
         lines.append(f"{open_date} open {account}")
-    lines.append(f"{open_date} open Equity:OpeningBalances")
+    if "Equity:OpeningBalances" not in account_list:
+        lines.append(f"{open_date} open Equity:OpeningBalances")
     lines.append("")
 
     # Opening balance

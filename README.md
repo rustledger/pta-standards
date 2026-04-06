@@ -1,6 +1,6 @@
 # PTA Standards
 
-[![Conformance Tests](https://github.com/pta-standards/pta-standards/actions/workflows/run-tests.yml/badge.svg)](https://github.com/pta-standards/pta-standards/actions/workflows/run-tests.yml)
+[![Conformance Tests](https://github.com/rustledger/pta-standards/actions/workflows/run-tests.yml/badge.svg)](https://github.com/rustledger/pta-standards/actions/workflows/run-tests.yml)
 
 **Plain Text Accounting Standards**: Specifications for Beancount, Ledger, and hledger formats.
 

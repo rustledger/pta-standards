@@ -74,7 +74,7 @@ References and resources for Plain Text Accounting standards.
 - Plain Text Accounting. https://plaintextaccounting.org/
   - Community hub and resources
 
-- Awesome Plain Text Accounting. https://github.com/plaintextaccounting/awesome-plaintextaccounting
+- Awesome Plain Text Accounting. https://plaintextaccounting.org/#software
   - Curated list of tools and resources
 
 ### Mailing Lists and Forums
@@ -100,7 +100,7 @@ References and resources for Plain Text Accounting standards.
 
 ### This Project
 
-- PTA Standards. "Plain Text Accounting Standards." https://github.com/pta-standards/pta-standards
+- PTA Standards. "Plain Text Accounting Standards." https://github.com/rustledger/pta-standards
   - This specification project
 
 ### Related Specifications
@@ -117,7 +117,7 @@ When citing this specification:
 
 ```
 PTA Standards Working Group. "Plain Text Accounting Standards, Version 1.0."
-https://github.com/pta-standards/pta-standards, 2024.
+https://github.com/rustledger/pta-standards, 2024.
 ```
 
 ## Contributing
