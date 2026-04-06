@@ -3,7 +3,7 @@ name: Differential Testing
 on:
   schedule:
     # Run nightly at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
       group:

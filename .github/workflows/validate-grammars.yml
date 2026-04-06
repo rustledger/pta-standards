@@ -16,6 +16,7 @@ on:
       - 'formats/**/grammar.js'
       - '.github/workflows/validate-grammars.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   validate-ebnf:
