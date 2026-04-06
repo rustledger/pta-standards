@@ -156,7 +156,7 @@
       "id": "invalid-option-unknown",
       "description": "Unknown option name",
       "input": {"inline": "option \"unknown_option\" \"value\""},
-      "expected": {"parse": "error", "error_contains": ["option"]},
+      "expected": {"parse": "error", "error_contains": ["Invalid option"]},
       "tags": ["option"]
     },
     {
