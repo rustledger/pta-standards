@@ -72,7 +72,7 @@ class RustledgerExecutor(BaseExecutor):
         """
         try:
             result = subprocess.run(
-                [self.binary, "query", file_path, query, "--format", "json"],
+                [self.binary, "query", "--format", "json", file_path, query],
                 capture_output=True,
                 text=True,
                 timeout=30,
