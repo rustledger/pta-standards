@@ -171,7 +171,7 @@ jobs:
         id: parse
         run: |
           cd tests/harness/runners/python
-          if [ -f results.json ]; then
+          if [ -s results.json ]; then
             python -c "
           import json
           with open('results.json') as f:
@@ -183,6 +183,7 @@ jobs:
           print(f\"skipped={s['skipped']}\")
           " >> $GITHUB_OUTPUT
           else
+            echo "results.json is empty or missing"
             echo "total=0" >> $GITHUB_OUTPUT
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT

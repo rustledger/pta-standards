@@ -53,7 +53,7 @@ class JSONReporter:
                 if result.actual:
                     result_data["actual"] = result.actual
 
-            output["results"].append(result_data)
+            results_list.append(result_data)
 
         self.output.write(json.dumps(output, indent=2))
         self.output.write("\n")

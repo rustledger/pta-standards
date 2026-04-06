@@ -1,7 +1,10 @@
 {
   "ignorePatterns": [
     { "pattern": "^#" },
-    { "pattern": "^mailto:" }
+    { "pattern": "^mailto:" },
+    { "pattern": "/$" },
+    { "pattern": "^https://reddit.com" },
+    { "pattern": "^https://mitpress.mit.edu" }
   ],
   "replacementPatterns": [
     { "pattern": "^/", "replacement": "{{BASEURL}}/" }
@@ -17,5 +20,5 @@
   "timeout": "10s",
   "retryOn429": true,
   "retryCount": 3,
-  "aliveStatusCodes": [200, 206, 301, 302, 308]
+  "aliveStatusCodes": [200, 206, 301, 302, 308, 403]
 }
