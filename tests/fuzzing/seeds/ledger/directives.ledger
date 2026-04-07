@@ -1,0 +1,61 @@
+; Ledger seed with all directive types
+
+account Assets:Bank:Checking
+    note My checking account
+    alias checking
+
+account Expenses:Food
+
+commodity $
+    format $1,000.00
+
+commodity AAPL
+    format 1,000.000 AAPL
+
+tag project
+tag trip
+
+year 2024
+
+; Regular transaction
+2024/01/01 * Opening Balance
+    Assets:Bank:Checking                    $10,000.00
+    Equity:Opening Balances
+
+; Pending transaction
+2024/01/15 ! Grocery Store | Weekly shopping
+    ; :groceries:food:
+    Expenses:Food                           $85.50
+    Assets:Bank:Checking
+
+; Transaction with check number
+2024/02/01 * (1234) Landlord | Feb rent
+    Expenses:Housing:Rent                   $1,500.00
+    Assets:Bank:Checking
+
+; Balance assertion
+2024/02/15 * Balance
+    Assets:Bank:Checking                    $0  = $8,414.50
+
+; Periodic transaction
+~ Monthly
+    Expenses:Housing:Rent                   $1,500.00
+    Assets:Bank:Checking
+
+; Automated transaction
+= /Grocery/
+    (Budget:Food)                           -1.0
+
+; Price history
+P 2024/03/01 AAPL $175.00
+P 2024/06/30 AAPL $185.00
+
+; Stock purchase
+2024/03/01 * Buy Stock
+    Assets:Brokerage                        10 AAPL @ $175.00
+    Assets:Bank:Checking                    $-1,750.00
+
+; Effective date
+2024/04/01=2024/04/05 * Future payment
+    Expenses:Insurance                      $200.00
+    Assets:Bank:Checking

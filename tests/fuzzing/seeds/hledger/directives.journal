@@ -1,0 +1,50 @@
+; hledger seed with all directive types
+
+account assets:bank:checking
+    ; type: Asset
+
+account expenses:food
+
+commodity $1,000.00
+
+decimal-mark .
+
+; Regular transaction
+2024-01-01 * Opening Balance | Opening
+    assets:bank:checking              $10,000.00
+    equity:opening balances
+
+; Pending transaction
+2024-01-15 ! Grocery Store | Weekly shopping
+    ; project: groceries
+    expenses:food                     $85.50
+    assets:bank:checking
+
+; Balance assertion
+2024-02-01 * Balance check
+    assets:bank:checking              $0  = $9,914.50
+
+; Strict balance assertion
+2024-02-15 * Strict check
+    assets:bank:checking              $0  == $9,914.50
+
+; Price declaration
+P 2024-03-01 AAPL $175.00
+P 2024-06-30 EUR $1.07
+
+; Multi-currency transaction
+2024-03-01 * Buy stock
+    assets:brokerage                  10 AAPL @ $175.00
+    assets:bank:checking             $-1,750.00
+
+; Payee directive
+payee Grocery Store
+payee Landlord
+
+; Tag directive
+tag project
+tag trip
+
+; Auto posting rule
+= expenses:food
+    budget:food                       *-1

@@ -1,0 +1,49 @@
+option "title" "Fuzzing Seed"
+option "operating_currency" "USD"
+
+plugin "beancount.plugins.auto_accounts"
+
+2024-01-01 open Assets:Bank:Checking USD
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Assets:Brokerage AAPL,USD
+2024-01-01 open Liabilities:Credit-Card USD
+2024-01-01 open Equity:Opening-Balances
+2024-01-01 open Income:Salary USD
+2024-01-01 open Expenses:Food USD
+2024-01-01 open Expenses:Rent USD
+
+2024-01-01 commodity USD
+2024-01-01 commodity AAPL
+
+2024-01-01 * "Opening" "Opening balances"
+  Assets:Bank:Checking  10000 USD
+  Equity:Opening-Balances
+
+2024-01-15 * "Employer" "Salary" #income
+  Assets:Bank:Checking  5000 USD
+  Income:Salary
+
+2024-01-20 ! "Grocery Store" "Weekly groceries"
+  Expenses:Food  85.50 USD
+  Assets:Bank:Checking
+
+2024-02-01 * "Landlord" "February rent"
+  category: "housing"
+  Expenses:Rent  1500 USD
+  Assets:Bank:Checking
+
+2024-02-15 balance Assets:Bank:Checking 13414.50 USD
+
+2024-03-01 pad Assets:Cash Equity:Opening-Balances
+
+2024-03-15 * "Buy stock" ^trade-001
+  Assets:Brokerage  10 AAPL {150.00 USD, 2024-03-15}
+  Assets:Bank:Checking -1500.00 USD
+
+2024-04-01 price AAPL 155.00 USD
+
+2024-04-15 event "location" "New York"
+
+2024-05-01 note Assets:Bank:Checking "Account upgraded to premium"
+
+2024-06-01 close Assets:Cash
