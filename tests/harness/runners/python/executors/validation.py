@@ -43,20 +43,28 @@ class ValidationExecutor(BaseExecutor):
 
             # Separate parse errors from validation errors
             # In beancount, loader.load_file returns all errors combined.
-            # Parse errors come from the parser module; validation errors from elsewhere.
+            # Parse errors come from the parser/lexer; booking, interpolation,
+            # categorization, and reduction errors are validation-phase.
+            VALIDATION_ERROR_NAMES = {
+                "CategorizationError",
+                "AmbiguousMatchError",
+                "ReductionError",
+                "InterpolationError",
+                "BookingError",
+                "ValidationError",
+            }
+
             def is_parse_error(e: object) -> bool:
-                mod = type(e).__module__ or ""
                 name = type(e).__name__
-                return (
-                    "parser" in mod.lower()
-                    or "lexer" in mod.lower()
-                    or name
-                    in {
-                        "ParserError",
-                        "ParserSyntaxError",
-                        "LexerError",
-                    }
-                )
+                # Booking/interpolation/validation errors are never parse errors,
+                # even if their module path contains "parser"
+                if name in VALIDATION_ERROR_NAMES:
+                    return False
+                return name in {
+                    "ParserError",
+                    "ParserSyntaxError",
+                    "LexerError",
+                }
 
             parse_errors = [e for e in errors if is_parse_error(e)]
             validation_errors = [e for e in errors if not is_parse_error(e)]
