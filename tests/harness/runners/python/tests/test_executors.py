@@ -95,13 +95,13 @@ class TestSyntaxExecutor:
         test = _make_test(inline=INVALID_SYNTAX, parse="success")
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Expected parse=success" in result.error_message
+        assert result.error_message is not None and "Expected parse=success" in result.error_message
 
     def test_parse_mismatch_expected_error(self):
         test = _make_test(inline=VALID_LEDGER, parse="error")
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Expected parse=error" in result.error_message
+        assert result.error_message is not None and "Expected parse=error" in result.error_message
 
     def test_directive_count(self):
         # 2 open + 1 transaction = 3 directives
@@ -113,13 +113,13 @@ class TestSyntaxExecutor:
         test = _make_test(inline=VALID_LEDGER, parse="success", directives=99)
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "directives" in result.error_message
+        assert result.error_message is not None and "directives" in result.error_message
 
     def test_missing_parse_field(self):
         test = _make_test(inline=VALID_LEDGER)
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "missing" in result.error_message.lower()
+        assert result.error_message is not None and "missing" in result.error_message.lower()
 
     def test_no_input(self):
         test = _make_test(parse="success")
@@ -163,7 +163,7 @@ class TestValidationExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Expected validate=error" in result.error_message
+        assert result.error_message is not None and "Expected validate=error" in result.error_message
 
     def test_accounts_check(self):
         test = _make_test(
@@ -184,7 +184,7 @@ class TestValidationExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Missing" in result.error_message
+        assert result.error_message is not None and "Missing" in result.error_message
 
     def test_error_count(self):
         test = _make_test(
@@ -211,7 +211,7 @@ class TestBQLExecutor:
         test = _make_test(inline=VALID_LEDGER, query_expected="success")
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "missing query" in result.error_message.lower()
+        assert result.error_message is not None and "missing query" in result.error_message.lower()
 
     def test_select_all(self):
         test = _make_test(
@@ -242,7 +242,7 @@ class TestBQLExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "rows" in result.error_message
+        assert result.error_message is not None and "rows" in result.error_message
 
     def test_query_error_expected(self):
         test = _make_test(
@@ -261,7 +261,7 @@ class TestBQLExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Expected query=success" in result.error_message
+        assert result.error_message is not None and "Expected query=success" in result.error_message
 
     def test_columns_check(self):
         test = _make_test(
@@ -282,4 +282,4 @@ class TestBQLExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert "Column" in result.error_message
+        assert result.error_message is not None and "Column" in result.error_message
