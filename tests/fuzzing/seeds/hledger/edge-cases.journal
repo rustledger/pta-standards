@@ -1,0 +1,78 @@
+; Edge cases for hledger parser fuzzing
+
+; Minimal transaction
+2024-01-01
+    assets:a  $1
+    assets:b
+
+; Pipe-separated payee and description
+2024-01-15 * Payee | Description with pipe
+    expenses:food  $50
+    assets:bank
+
+; Secondary date
+2024-02-01=2024-02-05 * Transaction with secondary date
+    expenses:food  $25
+    assets:bank
+
+; Posting comment with tag
+2024-03-01 * Tagged posting
+    expenses:food  $30  ; project: lunch
+    assets:bank
+
+; Transaction comment
+2024-03-15 * Comment on transaction  ; note: important
+    expenses:food  $20
+    assets:bank
+
+; Balance assertion with subaccounts
+2024-04-01 * Check
+    assets:bank  $0 =* $1000
+
+; Very long account name
+2024-05-01 * Deep
+    expenses:a:b:c:d:e:f:g:h  $1
+    assets:bank
+
+; Amount with many decimal places
+2024-06-01 * Precise
+    expenses:food  $0.0001
+    assets:bank
+
+; Negative amounts
+2024-07-01 * Negative
+    assets:bank  $-100
+    income:refund
+
+; Unicode
+2024-08-01 * Café Müller | Frühstück
+    expenses:food  €25
+    assets:bank
+
+; Leap day
+2024-02-29 * Leap
+    assets:a  $1
+    assets:b
+
+; Year boundary
+2024-12-31 * Year end
+    assets:a  $1
+    assets:b
+
+; Multiple currencies
+2024-09-01 * Multi
+    assets:eur  €100 @ $1.07
+    assets:usd
+
+; Empty narration
+2024-10-01 *
+    assets:a  $1
+    assets:b
+
+; Many postings
+2024-11-01 * Many
+    expenses:a  $10
+    expenses:b  $20
+    expenses:c  $30
+    expenses:d  $40
+    assets:bank

@@ -1,0 +1,78 @@
+option "title" "Complex Fuzzing Seed"
+option "operating_currency" "USD"
+option "inferred_tolerance_default" "USD:0.005"
+
+2024-01-01 open Assets:Bank:Checking USD
+2024-01-01 open Assets:Bank:Savings USD
+2024-01-01 open Assets:Brokerage AAPL,GOOGL,VTI,USD
+2024-01-01 open Assets:Foreign EUR,GBP
+2024-01-01 open Liabilities:Credit-Card USD
+2024-01-01 open Liabilities:Mortgage USD
+2024-01-01 open Equity:Opening-Balances
+2024-01-01 open Income:Salary USD
+2024-01-01 open Income:Dividends USD
+2024-01-01 open Income:Capital-Gains USD
+2024-01-01 open Expenses:Food:Groceries USD
+2024-01-01 open Expenses:Food:Restaurant USD
+2024-01-01 open Expenses:Housing:Rent USD
+2024-01-01 open Expenses:Transport USD
+2024-01-01 open Expenses:Taxes:Federal USD
+
+; Opening balances
+2024-01-01 * "Opening"
+  Assets:Bank:Checking    50000.00 USD
+  Assets:Bank:Savings    100000.00 USD
+  Assets:Brokerage        100 AAPL {150.00 USD, 2023-06-15}
+  Assets:Brokerage         50 GOOGL {140.00 USD, 2023-09-01}
+  Assets:Brokerage        200 VTI {220.00 USD, 2023-03-01}
+  Assets:Foreign         5000.00 EUR {1.08 USD, 2023-12-01}
+  Liabilities:Mortgage -250000.00 USD
+  Equity:Opening-Balances
+
+; Multi-posting transaction with metadata
+2024-01-15 * "Employer" "Monthly salary" #income #2024
+  receipt: "pay-stub-2024-01.pdf"
+  Assets:Bank:Checking    8000.00 USD
+  Expenses:Taxes:Federal  2000.00 USD
+  Income:Salary         -10000.00 USD
+
+; Credit card with multiple expense categories
+2024-01-20 * "Various" "Weekly expenses"
+  Expenses:Food:Groceries   120.50 USD
+  Expenses:Food:Restaurant   45.00 USD
+  Expenses:Transport         35.00 USD
+  Liabilities:Credit-Card
+
+; Stock purchase with cost basis
+2024-02-01 * "Buy more AAPL"
+  Assets:Brokerage  25 AAPL {175.00 USD, 2024-02-01}
+  Assets:Bank:Checking -4375.00 USD
+
+; Stock sale with FIFO booking
+2024-03-01 * "Sell AAPL" ^trade-q1
+  Assets:Brokerage -50 AAPL {150.00 USD, 2023-06-15} @ 180.00 USD
+  Assets:Bank:Checking  9000.00 USD
+  Income:Capital-Gains
+
+; Dividend income
+2024-03-15 * "AAPL" "Q1 Dividend"
+  Assets:Bank:Checking  75.00 USD
+  Income:Dividends
+
+; Currency conversion
+2024-04-01 * "Convert EUR"
+  Assets:Bank:Checking    2700.00 USD
+  Assets:Foreign         -2500.00 EUR {1.08 USD, 2023-12-01} @ 1.08 USD
+
+; Balance assertions
+2024-06-30 balance Assets:Bank:Checking 63025.50 USD
+2024-06-30 balance Assets:Brokerage      75 AAPL
+2024-06-30 balance Assets:Brokerage      50 GOOGL
+2024-06-30 balance Assets:Brokerage     200 VTI
+
+; Prices
+2024-06-30 price AAPL  185.00 USD
+2024-06-30 price GOOGL 175.00 USD
+2024-06-30 price VTI   235.00 USD
+2024-06-30 price EUR     1.07 USD
+2024-06-30 price GBP     1.26 USD

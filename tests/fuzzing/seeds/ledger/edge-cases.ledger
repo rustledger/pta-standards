@@ -1,0 +1,69 @@
+; Edge cases for Ledger parser fuzzing
+
+; Empty description
+2024/01/01 *
+    Assets:Bank                             $100.00
+    Equity
+
+; Virtual postings
+2024/01/15 * Test
+    Expenses:Food                           $50.00
+    (Budget:Food)                           $-50.00
+    Assets:Bank
+
+; Balanced virtual postings
+2024/01/20 * Test
+    Expenses:Food                           $50.00
+    [Budget:Food]                           $-50.00
+    Assets:Bank
+
+; Value expression in amount
+2024/02/01 * Expression
+    Expenses:Food                           ($10 * 5)
+    Assets:Bank
+
+; Lot with date
+2024/03/01 * Buy
+    Assets:Brokerage                        10 AAPL {$175.00} [2024/03/01]
+    Assets:Bank
+
+; Total cost
+2024/03/15 * Buy total cost
+    Assets:Brokerage                        10 AAPL @@ $1,800.00
+    Assets:Bank
+
+; Multi-line metadata
+2024/04/01 * Metadata test
+    ; key: value
+    ; :tag1:tag2:tag3:
+    Expenses:Food                           $25.00
+    Assets:Bank
+
+; Spaces in account names
+2024/05/01 * Spaces
+    Expenses:Auto:Gas & Oil                 $45.00
+    Assets:Bank
+
+; Very long payee
+2024/06/01 * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+    Expenses:Food                           $1.00
+    Assets:Bank
+
+; Negative amount with commodity on left
+2024/07/01 * Negative
+    Assets:Bank                             $-100.00
+    Income:Refund
+
+; Zero amount
+2024/08/01 * Zero
+    Assets:Bank                             $0.00
+    Expenses:Test                           $0.00
+
+; Date formats
+2024/02/29 * Leap day
+    Assets:Bank                             $1.00
+    Equity
+
+2024/12/31 * Year end
+    Assets:Bank                             $1.00
+    Equity
