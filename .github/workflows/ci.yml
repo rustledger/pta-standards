@@ -91,6 +91,41 @@ jobs:
           echo "## Unit Test Results" >> $GITHUB_STEP_SUMMARY
           echo "Coverage report uploaded as artifact." >> $GITHUB_STEP_SUMMARY
 
+  validate-examples:
+    name: Validate Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install beancount
+        run: pip install git+https://github.com/beancount/beancount.git@master
+
+      - name: Validate beancount examples
+        run: |
+          errors=0
+          for f in examples/beancount/*.beancount; do
+            echo "Checking: $f"
+            if ! bean-check "$f"; then
+              errors=$((errors + 1))
+            fi
+          done
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::$errors example file(s) have errors"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          count=$(ls examples/beancount/*.beancount | wc -l)
+          echo "## Example Validation" >> $GITHUB_STEP_SUMMARY
+          echo "Validated **$count** beancount example files." >> $GITHUB_STEP_SUMMARY
+
   conformance-tests:
     name: Conformance Tests
     uses: ./.github/workflows/conformance-tests.yml
