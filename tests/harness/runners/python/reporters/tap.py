@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import TextIO
 
-sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from executors.base import TestResult
 
 

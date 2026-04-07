@@ -4,7 +4,8 @@
     { "pattern": "^mailto:" },
     { "pattern": "^[^h]" },
     { "pattern": "^http://localhost" },
-    { "pattern": "^http://ofxhome" }
+    { "pattern": "^http://ofxhome" },
+    { "pattern": "^https://www.iso.org" }
   ],
   "httpHeaders": [
     {

@@ -122,30 +122,45 @@
       }
     },
     "amount": {
-      "type": ["object", "null"],
-      "required": ["number", "currency"],
-      "properties": {
-        "number": {
-          "type": "string",
-          "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-        },
-        "currency": { "type": "string" }
-      }
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["number", "currency"],
+          "properties": {
+            "number": {
+              "type": "string",
+              "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+            },
+            "currency": { "type": "string" }
+          }
+        }
+      ]
     },
     "cost": {
-      "type": ["object", "null"],
-      "properties": {
-        "amount": { "$ref": "#/$defs/amount" },
-        "date": { "$ref": "#/$defs/date" },
-        "label": { "type": "string" }
-      }
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "properties": {
+            "amount": { "$ref": "#/$defs/amount" },
+            "date": { "$ref": "#/$defs/date" },
+            "label": { "type": "string" }
+          }
+        }
+      ]
     },
     "price_annotation": {
-      "type": ["object", "null"],
-      "properties": {
-        "amount": { "$ref": "#/$defs/amount" },
-        "total": { "type": "boolean" }
-      }
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "properties": {
+            "amount": { "$ref": "#/$defs/amount" },
+            "total": { "type": "boolean" }
+          }
+        }
+      ]
     },
     "balance": {
       "type": "object",
