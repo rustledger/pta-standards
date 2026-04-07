@@ -9,8 +9,7 @@ from pathlib import Path
 
 import beanquery
 
-sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
-import builtins
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import contextlib
 
 from executors.base import BaseExecutor, TestResult
@@ -139,7 +138,7 @@ class BQLExecutor(BaseExecutor):
             duration_ms = (time.perf_counter() - start_time) * 1000
             # Clean up temp file on error
             if temp_path:
-                with contextlib.suppress(builtins.BaseException):
+                with contextlib.suppress(OSError):
                     Path(temp_path).unlink()
             return TestResult.failure(
                 test,

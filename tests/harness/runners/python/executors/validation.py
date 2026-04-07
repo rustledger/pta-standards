@@ -9,7 +9,7 @@ from pathlib import Path
 
 from beancount import loader
 
-sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from executors.base import BaseExecutor, TestResult
 from loader import TestCase
 
@@ -42,11 +42,24 @@ class ValidationExecutor(BaseExecutor):
             duration_ms = (time.perf_counter() - start_time) * 1000
 
             # Separate parse errors from validation errors
-            # In beancount, loader.load_file returns all errors combined
-            # Parse errors typically have certain types
-            parse_error_types = {"ParserError", "ParserSyntaxError", "LexerError"}
-            parse_errors = [e for e in errors if type(e).__name__ in parse_error_types]
-            validation_errors = [e for e in errors if type(e).__name__ not in parse_error_types]
+            # In beancount, loader.load_file returns all errors combined.
+            # Parse errors come from the parser module; validation errors from elsewhere.
+            def is_parse_error(e: object) -> bool:
+                mod = type(e).__module__ or ""
+                name = type(e).__name__
+                return (
+                    "parser" in mod.lower()
+                    or "lexer" in mod.lower()
+                    or name
+                    in {
+                        "ParserError",
+                        "ParserSyntaxError",
+                        "LexerError",
+                    }
+                )
+
+            parse_errors = [e for e in errors if is_parse_error(e)]
+            validation_errors = [e for e in errors if not is_parse_error(e)]
 
             # Check parse result first
             expected_parse = test.expected.parse

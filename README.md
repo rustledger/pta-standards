@@ -14,8 +14,8 @@ This repository contains formal specifications for plain text accounting formats
 | Format | Version | Status |
 |--------|---------|--------|
 | [Beancount](formats/beancount/) | v3 | Draft |
-| [Ledger](formats/ledger/) | v1 | Planned |
-| [hledger](formats/hledger/) | v1 | Planned |
+| [Ledger](formats/ledger/) | v1 | Draft |
+| [hledger](formats/hledger/) | v1 | Draft |
 
 ## Structure
 

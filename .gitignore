@@ -27,6 +27,12 @@ conformance/benchmarks/files/
 .venv*/
 venv/
 
+# Nix
+.direnv/
+
+# Claude Code
+.claude/
+
 # Reference repos (cloned, not tracked)
 references/
 
