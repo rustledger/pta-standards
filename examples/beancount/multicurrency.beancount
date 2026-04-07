@@ -28,14 +28,14 @@ option "operating_currency" "USD"
 
 ; Receive GBP freelance payment
 2024-03-15 * "UK Client Ltd" "Freelance payment"
-  Assets:Bank:UK-Account              3000.00 GBP @ 1.2700 USD
+  Assets:Bank:UK-Account              3000.00 GBP {1.2700 USD, 2024-03-15}
   Income:Freelance                   -3810.00 USD
 
 ; Convert GBP to USD
 2024-04-01 * "Wise" "Transfer GBP to USD"
   Assets:Bank:US-Checking             1900.00 USD
   Expenses:Transfer-Fees                 5.25 USD
-  Assets:Bank:UK-Account             -1500.00 GBP {1.2700 USD, 2024-04-01}
+  Assets:Bank:UK-Account             -1500.00 GBP {1.2700 USD, 2024-03-15} @ 1.2700 USD
 
 ; Travel spending in JPY
 2024-05-10 * "Hotel Tokyo" "Hotel accommodation"
