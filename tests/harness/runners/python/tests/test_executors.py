@@ -163,7 +163,9 @@ class TestValidationExecutor:
         )
         result = self.executor.execute(test)
         assert result.passed is False
-        assert result.error_message is not None and "Expected validate=error" in result.error_message
+        assert (
+            result.error_message is not None and "Expected validate=error" in result.error_message
+        )
 
     def test_accounts_check(self):
         test = _make_test(
