@@ -13,12 +13,12 @@ option "operating_currency" "USD"
 2024-01-01 open Income:Freelance
 2024-01-01 open Income:Currency-Gains
 
+2024-01-01 open Equity:Opening-Balances
+
 ; Opening balances
 2024-01-01 * "Opening balance"
   Assets:Bank:US-Checking            10000.00 USD
   Equity:Opening-Balances           -10000.00 USD
-
-2024-01-01 open Equity:Opening-Balances
 
 ; Convert USD to EUR
 2024-02-01 * "Wise" "Transfer USD to EUR"
@@ -28,7 +28,7 @@ option "operating_currency" "USD"
 
 ; Receive GBP freelance payment
 2024-03-15 * "UK Client Ltd" "Freelance payment"
-  Assets:Bank:UK-Account              3000.00 GBP
+  Assets:Bank:UK-Account              3000.00 GBP @ 1.2700 USD
   Income:Freelance                   -3810.00 USD
 
 ; Convert GBP to USD

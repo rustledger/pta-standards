@@ -110,7 +110,8 @@ jobs:
           errors=0
           for f in examples/beancount/*.beancount; do
             echo "Checking: $f"
-            if ! bean-check "$f"; then
+            if ! bean-check "$f" 2>&1; then
+              echo "::error file=$f::bean-check failed"
               errors=$((errors + 1))
             fi
           done

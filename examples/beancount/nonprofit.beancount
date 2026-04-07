@@ -31,13 +31,13 @@ option "operating_currency" "USD"
 ; Liability accounts
 2024-01-01 open Liabilities:Deferred-Revenue
 
+2024-01-01 open Equity:Opening-Balances
+
 ; Opening balance
 2024-01-01 * "Opening balance"
   Assets:Bank:Operating              25000.00 USD
   Assets:Bank:Savings                50000.00 USD
   Equity:Opening-Balances           -75000.00 USD
-
-2024-01-01 open Equity:Opening-Balances
 
 ; Unrestricted individual donations
 2024-01-15 * "Jane Smith" "Annual donation"
