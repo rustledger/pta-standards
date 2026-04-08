@@ -204,10 +204,17 @@ jobs:
     if: github.event_name == 'schedule' || github.event.inputs.update_readme == 'true'
 
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Update README with results
         run: |
@@ -224,8 +231,8 @@ jobs:
 
       - name: Commit and push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "rustledger-bot[bot]"
+          git config user.email "rustledger-bot[bot]@users.noreply.github.com"
           git add README.md
           git diff --staged --quiet || git commit -m "chore: update conformance test results [skip ci]"
           git push
