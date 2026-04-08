@@ -143,15 +143,22 @@ class RustledgerExecutor(BaseExecutor):
     ) -> TestResult:
         """Execute a parse/validation test."""
         try:
-            success, errors, _raw = self._run_check(file_path)
+            _success, errors, _raw = self._run_check(file_path)
             duration_ms = (time.perf_counter() - start_time) * 1000
 
+            # Separate parse errors from validation errors using error codes.
+            # rustledger uses P-prefixed codes for parse errors (e.g., P0012)
+            # and E-prefixed codes for validation errors (e.g., E1001, E3001).
+            parse_errors = [e for e in errors if str(e.get("code", "")).startswith("P")]
+            validation_errors = [e for e in errors if not str(e.get("code", "")).startswith("P")]
+
             # Check parse result
-            actual_parse = "success" if success else "error"
+            parse_succeeded = len(parse_errors) == 0
+            actual_parse = "success" if parse_succeeded else "error"
             expected_parse = test.expected.parse
 
             if expected_parse is not None and actual_parse != expected_parse:
-                error_msgs = [e.get("message", str(e)) for e in errors[:3]]
+                error_msgs = [e.get("message", str(e)) for e in parse_errors[:3]]
                 return TestResult.failure(
                     test,
                     f"Expected parse={expected_parse}, got {actual_parse}",
@@ -163,9 +170,9 @@ class RustledgerExecutor(BaseExecutor):
             # Check validation result
             expected_validate = test.expected.validate
             if expected_validate is not None and expected_validate != "skip":
-                actual_validate = "success" if success else "error"
+                actual_validate = "success" if len(validation_errors) == 0 else "error"
                 if actual_validate != expected_validate:
-                    error_msgs = [e.get("message", str(e)) for e in errors[:5]]
+                    error_msgs = [e.get("message", str(e)) for e in validation_errors[:5]]
                     return TestResult.failure(
                         test,
                         f"Expected validate={expected_validate}, got {actual_validate}",
