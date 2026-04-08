@@ -18,7 +18,7 @@
       "id": "booking-strict-ambiguous",
       "description": "STRICT booking with ambiguous reduction produces error",
       "spec_ref": "booking.md#strict-booking",
-      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL \"STRICT\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
       "expected": {
         "parse": "success",
         "validate": "error",
@@ -87,7 +87,7 @@
       "id": "booking-default-strict",
       "description": "Default booking method is STRICT when no method specified",
       "spec_ref": "booking.md#default-booking",
-      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy different cost\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous without booking method\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
+      "input": {"inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy different cost\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell - ambiguous without booking method\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"},
       "expected": {
         "parse": "success",
         "validate": "error",
