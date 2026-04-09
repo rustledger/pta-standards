@@ -146,11 +146,24 @@ class RustledgerExecutor(BaseExecutor):
             _success, errors, _raw = self._run_check(file_path)
             duration_ms = (time.perf_counter() - start_time) * 1000
 
-            # Separate parse errors from validation errors using error codes.
-            # rustledger uses P-prefixed codes for parse errors (e.g., P0012)
-            # and E-prefixed codes for validation errors (e.g., E1001, E3001).
-            parse_errors = [e for e in errors if str(e.get("code", "")).startswith("P")]
-            validation_errors = [e for e in errors if not str(e.get("code", "")).startswith("P")]
+            # Separate parse errors from validation errors using the `phase` field.
+            # rustledger tags each diagnostic with "parse" or "validate" based on when
+            # it was detected (lex/parse/load vs. semantic validation). This is more
+            # accurate than classifying by code prefix alone — for example, E7001
+            # (unknown option) fires during the load phase and is correctly tagged
+            # phase="parse" even though its code starts with E.
+            #
+            # Fall back to the legacy code-prefix heuristic (P* = parse) for older
+            # rustledger builds that don't emit the `phase` field, so the runner
+            # remains backwards compatible.
+            def _is_parse_error(e: dict) -> bool:
+                phase = e.get("phase")
+                if phase is not None:
+                    return phase == "parse"
+                return str(e.get("code", "")).startswith("P")
+
+            parse_errors = [e for e in errors if _is_parse_error(e)]
+            validation_errors = [e for e in errors if not _is_parse_error(e)]
 
             # Check parse result
             parse_succeeded = len(parse_errors) == 0
