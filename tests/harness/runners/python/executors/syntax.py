@@ -28,6 +28,8 @@ class SyntaxExecutor(BaseExecutor):
             # Get input content
             if test.input.inline is not None:
                 content = test.input.inline
+                if not content.endswith("\n"):
+                    content += "\n"
                 # Write to temp file for beancount loader
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)

@@ -44,6 +44,8 @@ class BQLExecutor(BaseExecutor):
                 dsn = f"beancount://{abs_path}"
             elif test.input.inline is not None:
                 content = test.input.inline
+                if not content.endswith("\n"):
+                    content += "\n"
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
