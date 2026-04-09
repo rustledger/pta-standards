@@ -4,7 +4,7 @@
   "description": "hledger to Beancount format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-h2b",
       "description": "Basic transaction converts correctly",
       "source": {
         "format": "hledger",
@@ -16,10 +16,15 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
       "id": "account-case-converted",
@@ -33,12 +38,18 @@
       },
       "expected": {
         "convert": "success",
-        "accounts": ["Expenses:Food:Groceries", "Assets:Bank:Checking"]
+        "accounts": [
+          "Expenses:Food:Groceries",
+          "Assets:Bank:Checking"
+        ]
       },
-      "tags": ["account", "case"]
+      "tags": [
+        "account",
+        "case"
+      ]
     },
     {
-      "id": "virtual-posting-lost",
+      "id": "virtual-posting-lost-h2b",
       "description": "Virtual postings are lost (warning)",
       "source": {
         "format": "hledger",
@@ -49,12 +60,17 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["virtual"]
+        "warnings": [
+          "virtual"
+        ]
       },
-      "tags": ["virtual", "loss"]
+      "tags": [
+        "virtual",
+        "loss"
+      ]
     },
     {
-      "id": "periodic-lost",
+      "id": "periodic-lost-h2b",
       "description": "Periodic transactions cannot convert",
       "source": {
         "format": "hledger",
@@ -65,9 +81,14 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["periodic"]
+        "warnings": [
+          "periodic"
+        ]
       },
-      "tags": ["periodic", "loss"]
+      "tags": [
+        "periodic",
+        "loss"
+      ]
     },
     {
       "id": "auto-lost",
@@ -81,12 +102,17 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["auto"]
+        "warnings": [
+          "auto"
+        ]
       },
-      "tags": ["auto", "loss"]
+      "tags": [
+        "auto",
+        "loss"
+      ]
     },
     {
-      "id": "commodity-symbol-converted",
+      "id": "commodity-symbol-converted-h2b",
       "description": "Commodity symbols converted to codes",
       "source": {
         "format": "hledger",
@@ -98,7 +124,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["commodity", "symbol"]
+      "tags": [
+        "commodity",
+        "symbol"
+      ]
     },
     {
       "id": "open-directives-generated",
@@ -114,10 +143,13 @@
         "convert": "success",
         "directives": 3
       },
-      "tags": ["account", "open"]
+      "tags": [
+        "account",
+        "open"
+      ]
     },
     {
-      "id": "balance-assertion",
+      "id": "balance-assertion-h2b",
       "description": "Balance assertion converts",
       "source": {
         "format": "hledger",
@@ -129,7 +161,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"]
+      "tags": [
+        "balance",
+        "assertion"
+      ]
     },
     {
       "id": "balance-assignment-converted",
@@ -144,7 +179,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assignment"]
+      "tags": [
+        "balance",
+        "assignment"
+      ]
     },
     {
       "id": "tags-converted",
@@ -159,7 +197,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["tags"]
+      "tags": [
+        "tags"
+      ]
     }
   ]
 }
