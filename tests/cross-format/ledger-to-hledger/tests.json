@@ -4,7 +4,7 @@
   "description": "Ledger to hledger format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-l2h",
       "description": "Basic transaction converts with high fidelity",
       "source": {
         "format": "ledger",
@@ -16,13 +16,18 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
-      "id": "virtual-posting",
+      "id": "virtual-posting-l2h",
       "description": "Virtual postings convert directly",
       "source": {
         "format": "ledger",
@@ -34,7 +39,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["virtual"]
+      "tags": [
+        "virtual"
+      ]
     },
     {
       "id": "balanced-virtual",
@@ -49,10 +56,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["virtual", "balanced"]
+      "tags": [
+        "virtual",
+        "balanced"
+      ]
     },
     {
-      "id": "periodic-transaction",
+      "id": "periodic-transaction-l2h",
       "description": "Periodic transaction converts",
       "source": {
         "format": "ledger",
@@ -64,7 +74,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["periodic"]
+      "tags": [
+        "periodic"
+      ]
     },
     {
       "id": "automated-transaction",
@@ -79,7 +91,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["automated"]
+      "tags": [
+        "automated"
+      ]
     },
     {
       "id": "account-directive",
@@ -94,10 +108,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "account"]
+      "tags": [
+        "directive",
+        "account"
+      ]
     },
     {
-      "id": "commodity-format",
+      "id": "commodity-format-l2h",
       "description": "Commodity format converts",
       "source": {
         "format": "ledger",
@@ -109,10 +126,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "commodity"]
+      "tags": [
+        "directive",
+        "commodity"
+      ]
     },
     {
-      "id": "balance-assertion",
+      "id": "balance-assertion-l2h",
       "description": "Balance assertion converts directly",
       "source": {
         "format": "ledger",
@@ -124,7 +144,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"]
+      "tags": [
+        "balance",
+        "assertion"
+      ]
     },
     {
       "id": "lot-price",
@@ -139,7 +162,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["lot", "price"]
+      "tags": [
+        "lot",
+        "price"
+      ]
     },
     {
       "id": "metadata-tags",
@@ -154,7 +180,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["metadata", "tags"]
+      "tags": [
+        "metadata",
+        "tags"
+      ]
     },
     {
       "id": "expression-amount-lost",
@@ -169,10 +198,15 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["expression", "evaluation"]
+      "tags": [
+        "expression",
+        "evaluation"
+      ]
     },
     {
       "id": "effective-date",
@@ -187,7 +221,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["date", "effective"]
+      "tags": [
+        "date",
+        "effective"
+      ]
     }
   ]
 }

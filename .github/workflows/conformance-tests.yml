@@ -292,3 +292,6 @@ jobs:
           else:
               print(f'Validated {len(test_files)} test files successfully')
           "
+
+      - name: Check test IDs are unique within each manifest
+        run: python scripts/check_test_ids_unique.py

@@ -4,7 +4,7 @@
   "description": "Ledger to Beancount format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-l2b",
       "description": "Basic transaction converts correctly",
       "source": {
         "format": "ledger",
@@ -16,13 +16,18 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
-      "id": "virtual-posting-lost",
+      "id": "virtual-posting-lost-l2b",
       "description": "Virtual postings are lost (warning)",
       "source": {
         "format": "ledger",
@@ -33,12 +38,17 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["virtual"]
+        "warnings": [
+          "virtual"
+        ]
       },
-      "tags": ["virtual", "loss"]
+      "tags": [
+        "virtual",
+        "loss"
+      ]
     },
     {
-      "id": "commodity-symbol-converted",
+      "id": "commodity-symbol-converted-l2b",
       "description": "Commodity symbols converted to codes",
       "source": {
         "format": "ledger",
@@ -50,10 +60,15 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["commodity", "symbol"]
+      "tags": [
+        "commodity",
+        "symbol"
+      ]
     },
     {
       "id": "needs-open-directives",
@@ -67,9 +82,15 @@
       },
       "expected": {
         "convert": "success",
-        "accounts": ["Expenses:Food", "Assets:Checking"]
+        "accounts": [
+          "Expenses:Food",
+          "Assets:Checking"
+        ]
       },
-      "tags": ["account", "open"]
+      "tags": [
+        "account",
+        "open"
+      ]
     },
     {
       "id": "expression-evaluated",
@@ -84,10 +105,14 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          }
         }
       },
-      "tags": ["expression"]
+      "tags": [
+        "expression"
+      ]
     },
     {
       "id": "automated-lost",
@@ -101,12 +126,17 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["automated"]
+        "warnings": [
+          "automated"
+        ]
       },
-      "tags": ["automated", "loss"]
+      "tags": [
+        "automated",
+        "loss"
+      ]
     },
     {
-      "id": "periodic-lost",
+      "id": "periodic-lost-l2b",
       "description": "Periodic transactions cannot convert",
       "source": {
         "format": "ledger",
@@ -117,9 +147,14 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["periodic"]
+        "warnings": [
+          "periodic"
+        ]
       },
-      "tags": ["periodic", "loss"]
+      "tags": [
+        "periodic",
+        "loss"
+      ]
     },
     {
       "id": "date-format-converted",
@@ -134,10 +169,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["date", "format"]
+      "tags": [
+        "date",
+        "format"
+      ]
     },
     {
-      "id": "balance-assertion",
+      "id": "balance-assertion-l2b",
       "description": "Balance assertion converts",
       "source": {
         "format": "ledger",
@@ -149,7 +187,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"]
+      "tags": [
+        "balance",
+        "assertion"
+      ]
     },
     {
       "id": "lot-cost",
@@ -164,7 +205,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["lot", "cost"]
+      "tags": [
+        "lot",
+        "cost"
+      ]
     }
   ]
 }

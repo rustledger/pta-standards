@@ -4,7 +4,7 @@
   "description": "hledger to Ledger format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-h2l",
       "description": "Basic transaction converts with high fidelity",
       "source": {
         "format": "hledger",
@@ -16,7 +16,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
       "id": "account-case-preserved",
@@ -31,10 +34,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["account", "case"]
+      "tags": [
+        "account",
+        "case"
+      ]
     },
     {
-      "id": "virtual-posting",
+      "id": "virtual-posting-h2l",
       "description": "Virtual postings convert directly",
       "source": {
         "format": "hledger",
@@ -46,10 +52,12 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["virtual"]
+      "tags": [
+        "virtual"
+      ]
     },
     {
-      "id": "periodic-transaction",
+      "id": "periodic-transaction-h2l",
       "description": "Periodic transaction converts",
       "source": {
         "format": "hledger",
@@ -61,7 +69,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["periodic"]
+      "tags": [
+        "periodic"
+      ]
     },
     {
       "id": "auto-posting",
@@ -76,7 +86,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["auto"]
+      "tags": [
+        "auto"
+      ]
     },
     {
       "id": "balance-assignment",
@@ -91,7 +103,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assignment"]
+      "tags": [
+        "balance",
+        "assignment"
+      ]
     },
     {
       "id": "subaccount-assertion",
@@ -106,7 +121,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"],
+      "tags": [
+        "balance",
+        "assertion"
+      ],
       "skip": true,
       "skip_reason": "Ledger doesn't have subaccount assertions"
     },
@@ -123,7 +141,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["date", "format"]
+      "tags": [
+        "date",
+        "format"
+      ]
     },
     {
       "id": "tags",
@@ -138,7 +159,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["tags", "metadata"]
+      "tags": [
+        "tags",
+        "metadata"
+      ]
     },
     {
       "id": "decimal-mark",
@@ -153,7 +177,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["decimal", "format"]
+      "tags": [
+        "decimal",
+        "format"
+      ]
     }
   ]
 }

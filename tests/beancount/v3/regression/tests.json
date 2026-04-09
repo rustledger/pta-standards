@@ -4,7 +4,7 @@
   "description": "Regression tests for fixed bugs and edge cases",
   "tests": [
     {
-      "id": "unicode-account-name",
+      "id": "unicode-account-name-regression",
       "description": "Account with Unicode characters after ASCII start",
       "spec_ref": "lexical.md#account",
       "input": {
@@ -14,10 +14,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["unicode", "accounts"]
+      "tags": [
+        "unicode",
+        "accounts"
+      ]
     },
     {
-      "id": "unicode-narration",
+      "id": "unicode-narration-regression",
       "description": "Transaction with Unicode narration including emoji",
       "spec_ref": "lexical.md#string",
       "input": {
@@ -27,10 +30,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["unicode", "strings"]
+      "tags": [
+        "unicode",
+        "strings"
+      ]
     },
     {
-      "id": "leap-year-date",
+      "id": "leap-year-date-regression",
       "description": "Transaction on Feb 29 in leap year",
       "spec_ref": "lexical.md#date",
       "input": {
@@ -40,7 +46,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["date", "edge-case"]
+      "tags": [
+        "date",
+        "edge-case"
+      ]
     },
     {
       "id": "invalid-leap-year-date",
@@ -51,9 +60,15 @@
       },
       "expected": {
         "parse": "error",
-        "error_contains": ["day", "out of range"]
+        "error_contains": [
+          "day",
+          "out of range"
+        ]
       },
-      "tags": ["date", "error"]
+      "tags": [
+        "date",
+        "error"
+      ]
     },
     {
       "id": "year-boundary-transaction",
@@ -66,10 +81,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["date", "edge-case"]
+      "tags": [
+        "date",
+        "edge-case"
+      ]
     },
     {
-      "id": "very-large-amount",
+      "id": "very-large-amount-regression",
       "description": "Transaction with very large amount",
       "spec_ref": "amounts.md",
       "input": {
@@ -79,10 +97,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["numbers", "edge-case"]
+      "tags": [
+        "numbers",
+        "edge-case"
+      ]
     },
     {
-      "id": "very-small-amount",
+      "id": "very-small-amount-regression",
       "description": "Transaction with very small amount",
       "spec_ref": "amounts.md",
       "input": {
@@ -92,7 +113,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["numbers", "edge-case"]
+      "tags": [
+        "numbers",
+        "edge-case"
+      ]
     },
     {
       "id": "number-with-grouping",
@@ -105,7 +129,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["numbers"]
+      "tags": [
+        "numbers"
+      ]
     },
     {
       "id": "multiline-narration",
@@ -118,7 +144,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["strings", "multiline"]
+      "tags": [
+        "strings",
+        "multiline"
+      ]
     },
     {
       "id": "escaped-quotes-in-string",
@@ -131,7 +160,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["strings", "escape"]
+      "tags": [
+        "strings",
+        "escape"
+      ]
     },
     {
       "id": "escaped-backslash-in-string",
@@ -144,7 +176,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["strings", "escape"]
+      "tags": [
+        "strings",
+        "escape"
+      ]
     },
     {
       "id": "long-account-chain",
@@ -157,7 +192,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["accounts"]
+      "tags": [
+        "accounts"
+      ]
     },
     {
       "id": "account-with-numbers",
@@ -170,7 +207,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["accounts"]
+      "tags": [
+        "accounts"
+      ]
     },
     {
       "id": "currency-with-special-chars",
@@ -183,7 +222,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["currency"]
+      "tags": [
+        "currency"
+      ]
     },
     {
       "id": "multiple-currencies-transaction",
@@ -196,7 +237,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["currency", "price"]
+      "tags": [
+        "currency",
+        "price"
+      ]
     },
     {
       "id": "balance-with-multiple-commodities",
@@ -209,7 +253,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["balance", "multi-commodity"]
+      "tags": [
+        "balance",
+        "multi-commodity"
+      ]
     },
     {
       "id": "cost-with-date-and-label",
@@ -222,7 +269,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["costs", "lot"]
+      "tags": [
+        "costs",
+        "lot"
+      ]
     },
     {
       "id": "total-cost-specification",
@@ -235,7 +285,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["costs", "total"]
+      "tags": [
+        "costs",
+        "total"
+      ]
     },
     {
       "id": "total-price-specification",
@@ -248,7 +301,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["price", "total"]
+      "tags": [
+        "price",
+        "total"
+      ]
     },
     {
       "id": "transaction-with-all-flags",
@@ -261,7 +317,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["transaction", "flags"]
+      "tags": [
+        "transaction",
+        "flags"
+      ]
     },
     {
       "id": "posting-with-flag",
@@ -274,7 +333,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["posting", "flags"]
+      "tags": [
+        "posting",
+        "flags"
+      ]
     },
     {
       "id": "metadata-all-types",
@@ -287,7 +349,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["metadata"]
+      "tags": [
+        "metadata"
+      ]
     },
     {
       "id": "posting-metadata",
@@ -300,10 +364,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["metadata", "posting"]
+      "tags": [
+        "metadata",
+        "posting"
+      ]
     },
     {
-      "id": "pushtag-poptag",
+      "id": "pushtag-poptag-regression",
       "description": "Push and pop tag directives",
       "spec_ref": "tags-links.md#pushtag",
       "input": {
@@ -313,10 +380,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["tags", "push-pop"]
+      "tags": [
+        "tags",
+        "push-pop"
+      ]
     },
     {
-      "id": "pushmeta-popmeta",
+      "id": "pushmeta-popmeta-regression",
       "description": "Push and pop metadata directives",
       "spec_ref": "metadata.md#pushmeta",
       "input": {
@@ -326,10 +396,13 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["metadata", "push-pop"]
+      "tags": [
+        "metadata",
+        "push-pop"
+      ]
     },
     {
-      "id": "pad-directive",
+      "id": "pad-directive-regression",
       "description": "Pad directive with balance",
       "spec_ref": "directives/pad.md",
       "input": {
@@ -339,10 +412,12 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["pad"]
+      "tags": [
+        "pad"
+      ]
     },
     {
-      "id": "event-directive",
+      "id": "event-directive-regression",
       "description": "Event directive",
       "spec_ref": "directives/event.md",
       "input": {
@@ -352,10 +427,12 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["event"]
+      "tags": [
+        "event"
+      ]
     },
     {
-      "id": "query-directive",
+      "id": "query-directive-regression",
       "description": "Query directive",
       "spec_ref": "directives/query.md",
       "input": {
@@ -365,10 +442,12 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["query"]
+      "tags": [
+        "query"
+      ]
     },
     {
-      "id": "note-directive",
+      "id": "note-directive-regression",
       "description": "Note directive",
       "spec_ref": "directives/note.md",
       "input": {
@@ -378,10 +457,12 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["note"]
+      "tags": [
+        "note"
+      ]
     },
     {
-      "id": "custom-directive",
+      "id": "custom-directive-regression",
       "description": "Custom directive with various values",
       "spec_ref": "directives/custom.md",
       "input": {
@@ -391,7 +472,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["custom"]
+      "tags": [
+        "custom"
+      ]
     },
     {
       "id": "commodity-directive-with-metadata",
@@ -404,7 +487,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["commodity", "metadata"]
+      "tags": [
+        "commodity",
+        "metadata"
+      ]
     },
     {
       "id": "same-day-open-close",
@@ -417,7 +503,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["accounts", "edge-case"]
+      "tags": [
+        "accounts",
+        "edge-case"
+      ]
     },
     {
       "id": "negative-price",
@@ -430,7 +519,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["price", "edge-case"]
+      "tags": [
+        "price",
+        "edge-case"
+      ]
     },
     {
       "id": "zero-amount-posting",
@@ -443,7 +535,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["posting", "edge-case"]
+      "tags": [
+        "posting",
+        "edge-case"
+      ]
     },
     {
       "id": "expression-in-amount",
@@ -456,7 +551,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["amounts", "expression"]
+      "tags": [
+        "amounts",
+        "expression"
+      ]
     },
     {
       "id": "comments-everywhere",
@@ -469,7 +567,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["comments"]
+      "tags": [
+        "comments"
+      ]
     },
     {
       "id": "blank-lines-and-whitespace",
@@ -482,7 +582,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["whitespace"]
+      "tags": [
+        "whitespace"
+      ]
     },
     {
       "id": "tabs-for-indentation",
@@ -495,7 +597,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["whitespace", "tabs"]
+      "tags": [
+        "whitespace",
+        "tabs"
+      ]
     },
     {
       "id": "date-slash-separator",
@@ -508,7 +613,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["date"]
+      "tags": [
+        "date"
+      ]
     },
     {
       "id": "single-digit-date-parts",
@@ -521,7 +628,9 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["date"]
+      "tags": [
+        "date"
+      ]
     },
     {
       "id": "org-mode-headers-ignored",
@@ -534,7 +643,10 @@
         "parse": "success",
         "validate": "success"
       },
-      "tags": ["comments", "org-mode"]
+      "tags": [
+        "comments",
+        "org-mode"
+      ]
     }
   ]
 }

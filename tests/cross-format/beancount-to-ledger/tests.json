@@ -4,7 +4,7 @@
   "description": "Beancount to Ledger format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-b2l",
       "description": "Basic transaction converts correctly",
       "source": {
         "format": "beancount",
@@ -16,11 +16,18 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Expenses:Food": {"USD": "50.00"},
-          "Assets:Checking": {"USD": "-50.00"}
+          "Expenses:Food": {
+            "USD": "50.00"
+          },
+          "Assets:Checking": {
+            "USD": "-50.00"
+          }
         }
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
       "id": "open-to-account",
@@ -35,10 +42,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "account"]
+      "tags": [
+        "directive",
+        "account"
+      ]
     },
     {
-      "id": "transaction-with-tags",
+      "id": "transaction-with-tags-b2l",
       "description": "Tags convert to Ledger metadata",
       "source": {
         "format": "beancount",
@@ -50,7 +60,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["tags", "metadata"]
+      "tags": [
+        "tags",
+        "metadata"
+      ]
     },
     {
       "id": "transaction-with-links",
@@ -65,10 +78,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["links", "metadata"]
+      "tags": [
+        "links",
+        "metadata"
+      ]
     },
     {
-      "id": "balance-assertion",
+      "id": "balance-assertion-b2l",
       "description": "Balance assertion converts",
       "source": {
         "format": "beancount",
@@ -80,7 +96,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"]
+      "tags": [
+        "balance",
+        "assertion"
+      ]
     },
     {
       "id": "commodity-directive",
@@ -95,10 +114,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "commodity"]
+      "tags": [
+        "directive",
+        "commodity"
+      ]
     },
     {
-      "id": "price-directive",
+      "id": "price-directive-b2l",
       "description": "Price directive converts",
       "source": {
         "format": "beancount",
@@ -110,7 +132,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "price"]
+      "tags": [
+        "directive",
+        "price"
+      ]
     },
     {
       "id": "lot-with-cost",
@@ -125,13 +150,18 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "Assets:Brokerage": {"AAPL": "10"}
+          "Assets:Brokerage": {
+            "AAPL": "10"
+          }
         }
       },
-      "tags": ["lot", "cost"]
+      "tags": [
+        "lot",
+        "cost"
+      ]
     },
     {
-      "id": "lot-with-price",
+      "id": "lot-with-price-b2l",
       "description": "Lot with price annotation converts",
       "source": {
         "format": "beancount",
@@ -143,7 +173,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["lot", "price"]
+      "tags": [
+        "lot",
+        "price"
+      ]
     },
     {
       "id": "multi-currency",
@@ -158,7 +191,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["currency", "exchange"]
+      "tags": [
+        "currency",
+        "exchange"
+      ]
     },
     {
       "id": "posting-metadata",
@@ -173,7 +209,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["metadata", "posting"]
+      "tags": [
+        "metadata",
+        "posting"
+      ]
     },
     {
       "id": "pad-directive",
@@ -188,7 +227,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "pad"],
+      "tags": [
+        "directive",
+        "pad"
+      ],
       "skip": true,
       "skip_reason": "Pad has no direct Ledger equivalent"
     },
@@ -205,7 +247,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "note"]
+      "tags": [
+        "directive",
+        "note"
+      ]
     },
     {
       "id": "event-directive",
@@ -220,7 +265,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "event"]
+      "tags": [
+        "directive",
+        "event"
+      ]
     },
     {
       "id": "incomplete-flag",
@@ -235,7 +283,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["flag", "pending"]
+      "tags": [
+        "flag",
+        "pending"
+      ]
     }
   ]
 }

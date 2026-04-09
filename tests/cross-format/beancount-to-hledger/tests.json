@@ -4,7 +4,7 @@
   "description": "Beancount to hledger format conversion tests",
   "tests": [
     {
-      "id": "simple-transaction",
+      "id": "simple-transaction-b2h",
       "description": "Basic transaction converts correctly",
       "source": {
         "format": "beancount",
@@ -16,11 +16,18 @@
       "expected": {
         "convert": "success",
         "balance": {
-          "expenses:food": {"USD": "50.00"},
-          "assets:checking": {"USD": "-50.00"}
+          "expenses:food": {
+            "USD": "50.00"
+          },
+          "assets:checking": {
+            "USD": "-50.00"
+          }
         }
       },
-      "tags": ["transaction", "basic"]
+      "tags": [
+        "transaction",
+        "basic"
+      ]
     },
     {
       "id": "account-case-conversion",
@@ -34,12 +41,17 @@
       },
       "expected": {
         "convert": "success",
-        "accounts": ["assets:bank:checking"]
+        "accounts": [
+          "assets:bank:checking"
+        ]
       },
-      "tags": ["account", "case"]
+      "tags": [
+        "account",
+        "case"
+      ]
     },
     {
-      "id": "transaction-with-tags",
+      "id": "transaction-with-tags-b2h",
       "description": "Tags convert to hledger tags",
       "source": {
         "format": "beancount",
@@ -51,10 +63,12 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["tags"]
+      "tags": [
+        "tags"
+      ]
     },
     {
-      "id": "balance-assertion",
+      "id": "balance-assertion-b2h",
       "description": "Balance assertion converts",
       "source": {
         "format": "beancount",
@@ -66,10 +80,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["balance", "assertion"]
+      "tags": [
+        "balance",
+        "assertion"
+      ]
     },
     {
-      "id": "lot-with-price",
+      "id": "lot-with-price-b2h",
       "description": "Lot with price annotation converts",
       "source": {
         "format": "beancount",
@@ -81,7 +98,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["lot", "price"]
+      "tags": [
+        "lot",
+        "price"
+      ]
     },
     {
       "id": "multi-posting-metadata",
@@ -96,7 +116,9 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["metadata"]
+      "tags": [
+        "metadata"
+      ]
     },
     {
       "id": "payee-narration",
@@ -111,10 +133,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["description", "payee"]
+      "tags": [
+        "description",
+        "payee"
+      ]
     },
     {
-      "id": "price-directive",
+      "id": "price-directive-b2h",
       "description": "Price directive converts to P directive",
       "source": {
         "format": "beancount",
@@ -126,10 +151,13 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["directive", "price"]
+      "tags": [
+        "directive",
+        "price"
+      ]
     },
     {
-      "id": "commodity-format",
+      "id": "commodity-format-b2h",
       "description": "Commodity format is preserved",
       "source": {
         "format": "beancount",
@@ -141,7 +169,10 @@
       "expected": {
         "convert": "success"
       },
-      "tags": ["commodity", "format"]
+      "tags": [
+        "commodity",
+        "format"
+      ]
     },
     {
       "id": "booking-method-lost",
@@ -155,9 +186,14 @@
       },
       "expected": {
         "convert": "success",
-        "warnings": ["booking method"]
+        "warnings": [
+          "booking method"
+        ]
       },
-      "tags": ["booking", "loss"]
+      "tags": [
+        "booking",
+        "loss"
+      ]
     }
   ]
 }
