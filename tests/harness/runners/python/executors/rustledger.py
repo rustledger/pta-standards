@@ -159,8 +159,8 @@ class RustledgerExecutor(BaseExecutor):
             def _is_parse_error(e: dict) -> bool:
                 phase = e.get("phase")
                 if phase is not None:
-                    return phase == "parse"
-                return str(e.get("code", "")).startswith("P")
+                    return bool(phase == "parse")
+                return bool(str(e.get("code", "")).startswith("P"))
 
             parse_errors = [e for e in errors if _is_parse_error(e)]
             validation_errors = [e for e in errors if not _is_parse_error(e)]
