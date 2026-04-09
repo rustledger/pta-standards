@@ -118,11 +118,16 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Get rustledger commit SHA
+        id: rl-sha
+        run: echo "sha=$(cd rustledger && git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: rustledger
           cache-on-failure: true
+          key: rl-${{ steps.rl-sha.outputs.sha }}
 
       - name: Build rustledger
         run: |
