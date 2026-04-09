@@ -28,6 +28,8 @@ class ValidationExecutor(BaseExecutor):
             # Get input content
             if test.input.inline is not None:
                 content = test.input.inline
+                if not content.endswith("\n"):
+                    content += "\n"
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name

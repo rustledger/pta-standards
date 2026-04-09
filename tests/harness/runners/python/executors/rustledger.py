@@ -110,6 +110,11 @@ class RustledgerExecutor(BaseExecutor):
             # Get input content and write to temp file
             if test.input.inline is not None:
                 content = test.input.inline
+                # Ensure the content ends with a newline. POSIX convention is
+                # that text files end with \n, and some parsers only recognize
+                # the end of a directive when followed by a newline/EOF boundary.
+                if not content.endswith("\n"):
+                    content += "\n"
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".beancount", delete=False) as f:
                     f.write(content)
                     temp_path = f.name
