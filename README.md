@@ -58,12 +58,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 <!-- CONFORMANCE-RESULTS-START -->
 ## Conformance Test Results
 
-Last updated: 2026-04-09
+Last updated: 2026-04-10
 
 | Implementation | Version | Passed | Failed | Skipped | Status |
 |---------------|---------|--------|--------|---------|--------|
 | Python beancount | 3.2.0 | 264 | 0 | 17 | :white_check_mark: |
-| Rustledger | 0.11.0 | 258 | 6 | 17 | :x: |
+| Rustledger | 0.11.0 | 263 | 1 | 17 | :x: |
 
 Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
 <!-- CONFORMANCE-RESULTS-END -->
