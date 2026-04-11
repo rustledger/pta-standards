@@ -349,6 +349,7 @@
     {
       "id": "mixed-whitespace",
       "description": "Transaction with mixed indentation styles",
+      "spec_ref": "lexical.md#whitespace",
       "input": {
         "inline": "2024-01-01 open Assets:A\n2024-01-01 open Assets:B\n\n2024-01-15 * \"Mixed whitespace\"\n  Assets:A  50 USD\n\tAssets:B  -50 USD"
       },
@@ -357,9 +358,7 @@
       },
       "tags": [
         "whitespace"
-      ],
-      "skip": true,
-      "skip_reason": "Mixed tab/space indentation may be implementation-specific"
+      ]
     },
     {
       "id": "comment-in-transaction",

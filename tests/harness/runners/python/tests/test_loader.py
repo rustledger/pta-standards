@@ -114,41 +114,6 @@ class TestTestCase:
         )
         assert tc.get_test_type() == "bql"
 
-    def test_should_skip_global(self):
-        tc = TestCase(
-            id="t",
-            description="d",
-            input=TestInput(inline="x"),
-            expected=TestExpected(),
-            base_path=Path("."),
-            skip=True,
-            skip_reason="global skip",
-        )
-        assert tc.should_skip("beancount") == (True, "global skip")
-        assert tc.should_skip("rustledger") == (True, "global skip")
-
-    def test_should_skip_per_implementation(self):
-        tc = TestCase(
-            id="t",
-            description="d",
-            input=TestInput(inline="x"),
-            expected=TestExpected(),
-            base_path=Path("."),
-            skip_implementations={"beancount": "missing feature"},
-        )
-        assert tc.should_skip("beancount") == (True, "missing feature")
-        assert tc.should_skip("rustledger") == (False, None)
-
-    def test_should_skip_none(self):
-        tc = TestCase(
-            id="t",
-            description="d",
-            input=TestInput(inline="x"),
-            expected=TestExpected(),
-            base_path=Path("."),
-        )
-        assert tc.should_skip("beancount") == (False, None)
-
 
 class TestLoadManifest:
     def test_load_manifest(self, tmp_manifest: Path):
