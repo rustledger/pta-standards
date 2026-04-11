@@ -93,11 +93,16 @@
     },
     "skip": {
       "type": "boolean",
-      "description": "Whether to skip this test"
+      "description": "Whether to skip this test for all implementations"
     },
     "skip_reason": {
       "type": "string",
       "description": "Reason for skipping (if skip is true)"
+    },
+    "skip_implementations": {
+      "type": "object",
+      "description": "Per-implementation skip reasons, keyed by implementation name (e.g., 'beancount', 'rustledger')",
+      "additionalProperties": {"type": "string"}
     },
     "source": {
       "type": "object",

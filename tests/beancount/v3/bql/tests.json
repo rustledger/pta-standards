@@ -947,8 +947,9 @@
       "id": "bql-weight-function",
       "description": "WEIGHT function returns position weight",
       "spec_ref": "bql/functions.md#weight",
-      "skip": true,
-      "skip_reason": "weight function not available in beanquery",
+      "skip_implementations": {
+        "beancount": "weight function not available in beanquery"
+      },
       "input": {
         "file": "fixtures/with-costs.beancount",
         "query": "SELECT account, weight(position) FROM postings"

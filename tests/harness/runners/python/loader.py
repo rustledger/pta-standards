@@ -62,6 +62,7 @@ class TestCase:
     tags: list[str] = field(default_factory=list)
     skip: bool = False
     skip_reason: str | None = None
+    skip_implementations: dict[str, str] = field(default_factory=dict)
     suite: str = ""
 
     def get_test_type(self) -> str:
@@ -71,6 +72,14 @@ class TestCase:
         if self.expected.validate is not None:
             return "validation"
         return "syntax"
+
+    def should_skip(self, implementation: str) -> tuple[bool, str | None]:
+        """Return (skip, reason) for the given implementation."""
+        if self.skip:
+            return True, self.skip_reason
+        if implementation in self.skip_implementations:
+            return True, self.skip_implementations[implementation]
+        return False, None
 
 
 @dataclass
@@ -143,6 +152,7 @@ def load_test_suite(path: Path) -> list[TestCase]:
             tags=test_data.get("tags", []),
             skip=test_data.get("skip", False),
             skip_reason=test_data.get("skip_reason"),
+            skip_implementations=test_data.get("skip_implementations", {}),
             suite=suite_name,
         )
         tests.append(test_case)
