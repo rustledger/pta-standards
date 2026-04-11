@@ -381,10 +381,8 @@
     {
       "id": "document-directive",
       "description": "Document directive",
-      "skip": true,
-      "skip_reason": "Document validation checks file existence during load - requires test fixture file",
       "input": {
-        "inline": "2024-01-01 open Assets:Checking\n\n2024-01-15 document Assets:Checking \"statement.pdf\""
+        "file": "fixtures/document-directive.beancount"
       },
       "expected": {
         "parse": "success"

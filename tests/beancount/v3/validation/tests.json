@@ -252,13 +252,11 @@
     },
     {
       "id": "include-cycle-detection",
-      "description": "Circular include is detected",
-      "skip": true,
-      "skip_reason": "Requires external file setup",
+      "description": "Circular include is detected as duplicate filename",
       "input": {"file": "fixtures/cycle-a.beancount"},
       "expected": {
         "parse": "error",
-        "error_contains": ["Circular"]
+        "error_contains": ["Duplicate filename"]
       },
       "tags": ["include", "cycle"]
     }

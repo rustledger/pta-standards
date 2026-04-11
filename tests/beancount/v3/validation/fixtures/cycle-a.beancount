@@ -1,0 +1,5 @@
+; Circular include test file A
+; Includes cycle-b which includes this file back
+include "cycle-b.beancount"
+
+2024-01-01 open Assets:A USD
