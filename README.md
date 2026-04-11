@@ -62,8 +62,8 @@ Last updated: 2026-04-11
 
 | Implementation | Version | Passed | Failed | Skipped | Status |
 |---------------|---------|--------|--------|---------|--------|
-| Python beancount | 3.2.0 | 266 | 0 | 15 | :white_check_mark: |
-| Rustledger | 0.11.0 | 267 | 0 | 14 | :white_check_mark: |
+| Python beancount | 3.2.0 | 267 | 3 | 4 | :x: |
+| Rustledger | 0.11.0 | 269 | 1 | 4 | :x: |
 
 Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
 <!-- CONFORMANCE-RESULTS-END -->
