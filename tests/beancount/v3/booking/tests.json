@@ -107,8 +107,6 @@
       "id": "booking-average-cost",
       "description": "AVERAGE booking uses weighted average cost",
       "spec_ref": "booking.md#average-cost",
-      "skip": true,
-      "skip_reason": "AVERAGE booking method not implemented in Python beancount 3.x",
       "input": {
         "inline": "2024-01-01 open Assets:Stock AAPL \"AVERAGE\"\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1 at 100\"\n  Assets:Stock 10 AAPL {100 USD}\n  Assets:Cash -1000 USD\n\n2024-01-20 * \"Buy lot 2 at 200\"\n  Assets:Stock 10 AAPL {200 USD}\n  Assets:Cash -2000 USD\n\n2024-02-15 * \"Sell at average (150)\"\n  Assets:Stock -5 AAPL {}\n  Assets:Cash 800 USD\n  Income:Gains"
       },
@@ -260,8 +258,6 @@
       "id": "cost-asterisk-merge",
       "description": "Asterisk * in cost merges all lots",
       "spec_ref": "costs.md#cost-merge",
-      "skip": true,
-      "skip_reason": "Cost merging {*} not implemented in Python beancount 3.x",
       "input": {
         "inline": "2024-01-01 open Assets:Stock AAPL\n2024-01-01 open Assets:Cash USD\n2024-01-01 open Income:Gains\n\n2024-01-15 * \"Buy lot 1\"\n  Assets:Stock 10 AAPL {150 USD}\n  Assets:Cash -1500 USD\n\n2024-01-20 * \"Buy lot 2\"\n  Assets:Stock 10 AAPL {160 USD}\n  Assets:Cash -1600 USD\n\n2024-02-15 * \"Sell with merge\"\n  Assets:Stock -5 AAPL {*}\n  Assets:Cash 800 USD\n  Income:Gains"
       },
