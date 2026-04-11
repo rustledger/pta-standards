@@ -50,6 +50,14 @@ def run_tests(
     results = []
 
     for test in tests:
+        # Check per-implementation skip. We mutate test.skip/skip_reason so
+        # the existing executor skip check picks it up. This is scoped to
+        # the current run and isn't persisted.
+        skip, reason = test.should_skip(_implementation)
+        if skip and not test.skip:
+            test.skip = True
+            test.skip_reason = reason
+
         executor = get_executor(test)
         result = executor.execute(test)
         results.append(result)
