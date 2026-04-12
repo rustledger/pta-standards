@@ -60,10 +60,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 Last updated: 2026-04-12
 
-| Implementation | Version | Passed | Failed | Skipped | Status |
-|---------------|---------|--------|--------|---------|--------|
-| Python beancount | 3.2.0 | 267 | 3 | 4 | :x: |
-| Rustledger | 0.11.0 | 269 | 1 | 4 | :x: |
+### Beancount v3 Spec
+
+| Implementation | Version | Passed | Failed | Status |
+|---------------|---------|--------|--------|--------|
+| Python beancount | 3.2.0 | 267 | 3 | :x: |
+| Rustledger | 0.11.0 | 269 | 1 | :x: |
+
+### PTA Beancount v3 Addendum
+
+| Implementation | Version | Passed | Failed | Status |
+|---------------|---------|--------|--------|--------|
+| Python beancount | 3.2.0 | 2 | 2 | :x: |
+| Rustledger | 0.11.0 | 3 | 1 | :x: |
 
 Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
 <!-- CONFORMANCE-RESULTS-END -->
