@@ -385,10 +385,10 @@
       },
       "tags": [
         "whitespace",
-        "transaction"
+        "transaction",
+        "addendum"
       ],
-      "skip": true,
-      "skip_reason": "Empty lines within transaction may end the transaction in some implementations"
+      "spec_ref": "addendum.md"
     },
     {
       "id": "account-starting-with-number",

@@ -21,6 +21,10 @@ jobs:
       passed: ${{ steps.parse.outputs.passed }}
       failed: ${{ steps.parse.outputs.failed }}
       skipped: ${{ steps.parse.outputs.skipped }}
+      base_passed: ${{ steps.parse.outputs.base_passed }}
+      base_failed: ${{ steps.parse.outputs.base_failed }}
+      addendum_passed: ${{ steps.parse.outputs.addendum_passed }}
+      addendum_failed: ${{ steps.parse.outputs.addendum_failed }}
       version: ${{ steps.version.outputs.version }}
 
     steps:
@@ -61,14 +65,46 @@ jobs:
           cd tests/harness/runners/python
           if [ -s results.json ]; then
             python -c "
-          import json
+          import json, glob
+          from pathlib import Path
+
+          # Load results
           with open('results.json') as f:
               data = json.load(f)
+
+          # Build set of addendum test IDs from test definitions
+          addendum_ids = set()
+          for tf in glob.glob('../../../../tests/beancount/v3/**/tests.json', recursive=True):
+              for t in json.load(open(tf)).get('tests', []):
+                  if 'addendum' in t.get('tags', []):
+                      addendum_ids.add(t['id'])
+
+          # Split results
+          base = {'passed': 0, 'failed': 0, 'skipped': 0}
+          addendum = {'passed': 0, 'failed': 0, 'skipped': 0}
+          for r in data['results']:
+              bucket = addendum if r['id'] in addendum_ids else base
+              if r['status'] == 'pass':
+                  bucket['passed'] += 1
+              elif r['status'] == 'fail':
+                  bucket['failed'] += 1
+              elif r['status'] == 'skip':
+                  bucket['skipped'] += 1
+
+          # Output totals
           s = data['summary']
           print(f\"total={s['total']}\")
           print(f\"passed={s['passed']}\")
           print(f\"failed={s['failed']}\")
           print(f\"skipped={s['skipped']}\")
+
+          # Output base spec counts
+          print(f\"base_passed={base['passed']}\")
+          print(f\"base_failed={base['failed']}\")
+
+          # Output addendum counts
+          print(f\"addendum_passed={addendum['passed']}\")
+          print(f\"addendum_failed={addendum['failed']}\")
           " >> $GITHUB_OUTPUT
           else
             echo "results.json is empty or missing"
@@ -76,6 +112,10 @@ jobs:
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
             echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "base_passed=0" >> $GITHUB_OUTPUT
+            echo "base_failed=0" >> $GITHUB_OUTPUT
+            echo "addendum_passed=0" >> $GITHUB_OUTPUT
+            echo "addendum_failed=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload test results
@@ -88,11 +128,10 @@ jobs:
         run: |
           echo "## Python Beancount (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Spec | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Beancount v3 | ${{ steps.parse.outputs.base_passed }} | ${{ steps.parse.outputs.base_failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PTA Addendum | ${{ steps.parse.outputs.addendum_passed }} | ${{ steps.parse.outputs.addendum_failed }} |" >> $GITHUB_STEP_SUMMARY
 
   rustledger:
     name: Rustledger
@@ -102,6 +141,10 @@ jobs:
       passed: ${{ steps.parse.outputs.passed }}
       failed: ${{ steps.parse.outputs.failed }}
       skipped: ${{ steps.parse.outputs.skipped }}
+      base_passed: ${{ steps.parse.outputs.base_passed }}
+      base_failed: ${{ steps.parse.outputs.base_failed }}
+      addendum_passed: ${{ steps.parse.outputs.addendum_passed }}
+      addendum_failed: ${{ steps.parse.outputs.addendum_failed }}
       version: ${{ steps.version.outputs.version }}
 
     steps:
@@ -168,14 +211,37 @@ jobs:
           cd tests/harness/runners/python
           if [ -s results.json ]; then
             python -c "
-          import json
+          import json, glob
+
           with open('results.json') as f:
               data = json.load(f)
+
+          addendum_ids = set()
+          for tf in glob.glob('../../../../tests/beancount/v3/**/tests.json', recursive=True):
+              for t in json.load(open(tf)).get('tests', []):
+                  if 'addendum' in t.get('tags', []):
+                      addendum_ids.add(t['id'])
+
+          base = {'passed': 0, 'failed': 0, 'skipped': 0}
+          addendum = {'passed': 0, 'failed': 0, 'skipped': 0}
+          for r in data['results']:
+              bucket = addendum if r['id'] in addendum_ids else base
+              if r['status'] == 'pass':
+                  bucket['passed'] += 1
+              elif r['status'] == 'fail':
+                  bucket['failed'] += 1
+              elif r['status'] == 'skip':
+                  bucket['skipped'] += 1
+
           s = data['summary']
           print(f\"total={s['total']}\")
           print(f\"passed={s['passed']}\")
           print(f\"failed={s['failed']}\")
           print(f\"skipped={s['skipped']}\")
+          print(f\"base_passed={base['passed']}\")
+          print(f\"base_failed={base['failed']}\")
+          print(f\"addendum_passed={addendum['passed']}\")
+          print(f\"addendum_failed={addendum['failed']}\")
           " >> $GITHUB_OUTPUT
           else
             echo "results.json is empty or missing"
@@ -183,6 +249,10 @@ jobs:
             echo "passed=0" >> $GITHUB_OUTPUT
             echo "failed=0" >> $GITHUB_OUTPUT
             echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "base_passed=0" >> $GITHUB_OUTPUT
+            echo "base_failed=0" >> $GITHUB_OUTPUT
+            echo "addendum_passed=0" >> $GITHUB_OUTPUT
+            echo "addendum_failed=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload test results
@@ -196,11 +266,10 @@ jobs:
         run: |
           echo "## Rustledger (v${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Passed | ${{ steps.parse.outputs.passed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Failed | ${{ steps.parse.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Skipped | ${{ steps.parse.outputs.skipped }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Spec | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Beancount v3 | ${{ steps.parse.outputs.base_passed }} | ${{ steps.parse.outputs.base_failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PTA Addendum | ${{ steps.parse.outputs.addendum_passed }} | ${{ steps.parse.outputs.addendum_failed }} |" >> $GITHUB_STEP_SUMMARY
 
   update-readme:
     name: Update README
@@ -226,13 +295,15 @@ jobs:
           python scripts/update_readme.py \
             --readme README.md \
             --beancount-version "${{ needs.beancount-v3.outputs.version }}" \
-            --beancount-passed "${{ needs.beancount-v3.outputs.passed }}" \
-            --beancount-failed "${{ needs.beancount-v3.outputs.failed }}" \
-            --beancount-skipped "${{ needs.beancount-v3.outputs.skipped }}" \
+            --beancount-base-passed "${{ needs.beancount-v3.outputs.base_passed }}" \
+            --beancount-base-failed "${{ needs.beancount-v3.outputs.base_failed }}" \
+            --beancount-addendum-passed "${{ needs.beancount-v3.outputs.addendum_passed }}" \
+            --beancount-addendum-failed "${{ needs.beancount-v3.outputs.addendum_failed }}" \
             --rustledger-version "${{ needs.rustledger.outputs.version }}" \
-            --rustledger-passed "${{ needs.rustledger.outputs.passed }}" \
-            --rustledger-failed "${{ needs.rustledger.outputs.failed }}" \
-            --rustledger-skipped "${{ needs.rustledger.outputs.skipped }}"
+            --rustledger-base-passed "${{ needs.rustledger.outputs.base_passed }}" \
+            --rustledger-base-failed "${{ needs.rustledger.outputs.base_failed }}" \
+            --rustledger-addendum-passed "${{ needs.rustledger.outputs.addendum_passed }}" \
+            --rustledger-addendum-failed "${{ needs.rustledger.outputs.addendum_failed }}"
 
       - name: Commit and push
         run: |
