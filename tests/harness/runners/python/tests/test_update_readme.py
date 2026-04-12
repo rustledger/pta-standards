@@ -27,40 +27,45 @@ class TestUpdateReadme:
         update_readme(
             str(readme),
             beancount_version="3.0.0",
-            beancount_passed="10",
-            beancount_failed="0",
-            beancount_skipped="2",
+            beancount_base_passed="10",
+            beancount_base_failed="0",
+            beancount_addendum_passed="4",
+            beancount_addendum_failed="0",
             rustledger_version="0.1.0",
-            rustledger_passed="8",
-            rustledger_failed="1",
-            rustledger_skipped="3",
+            rustledger_base_passed="8",
+            rustledger_base_failed="1",
+            rustledger_addendum_passed="3",
+            rustledger_addendum_failed="1",
         )
 
         content = readme.read_text()
         assert "CONFORMANCE-RESULTS-START" in content
         assert "CONFORMANCE-RESULTS-END" in content
         assert "3.0.0" in content
-        assert ":white_check_mark:" in content
-        assert ":x:" in content
+        assert "Beancount v3 Spec" in content
+        assert "PTA Beancount v3 Addendum" in content
 
     def test_replaces_existing_section(self, tmp_path: Path):
         readme = tmp_path / "README.md"
         readme.write_text(
             "# Project\n\n"
-            "<!-- CONFORMANCE-RESULTS-START -->\nOLD CONTENT\n<!-- CONFORMANCE-RESULTS-END -->\n\n"
+            "<!-- CONFORMANCE-RESULTS-START -->\nOLD CONTENT\n"
+            "<!-- CONFORMANCE-RESULTS-END -->\n\n"
             "Footer.\n"
         )
 
         update_readme(
             str(readme),
             beancount_version="3.1.0",
-            beancount_passed="20",
-            beancount_failed="0",
-            beancount_skipped="0",
+            beancount_base_passed="20",
+            beancount_base_failed="0",
+            beancount_addendum_passed="4",
+            beancount_addendum_failed="0",
             rustledger_version="0.2.0",
-            rustledger_passed="18",
-            rustledger_failed="0",
-            rustledger_skipped="0",
+            rustledger_base_passed="18",
+            rustledger_base_failed="0",
+            rustledger_addendum_passed="4",
+            rustledger_addendum_failed="0",
         )
 
         content = readme.read_text()
