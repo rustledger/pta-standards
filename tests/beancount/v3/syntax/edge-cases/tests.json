@@ -5,20 +5,18 @@
   "tests": [
     {
       "id": "unicode-account-name-edge",
-      "description": "Account name with Unicode characters (rejected by Beancount)",
+      "description": "Account name with CJK Unicode characters (permitted by addendum)",
+      "spec_ref": "addendum.md",
       "input": {
         "inline": "2024-01-01 open Assets:銀行口座"
       },
       "expected": {
-        "parse": "error",
-        "error_contains": [
-          "Invalid account"
-        ]
+        "parse": "success"
       },
       "tags": [
         "unicode",
         "account",
-        "invalid"
+        "addendum"
       ]
     },
     {
