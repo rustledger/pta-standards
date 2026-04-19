@@ -58,21 +58,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 <!-- CONFORMANCE-RESULTS-START -->
 ## Conformance Test Results
 
-Last updated: 2026-04-18
+Last updated: 2026-04-19
 
 ### Beancount v3 Spec
 
 | Implementation | Version | Passed | Failed | Status |
 |---------------|---------|--------|--------|--------|
-| Python beancount | 3.2.0 | 267 | 3 | :x: |
-| Rustledger | 0.12.0 | 268 | 2 | :x: |
+| Python beancount | 3.2.0 | 266 | 3 | :x: |
+| Rustledger | 0.12.0 | 268 | 1 | :x: |
 
 ### PTA Beancount v3 Addendum
 
 | Implementation | Version | Passed | Failed | Status |
 |---------------|---------|--------|--------|--------|
-| Python beancount | 3.2.0 | 2 | 2 | :x: |
-| Rustledger | 0.12.0 | 3 | 1 | :x: |
+| Python beancount | 3.2.0 | 2 | 3 | :x: |
+| Rustledger | 0.12.0 | 4 | 1 | :x: |
 
 Tests run nightly against `main` branches. See [conformance documentation](formats/beancount/v3/conformance/) for details.
 <!-- CONFORMANCE-RESULTS-END -->
