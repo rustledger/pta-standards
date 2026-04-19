@@ -5,7 +5,8 @@
     { "pattern": "^[^h]" },
     { "pattern": "^http://localhost" },
     { "pattern": "^http://ofxhome" },
-    { "pattern": "^https://www.iso.org" }
+    { "pattern": "^https://www.iso.org" },
+    { "pattern": "^https://beancount.github.io" }
   ],
   "httpHeaders": [
     {

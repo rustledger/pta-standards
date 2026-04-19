@@ -90,6 +90,47 @@ would break existing files.
 
 ---
 
+## 5. Unicode Characters in Account Names
+
+**Beancount status**: The v3 spec requires account name components to
+start with an ASCII uppercase letter (`[A-Z]`). This restriction
+originates from the C flex lexer used in beancount v1/v2, which had
+poor Unicode support. The v3 spec codified this limitation rather than
+fixing it.
+
+This has been an open issue in upstream beancount since 2015:
+- [beancount#161](https://github.com/beancount/beancount/issues/161) — Russian (2015)
+- [beancount#398](https://github.com/beancount/beancount/issues/398) — CJK (2017)
+- [beancount#733](https://github.com/beancount/beancount/issues/733) — Chinese (2023)
+
+**PTA-standards definition**: Account name components MAY start with
+any Unicode uppercase letter (`\p{Lu}`), titlecase letter (`\p{Lt}`),
+or ideographic character (`\p{Lo}`). The ASCII-only restriction is
+removed.
+
+Valid account starts include:
+- Latin uppercase: `A-Z` (unchanged)
+- Cyrillic uppercase: `А-Я` (e.g., `Активы:Банк`)
+- Greek uppercase: `Α-Ω` (e.g., `Ενεργητικό:Τράπεζα`)
+- CJK ideographs: `漢字` (e.g., `資産:銀行口座`)
+- Other Unicode letters without case: `\p{Lo}`
+
+Subsequent characters in account components follow the same rules as
+the base spec (ASCII alphanumeric, hyphens, and UTF-8 characters).
+
+**Rationale**: There is no semantic reason to restrict account names
+to ASCII. The restriction excludes every non-Latin writing system,
+affecting users of Cyrillic, CJK, Arabic, Devanagari, and other
+scripts. Plain text accounting should be accessible to all languages.
+The `name_assets`, `name_liabilities`, etc. options already allow
+non-ASCII account type roots, making the component restriction
+inconsistent.
+
+**Test**: `unicode-account-name-edge`
+
+---
+
 ## Changelog
 
+- 2026-04-18: Add section 5 — Unicode account names
 - 2026-04-12: Initial addendum with 4 behavior definitions
