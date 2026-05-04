@@ -58,7 +58,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 <!-- CONFORMANCE-RESULTS-START -->
 ## Conformance Test Results
 
-Last updated: 2026-05-03
+Last updated: 2026-05-04
 
 ### Beancount v3 Spec
 
