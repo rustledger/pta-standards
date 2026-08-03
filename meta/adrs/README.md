@@ -11,6 +11,7 @@ This directory contains Architecture Decision Records (ADRs) documenting signifi
 | 0003 | EBNF + ABNF Grammars | Accepted |
 | 0004 | JSON Schema 2020-12 | Accepted |
 | 0005 | Tree-sitter as Primary Editor Grammar | Accepted |
+| [0006](0006-enterprise-regulated-scope.md) | Enterprise/Regulated Scope with Layered Model | Proposed |
 
 ## Format
 
