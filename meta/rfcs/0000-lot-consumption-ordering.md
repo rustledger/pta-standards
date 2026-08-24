@@ -252,29 +252,36 @@ slots on `(sort key, earliest slot holding an interchangeable lot)` rather
 than on `(sort key, own index)`, keeping per-acquisition provenance available
 for diagnostics.
 
-**That is not a one-line change, and an earlier draft of this RFC was wrong to
-say so.** The ordering needs a map from lot identity to its earliest slot, and
-where that map lives dominates the cost. Measured on rustledger 0.22 against a
-20,000-transaction FIFO journal, where the unmodified build takes 21.9s:
+Rule 3 says conformance constrains behaviour and not representation. It does
+not promise that every route to conformance costs the same, and the spread is
+large. Measured on rustledger 0.22 against a 20,000-transaction FIFO journal
+that the unmodified build loads in 22.0s:
 
 | approach | 20,000 txns | versus baseline |
 | --- | --- | --- |
 | scan for the earliest match inside the sort comparator | 213s | 9.7x |
-| build the map once per sort, and per incremental insert | 124s | 5.7x |
-| carry the map in the ordered index and update it in place | 26.4s | 1.21x |
+| build the map once per sort, and once per incremental insert | 124s | 5.7x |
+| maintain an identity to earliest-slot map in the index | 26.4s | 1.21x |
+| key that map by slot instead, for the comparator | 25.2s | 1.15x |
+| derive the answer from an existing cost index | 21.8s | parity |
 
-The first two are the quadratic shape this codebase twice removed. Only the
-third is viable, and it does change the storage model: the index gains a
-`identity -> earliest slot` map that must be populated on build, updated on
-insert, and rebuilt when slot renumbering invalidates it.
+The first two are the quadratic shape rustledger removed in #2083 and #2091.
 
-Even then the remaining cost is real: 1.10x at 2,000 transactions and 1.21x at
-20,000 on a booking-heavy shape. Implementers should budget for that rather
-than expect it free. An implementation that merges eagerly at acquisition time
-satisfies Rule 1 by construction and pays none of this.
+**The last row is the one to implement, and it needs no new storage.** An
+implementation that already indexes lots by cost, as rustledger indexes them
+by `(units currency, cost number, cost currency)`, can answer "the earliest
+interchangeable slot" by scanning that bucket for the first member agreeing on
+date and label. Buckets hold one or two entries in practice, and the lookup
+hashes three cheap values rather than cloning a currency and a label string.
+Conforming then costs nothing measurable: parity at 2,000 and 20,000
+transactions, and parity on LIFO, HIFO and STRICT.
 
-Rule 3 still holds: conformance constrains behaviour, not representation. What
-it does not promise is that conforming is cheap for every representation.
+The intermediate rows are recorded because the obvious implementations are
+the slow ones, and an implementer who reaches for a dedicated identity map
+will pay 1.15x to 1.21x for no benefit.
+
+An implementation that merges eagerly at acquisition time satisfies Rule 1 by
+construction and pays none of this.
 
 ## Open Questions
 
@@ -305,8 +312,11 @@ it does not promise is that conforming is cheap for every representation.
 - 2026-08-24: Corrected Implementation Notes. The first draft claimed
   conforming was "a change to one comparison, not to the storage model". A
   prototype disproved it: the naive form is 9.7x slower on a 20,000
-  transaction journal, and the viable form requires a maintained map in the
-  index. Measurements added.
+  transaction journal.
+- 2026-08-24: Corrected them again, in the other direction. Deriving the
+  answer from an existing cost index conforms at PARITY and needs no new
+  storage, where the previous note had settled for 1.21x. Full measurement
+  spread recorded so implementers can avoid the slow routes.
 
 ---
 
