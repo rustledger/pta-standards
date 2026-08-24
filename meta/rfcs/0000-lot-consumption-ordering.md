@@ -247,41 +247,48 @@ constrains formats that carry per-lot cost basis.
 
 ## Implementation Notes
 
-An implementation that stores one slot per acquisition conforms by ordering
-slots on `(sort key, earliest slot holding an interchangeable lot)` rather
-than on `(sort key, own index)`, keeping per-acquisition provenance available
-for diagnostics.
+There are two ways to conform, and they are not close in cost.
 
-Rule 3 says conformance constrains behaviour and not representation. It does
-not promise that every route to conformance costs the same, and the spread is
-large. Measured on rustledger 0.22 against a 20,000-transaction FIFO journal
-that the unmodified build loads in 22.0s:
+**Merge at acquisition.** Store interchangeable lots as one position, so the
+group has one slot rather than several that must be kept adjacent. Rule 1
+then holds by construction: the group occupies its position until its units
+reach zero, and a re-acquisition after a full drain lands at the end, because
+that is what a single position does. Ordering needs no secondary key at all.
+
+This is what Python Beancount does, keying its inventory on
+`(currency, cost)`. It is also what rustledger now does: `add` already merged
+cost-less positions, so implementing Rule 1 meant widening that gate rather
+than adding anything. Measured at parity with the unmerged build, marginally
+faster for having fewer positions to sort.
+
+**Keep one slot per acquisition** and reproduce the behaviour by ordering.
+Rule 3 permits this, and it keeps per-acquisition provenance available for
+diagnostics, but every version of it costs something. Against a 20,000
+transaction FIFO journal that an unmodified rustledger loads in 22.0s:
 
 | approach | 20,000 txns | versus baseline |
 | --- | --- | --- |
-| scan for the earliest match inside the sort comparator | 213s | 9.7x |
-| build the map once per sort, and once per incremental insert | 124s | 5.7x |
+| scan for the earliest interchangeable slot inside the sort comparator | 213s | 9.7x |
+| build a slot map once per sort, and once per incremental insert | 124s | 5.7x |
 | maintain an identity to earliest-slot map in the index | 26.4s | 1.21x |
-| key that map by slot instead, for the comparator | 25.2s | 1.15x |
-| derive the answer from an existing cost index | 21.8s | parity |
+| key that map by slot, for the comparator | 25.2s | 1.15x |
+| merge at acquisition instead | 21.8s | parity |
 
-The first two are the quadratic shape rustledger removed in #2083 and #2091.
+The first two are quadratic. The middle two are not, and are still slower
+than merging, because each reconstructs at several call sites a property that
+merging provides once.
 
-**The last row is the one to implement, and it needs no new storage.** An
-implementation that already indexes lots by cost, as rustledger indexes them
-by `(units currency, cost number, cost currency)`, can answer "the earliest
-interchangeable slot" by scanning that bucket for the first member agreeing on
-date and label. Buckets hold one or two entries in practice, and the lookup
-hashes three cheap values rather than cloning a currency and a label string.
-Conforming then costs nothing measurable: parity at 2,000 and 20,000
-transactions, and parity on LIFO, HIFO and STRICT.
+There is a subtler trap in the third and fourth rows, worth stating because
+it cost real time to find. Deriving a group's position from its earliest
+SURVIVING member looks equivalent to Rule 1 and is not: draining the earliest
+member moves the survivors, so a group sitting before another lot jumps
+behind it part-way through a journal. Reproducing Rule 1 by ordering requires
+an anchor that is stable across drains and across any slot renumbering, which
+means state maintained in three places rather than one comparison.
 
-The intermediate rows are recorded because the obvious implementations are
-the slow ones, and an implementer who reaches for a dedicated identity map
-will pay 1.15x to 1.21x for no benefit.
-
-An implementation that merges eagerly at acquisition time satisfies Rule 1 by
-construction and pays none of this.
+**Recommendation: merge at acquisition.** Rule 3 stands, and an
+implementation with a strong reason to keep per-acquisition storage may, but
+it should expect to pay for it rather than expect it free.
 
 ## Open Questions
 
@@ -317,6 +324,12 @@ construction and pays none of this.
   answer from an existing cost index conforms at PARITY and needs no new
   storage, where the previous note had settled for 1.21x. Full measurement
   spread recorded so implementers can avoid the slow routes.
+- 2026-08-24: Rewrote Implementation Notes around merging at acquisition,
+  which is what a reference implementation of Rule 1 turned out to be. The
+  ordering approaches the earlier drafts described are all attempts to
+  reproduce Rule 1 while keeping per-acquisition storage, and every one is
+  slower than simply satisfying it. rustledger implements this as of
+  rustledger#2139.
 
 ---
 
