@@ -247,15 +247,34 @@ constrains formats that carry per-lot cost basis.
 
 ## Implementation Notes
 
-Rule 3 exists so that an implementation need not restructure its inventory. An
-implementation that stores one slot per acquisition can conform by ordering
-slots on `(sort key, index of the earliest acquisition sharing this lot
-identity)` rather than on `(sort key, own index)`. That is a change to one
-comparison, not to the storage model, and it keeps per-acquisition provenance
-available for diagnostics.
+An implementation that stores one slot per acquisition conforms by ordering
+slots on `(sort key, earliest slot holding an interchangeable lot)` rather
+than on `(sort key, own index)`, keeping per-acquisition provenance available
+for diagnostics.
 
-Implementations that merge eagerly at acquisition time satisfy Rule 1 by
-construction.
+**That is not a one-line change, and an earlier draft of this RFC was wrong to
+say so.** The ordering needs a map from lot identity to its earliest slot, and
+where that map lives dominates the cost. Measured on rustledger 0.22 against a
+20,000-transaction FIFO journal, where the unmodified build takes 21.9s:
+
+| approach | 20,000 txns | versus baseline |
+| --- | --- | --- |
+| scan for the earliest match inside the sort comparator | 213s | 9.7x |
+| build the map once per sort, and per incremental insert | 124s | 5.7x |
+| carry the map in the ordered index and update it in place | 26.4s | 1.21x |
+
+The first two are the quadratic shape this codebase twice removed. Only the
+third is viable, and it does change the storage model: the index gains a
+`identity -> earliest slot` map that must be populated on build, updated on
+insert, and rebuilt when slot renumbering invalidates it.
+
+Even then the remaining cost is real: 1.10x at 2,000 transactions and 1.21x at
+20,000 on a booking-heavy shape. Implementers should budget for that rather
+than expect it free. An implementation that merges eagerly at acquisition time
+satisfies Rule 1 by construction and pays none of this.
+
+Rule 3 still holds: conformance constrains behaviour, not representation. What
+it does not promise is that conforming is cheap for every representation.
 
 ## Open Questions
 
@@ -283,6 +302,11 @@ construction.
 ## Changelog
 
 - 2026-08-24: Initial draft
+- 2026-08-24: Corrected Implementation Notes. The first draft claimed
+  conforming was "a change to one comparison, not to the storage model". A
+  prototype disproved it: the naive form is 9.7x slower on a 20,000
+  transaction journal, and the viable form requires a maintained map in the
+  index. Measurements added.
 
 ---
 
