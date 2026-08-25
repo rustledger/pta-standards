@@ -1,0 +1,6 @@
+# Lint/format tooling, pinned so a new release cannot turn an unrelated PR red.
+# `ruff format` output is version-dependent: this repo sat five weeks between CI
+# runs, ruff shipped a new formatter style in that window, and the next PR to
+# touch anything (a markdown-only RFC) inherited 41 reformatted files it had not
+# written. Bump this deliberately, with the reformat in the same commit.
+ruff==0.16.2

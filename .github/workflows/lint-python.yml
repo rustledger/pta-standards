@@ -28,7 +28,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install -r requirements-dev.txt
 
       - name: Check formatting
         run: ruff format --check .
