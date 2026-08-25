@@ -8,6 +8,14 @@ line-length = 100
 extend-exclude = [
     "reference/",
     "conformance/benchmarks/",
+    # Ruff 0.16 began formatting Python code blocks inside Markdown. In this
+    # repo Markdown is the deliverable, not source: the snippets are
+    # illustrative and reference types the spec defines in prose rather than
+    # in code. Restyling 41 normative documents is a decision to make on
+    # purpose, not one to inherit from a formatter upgrade. Lint and format
+    # cover real .py files; drop this line and run `ruff format .` once if the
+    # examples should follow the same style.
+    "*.md",
 ]
 
 [tool.ruff.lint]
