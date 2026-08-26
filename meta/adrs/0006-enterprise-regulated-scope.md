@@ -447,7 +447,7 @@ audit trail). The closest projects each cover a subset:
 | **ERPNext** (GPL-3.0) | Full enterprise: hierarchical CoA, multi-company, fiscal year, financial reports, country localizations | Data model embedded in Frappe framework; not a separable specification |
 | **Odoo CE** (LGPL-3.0) | `account.move` / `account.move.line` model; integrity hash; fiscal periods; tax reporting | Data model is ORM-defined (Python/XML), not a standalone spec |
 | **LedgerSMB** (GPL-2.0+) | PostgreSQL-native DEB with stored procedures; payments as first-class entities | No formal data model documentation beyond SQL DDL |
-| **python-accounting** (MIT) | IFRS-compliant reports (IS, BS, CF); account type system (Bank, Receivable, COGS, etc.); multi-entity; tamper protection | No XBRL; largely dormant since 2024; small project (~150 stars) |
+| **python-accounting** (MIT) | IFRS-compliant reports (IS, BS, CF); account type system (Bank, Receivable, COGS, etc.); multi-entity; tamper protection | No XBRL; small project, and the account-type work is the part worth borrowing rather than the whole |
 
 ### Fintech ledgers (not accounting systems)
 
@@ -542,7 +542,7 @@ taxonomy alignment (XBRL GL), and regulatory output (SAF-T, iXBRL).
 
 - XBRL International: <https://www.xbrl.org/>
 - XBRL GL (Global Ledger Taxonomy):
-  <https://specifications.xbrl.org/work-product-index-gl-gl.html>
+  <https://specifications.xbrl.org/spec-group-index-xbrl-gl.html>
 - XBRL US GAAP Taxonomy: <https://xbrl.us/xbrl-taxonomy/>
 - IFRS Taxonomy: <https://www.ifrs.org/issued-standards/ifrs-taxonomy/>
 - OECD SAF-T: <https://www.oecd.org/tax/administration/standard-audit-file-tax-saf-t.htm>
