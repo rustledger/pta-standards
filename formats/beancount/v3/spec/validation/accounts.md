@@ -56,8 +56,9 @@ An account MUST NOT be opened twice without an intervening close. Opening an alr
 
 An account MUST NOT be used in postings AFTER its close date.
 
-> **UNDEFINED**: Whether posting ON the close date is allowed is pending clarification.
-> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
+> **Defined by PTA-standards addendum**: Posting ON the close date is permitted.
+> The close date is the last day the account is active.
+> See [addendum.md](../addendum.md#1-posting-on-account-close-date).
 
 **Example:**
 ```beancount

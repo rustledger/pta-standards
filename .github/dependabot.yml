@@ -50,6 +50,18 @@ updates:
       - "javascript"
     open-pull-requests-limit: 5
 
+  # Python (lint/format tooling, pinned in requirements-dev.txt)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps):"
+    labels:
+      - "dependencies"
+      - "python"
+    open-pull-requests-limit: 5
+
   # Python (for test harness)
   - package-ecosystem: "pip"
     directory: "/tests/harness/runners/python"

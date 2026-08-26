@@ -194,12 +194,13 @@ Only one `pad` may precede each `balance` for a given account/currency. Multiple
 
 ### No Postings
 
-> **UNDEFINED**: Whether transactions with no postings should produce an error is pending clarification.
-> Tracked in: [python-beancount.md conformance issues](../../conformance/python-beancount.md)
+> **Defined by PTA-standards addendum**: Transactions with no postings
+> are valid. They are trivially balanced.
+> See [addendum.md](../addendum.md#3-transactions-with-no-postings).
 
 ```beancount
 2024-01-15 * "Empty transaction"
-; Should this be an error?
+; Valid — trivially balanced
 ```
 
 ### Single Posting

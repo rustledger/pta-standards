@@ -195,12 +195,9 @@ All directives automatically receive:
 
 ## Duplicate Keys
 
-> **UNDEFINED**: The behavior for duplicate metadata keys is pending clarification.
-> Tracked in: [python-beancount.md conformance issues](../conformance/python-beancount.md)
-
-Questions to resolve:
-- Should duplicate keys produce an error, warning, or be silently ignored?
-- If allowed, which value is retained (first or last)?
+> **Defined by PTA-standards addendum**: Duplicate metadata keys are accepted.
+> The last value takes precedence.
+> See [addendum.md](addendum.md#2-duplicate-metadata-keys).
 
 ```beancount
 2024-01-15 * "Purchase"

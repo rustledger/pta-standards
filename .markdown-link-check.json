@@ -20,6 +20,9 @@
     },
     {
       "pattern": "^https://www\\.iso20022\\.org/?$"
+    },
+    {
+      "pattern": "^https://beancount.github.io"
     }
   ],
   "httpHeaders": [
