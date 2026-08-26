@@ -1,16 +1,35 @@
 {
   "ignorePatterns": [
-    { "pattern": "^#" },
-    { "pattern": "^mailto:" },
-    { "pattern": "^[^h]" },
-    { "pattern": "^http://localhost" },
-    { "pattern": "^http://ofxhome" },
-    { "pattern": "^https://www.iso.org" },
-    { "pattern": "^https://beancount.github.io" }
+    {
+      "pattern": "^#"
+    },
+    {
+      "pattern": "^mailto:"
+    },
+    {
+      "pattern": "^[^h]"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^http://ofxhome"
+    },
+    {
+      "pattern": "^https://www.iso.org"
+    },
+    {
+      "pattern": "^https://www\\.iso20022\\.org/?$"
+    },
+    {
+      "pattern": "^https://beancount.github.io"
+    }
   ],
   "httpHeaders": [
     {
-      "urls": ["https://github.com"],
+      "urls": [
+        "https://github.com"
+      ],
       "headers": {
         "Accept-Encoding": "gzip, deflate"
       }
@@ -19,5 +38,12 @@
   "timeout": "10s",
   "retryOn429": true,
   "retryCount": 3,
-  "aliveStatusCodes": [200, 206, 301, 302, 308, 403]
+  "aliveStatusCodes": [
+    200,
+    206,
+    301,
+    302,
+    308,
+    403
+  ]
 }
