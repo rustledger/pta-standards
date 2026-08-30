@@ -3,4 +3,4 @@
 # runs, ruff shipped a new formatter style in that window, and the next PR to
 # touch anything (a markdown-only RFC) inherited 41 reformatted files it had not
 # written. Bump this deliberately, with the reformat in the same commit.
-ruff==0.16.4
+ruff==0.16.5
