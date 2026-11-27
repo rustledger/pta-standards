@@ -1,0 +1,105 @@
+name: Semantic Differential (nightly)
+
+# The large sweep of ptadiff's semantic differential: tens of thousands of
+# generated, well-formed beancount ledgers (and seeds the pull-request sample
+# never sees) loaded by beancount 3.2.3 and by rustledger's main branch, each
+# compared by what a full load makes of it (tooling/differential/SNAPSHOT.md).
+# rustledger's own CI runs a pinned 10k sample per pull request
+# (scripts/compat-semantic-parity.py there); this finds what that misses.
+#
+# The report (categories, minimized examples, deviations) is an artifact and
+# the job summary. It does not fail on mismatches: a mismatch is a finding,
+# and rustledger's pinned gate is what fails on regressions. It fails when it
+# cannot run (beancount, ptadiff or rustledger's side missing), so a broken
+# sweep is never read as a clean one.
+
+on:
+  schedule:
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+    inputs:
+      rustledger_ref:
+        description: 'rustledger ref to compare'
+        default: 'main'
+        type: string
+      per_generator:
+        description: 'ledgers per generator and seed'
+        default: '5000'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    name: beancount 3.2.3 vs rustledger (semantic)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check out rustledger
+        uses: actions/checkout@v7
+        with:
+          repository: rustledger/rustledger
+          ref: ${{ github.event.inputs.rustledger_ref || 'main' }}
+          path: rustledger
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build rustledger's side
+        working-directory: rustledger
+        env:
+          CARGO_PROFILE_RELEASE_LTO: 'false'
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+        run: cargo build --release -p rustledger-loader --example semantic_snapshot
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install beancount 3.2.3 and ptadiff
+        run: |
+          pip install beancount==3.2.3 ./tooling/differential
+          python -I -c "import beancount, ptadiff; assert beancount.__version__ == '3.2.3'"
+
+      - name: Run the sweep
+        env:
+          N: ${{ github.event.inputs.per_generator || '5000' }}
+        run: |
+          set -euo pipefail
+          # A new seed every night (the day of the year), beside a fixed one,
+          # so the sweep both explores and stays comparable night to night.
+          day=$(date -u +%j)
+          gens=()
+          for g in s1 s2 s3 s4; do
+            gens+=(--gen "$g:1:$N" --gen "$g:$((1000 + 10#$day)):$N")
+          done
+          python -m ptadiff run --semantic --format beancount \
+            --impl "$PWD/rustledger/target/release/examples/semantic_snapshot" \
+            --hooks rustledger/scripts/semantic_parity_hooks.py \
+            "${gens[@]}" \
+            --minimize 20 --limit 60 \
+            --json semantic-report.json --markdown semantic-report.md \
+            --results semantic-results.jsonl > /dev/null
+
+      - name: Report to the job summary
+        if: always()
+        run: |
+          if [ -f semantic-report.md ]; then
+            cat semantic-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "no report: the sweep did not get that far" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: semantic-differential
+          path: |
+            semantic-report.json
+            semantic-report.md
+            semantic-results.jsonl
+          if-no-files-found: ignore

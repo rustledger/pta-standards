@@ -6,6 +6,15 @@
         [--hooks hooks.py] [--key shape] [--minimize 10] \\
         [--results out.jsonl] [--json report.json] [--markdown report.md]
     python -m ptadiff minimize --format beancount --impl "IMPL --jsonl" FILE
+
+With `--semantic`, each command works on whole ledgers compared by what a
+full load makes of them (`ptadiff.semantic`): `generate` writes a semantic
+generator's ledgers, `run` compares snapshots, and `minimize` shrinks a
+ledger (a file, or a `.jsonl` line's ledger with `--line`) keeping its key.
+
+    python -m ptadiff generate --semantic --format beancount --generator s1 --seed 1 --n 100 -o s1.jsonl
+    python -m ptadiff run --semantic --format beancount --impl "semantic_snapshot" \\
+        --gen smix:1:1000 [--input ledgers/] [--hooks hooks.py] [--minimize 10] [--json r.json]
 """
 
 from __future__ import annotations
@@ -25,6 +34,8 @@ from .model import content_id
 from .pipeline import Differ, load_hooks
 from .protocol import JsonlImplementation
 from .report import build_report, render_markdown
+from .semantic import SemanticDiffer
+from .snapshot import Ledger, ledger_id
 
 
 def read_inputs(path: Path, extensions: tuple[str, ...]):
@@ -60,8 +71,166 @@ def _setup(args):
     return fmt, Differ(fmt, oracle, impl, key=args.key, jobs=args.jobs)
 
 
+def read_ledgers(path: Path, extensions: tuple[str, ...]):
+    """`(source, label, Ledger)` for every ledger under `path`: as
+    `read_inputs`, a `.jsonl` line's `files` kept. A directory's or a
+    file's ledger is its one file (an `include` it holds names a file the
+    input does not have, the same on both sides)."""
+    if path.suffix == ".jsonl" and not path.is_dir():
+        with open(path, encoding="utf-8") as f:
+            for n, line in enumerate(f):
+                obj = json.loads(line)
+                led = Ledger.from_json(obj)
+                yield str(path), obj.get("id") or f"{path.name}:{n}", led
+        return
+    for source, label, text in read_inputs(path, extensions):
+        yield source, label, Ledger(text)
+
+
+def _semantic_setup(args):
+    fmt = get_format(args.format)
+    for name in args.no_normalize or ():
+        fmt.semantic_normalizer(name).enabled = False
+    if args.hooks:
+        load_hooks(fmt, args.hooks)
+    oracle = fmt.semantic_oracle()
+    impl = JsonlImplementation(args.impl)
+    return fmt, SemanticDiffer(fmt, oracle, impl, key=args.key, jobs=args.jobs)
+
+
+def cmd_semantic_run(args) -> int:
+    fmt, differ = _semantic_setup(args)
+    items: dict[str, tuple[str, str, Ledger]] = {}
+    for p in args.input or ():
+        for source, label, led in read_ledgers(Path(p), fmt.extensions):
+            items.setdefault(ledger_id(led), (source, label, led))
+    for spec in args.gen or ():
+        name, seed, n = spec.split(":")
+        for led in fmt.semantic_generators[name](int(seed), int(n)):
+            items.setdefault(ledger_id(led), (f"{name}:{seed}", "", led))
+    if not items:
+        print("error: no inputs", file=sys.stderr)
+        return 2
+    order = sorted(items)
+    verdicts = differ.evaluate([(i, items[i][2]) for i in order])
+    totals: Counter[str] = Counter()
+    deviations: Counter[str] = Counter()
+    by_source: dict[str, Counter[str]] = defaultdict(Counter)
+    members = []
+    main = fmt.main_file
+    for i in order:
+        source, label, led = items[i]
+        v = verdicts[i]
+        totals[v.status] += 1
+        by_source[source][v.status] += 1
+        if v.status == "deviation":
+            deviations[v.deviation or ""] += 1
+        if v.status == "mismatch":
+            members.append(Member(i, v.key or "", led.render(main), source, "", led))
+    clusters = cluster(members)
+    for c in clusters[: args.minimize]:
+        r = differ.minimize(c.shortest.payload, c.key)
+        c.minimized, c.minimized_complete = r.ledger.render(main), r.complete
+        c.features = fmt.ledger_features(r.ledger)
+    oracle = differ.oracle
+    report = build_report(
+        clusters,
+        totals,
+        by_source=by_source,
+        meta={
+            "title": "Differential semantic report",
+            "format": fmt.name,
+            "key": differ.key_name,
+            "oracle": {"name": oracle.name, "version": oracle.version()},
+            "implementation": differ.impl.name,
+            "ptadiff": __version__,
+            "deviations": dict(sorted(deviations.items())),
+        },
+    )
+    if args.results:
+        with open(args.results, "w", encoding="utf-8") as f:
+            for i in order:
+                v = verdicts[i]
+                source, label, led = items[i]
+                d = v.diff
+                f.write(
+                    json.dumps(
+                        {
+                            "id": i,
+                            "source": source,
+                            "label": label,
+                            "status": v.status,
+                            "key": v.key,
+                            "crash": v.crash,
+                            **led.to_json(i, main),
+                            "diff": None
+                            if d is None
+                            else {
+                                "field": d.field,
+                                "path": d.path,
+                                "kind": d.kind,
+                                "file": d.file,
+                                "line": d.line,
+                                "subject": d.subject,
+                                "oracle": d.oracle,
+                                "impl": d.impl,
+                            },
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+    if args.json:
+        Path(args.json).write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    md = render_markdown(report, limit=args.limit)
+    if args.markdown:
+        Path(args.markdown).write_text(md, encoding="utf-8")
+    print(md)
+    return 0
+
+
+def cmd_semantic_minimize(args) -> int:
+    fmt, differ = _semantic_setup(args)
+    path = Path(args.file)
+    if path.suffix == ".jsonl":
+        ledgers = [led for _, _, led in read_ledgers(path, fmt.extensions)]
+        led = ledgers[args.line]
+    else:
+        led = Ledger(path.read_bytes().decode("utf-8"))
+    key = differ.keys_of([led])[0]
+    if key is None:
+        print("the ledger does not mismatch", file=sys.stderr)
+        return 1
+    r = differ.minimize(led, key, max_evaluations=args.budget)
+    print(
+        json.dumps(
+            {
+                "key": key,
+                "text": r.ledger.text,
+                "files": dict(r.ledger.files),
+                "features": fmt.ledger_features(r.ledger),
+                "evaluations": r.evaluations,
+                "complete": r.complete,
+            },
+            ensure_ascii=False,
+        )
+    )
+    return 0
+
+
 def cmd_generate(args) -> int:
     fmt = get_format(args.format)
+    if args.semantic:
+        main = fmt.main_file
+        led_lines = "".join(
+            json.dumps(led.to_json(ledger_id(led), main), ensure_ascii=False) + "\n"
+            for led in fmt.semantic_generators[args.generator](args.seed, args.n)
+        )
+        if args.output:
+            Path(args.output).write_text(led_lines, encoding="utf-8")
+        else:
+            sys.stdout.write(led_lines)
+        return 0
     gen = fmt.generators[args.generator]
     lines = "".join(
         json.dumps({"id": content_id(text), "text": text}) + "\n" for text in gen(args.seed, args.n)
@@ -74,6 +243,8 @@ def cmd_generate(args) -> int:
 
 
 def cmd_run(args) -> int:
+    if args.semantic:
+        return cmd_semantic_run(args)
     fmt, differ = _setup(args)
     items: dict[str, tuple[str, str, str]] = {}
     for p in args.input or ():
@@ -150,6 +321,8 @@ def cmd_run(args) -> int:
 
 
 def cmd_minimize(args) -> int:
+    if args.semantic:
+        return cmd_semantic_minimize(args)
     fmt, differ = _setup(args)
     text = Path(args.file).read_bytes().decode("utf-8")
     key = differ.keys_of([text])[0]
@@ -176,6 +349,7 @@ def main(argv=None) -> int:
     g.add_argument("--seed", type=int, required=True)
     g.add_argument("--n", type=int, required=True)
     g.add_argument("-o", "--output")
+    g.add_argument("--semantic", action="store_true", help="a semantic generator's ledgers")
     g.set_defaults(fn=cmd_generate)
 
     def common(p):
@@ -185,6 +359,9 @@ def main(argv=None) -> int:
         p.add_argument("--key", help="category key name (default: the format's first)")
         p.add_argument("--no-normalize", action="append", metavar="NAME")
         p.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
+        p.add_argument(
+            "--semantic", action="store_true", help="compare full-load snapshots of ledgers"
+        )
 
     r = sub.add_parser("run", help="compare, categorize, cluster and report")
     common(r)
@@ -201,6 +378,7 @@ def main(argv=None) -> int:
     common(m)
     m.add_argument("file")
     m.add_argument("--budget", type=int, default=5000)
+    m.add_argument("--line", type=int, default=0, help="the .jsonl line's ledger (--semantic)")
     m.set_defaults(fn=cmd_minimize)
 
     args = ap.parse_args(argv)

@@ -11,6 +11,14 @@ format. A `FormatPlugin` supplies the rest:
   be added without touching any stage;
 * generators: seeded, deterministic input generators;
 * shrink units: how the minimizer cuts an input below the line level.
+
+For the SEMANTIC differential (`ptadiff.semantic`, whole ledgers compared by
+what a full load makes of them) a format supplies the same kinds of parts,
+in their own registries: `semantic_oracle`, `semantic_normalizers` (rewrites
+of a canonical snapshot), `semantic_keys`, `semantic_generators` (which
+return `ptadiff.snapshot.Ledger`s, so an input can span several files), and
+`deviations` (normally empty: an implementation's deliberate differences are
+its consumer's to declare, through a hooks module).
 """
 
 from __future__ import annotations
@@ -69,7 +77,14 @@ class Normalizer:
     enabled: bool = True
 
 
+def generic_semantic_key(m) -> str:
+    """`field|path|kind` of a semantic mismatch's first difference."""
+    d = m.diff
+    return f"{d.field}|{d.path}|{d.kind}"
+
+
 _SHRINK_WORDS = re.compile(r"[ \t]+|[^ \t\n]+|\n")
+_WORDS = re.compile(r"[^ \t\n]+[ \t]*|[ \t]+|\n")
 
 
 @dataclass
@@ -86,10 +101,76 @@ class FormatPlugin:
     #: Whether any key function reads `Mismatch.tokens` (the oracle's lexer
     #: is then run on every mismatching input).
     needs_tokens: bool = False
+    #: Semantic differential parts (see the module docstring). A semantic
+    #: normalizer's `side` is `oracle`, `impl` or `both`, and its `fn` takes
+    #: `(ledger, snapshot, side)` and returns the rewritten snapshot; or
+    #: `pair`, and its `fn` takes `(ledger, oracle, impl)` and returns both.
+    semantic_normalizers: list[Normalizer] = field(default_factory=list)
+    semantic_keys: dict[str, Callable] = field(default_factory=dict)
+    semantic_generators: dict[str, Generator] = field(default_factory=dict)
+    deviations: list = field(default_factory=list)
+    #: The main file's name, in the directory a multi-file input is laid out in.
+    main_file: str = "main"
 
     def __post_init__(self) -> None:
         if not self.keys:
             self.keys = {"coarse": self.coarse_key}
+        if not self.semantic_keys:
+            self.semantic_keys = {"field": generic_semantic_key}
+
+    # -- the semantic oracle ----------------------------------------------
+
+    def semantic_oracle(self, **options):
+        raise NotImplementedError(f"format {self.name!r} has no semantic oracle adapter")
+
+    def oracle_unjudged(self, ledger, snapshot: dict) -> str | None:
+        """Why the oracle's (canonical) snapshot cannot judge `ledger`, or
+        None. An oracle that could not run the ledger as written for a
+        reason of its ENVIRONMENT (a third-party plugin that is not
+        installed where it runs) gives no verdict on it, as a crash gives
+        none. None by default."""
+        return None
+
+    def well_formed(self, snapshot: dict) -> bool:
+        """Whether the oracle's (canonical) snapshot says the ledger parsed
+        cleanly. The semantic minimizer keeps only candidates that still do,
+        so a minimized example stays a ledger the oracle reads as written,
+        not one whose meaning hangs on how a parser recovers from an error
+        (that is the parse differential's subject). True by default."""
+        return True
+
+    def ledger_features(self, ledger) -> list[str]:
+        """The features a ledger is made of, for a report's minimized
+        examples. None by default."""
+        return []
+
+    def semantic_normalizer(self, name: str) -> Normalizer:
+        for n in self.semantic_normalizers:
+            if n.name == name:
+                return n
+        raise KeyError(f"format {self.name!r} has no semantic normalizer {name!r}")
+
+    def directive_lines(self, text: str, line: int) -> tuple[int, int]:
+        """The 1-based first and last line of the directive `line` is in: the
+        nearest line at or above it that starts in column 0 and is not blank
+        or a comment, through the last indented line after it. Every
+        plain-text-accounting format indents a directive's continuation
+        lines; a format that does not overrides this. `(line, line)` when
+        `line` is 0 or past the end."""
+        lines = text.split("\n")
+        if line <= 0 or line > len(lines):
+            return line, line
+
+        def top(s: str) -> bool:
+            return bool(s.strip()) and s[:1] not in (" ", "\t") and not s.startswith(";")
+
+        start = line
+        while start > 1 and not top(lines[start - 1]):
+            start -= 1
+        end = start
+        while end < len(lines) and lines[end][:1] in (" ", "\t") and lines[end].strip():
+            end += 1
+        return start, max(end, line)
 
     # -- the oracle -------------------------------------------------------
 
@@ -180,9 +261,14 @@ class FormatPlugin:
     def shrink_units(self, text: str, level: str) -> list[str]:
         """`text` cut into units whose concatenation is `text`, for the
         minimizer's `level`: `lines` (each with its `\\n`), `tokens` (runs of
-        blanks, runs of non-blanks, and newlines) or `chars`."""
+        blanks, runs of non-blanks, and newlines), `words` (a run of
+        non-blanks with the blanks after it, so dropping one never glues two
+        words together: the level that keeps a minimized ledger readable) or
+        `chars`."""
         if level == "lines":
             return [u for u in re.split(r"(?<=\n)", text) if u]
+        if level == "words":
+            return _WORDS.findall(text)
         if level == "tokens":
             return _SHRINK_WORDS.findall(text)
         if level == "chars":

@@ -124,6 +124,7 @@ jobs:
           python3.12 -m venv /tmp/venv-install
           /tmp/venv-install/bin/pip install ./tooling/differential
           (cd /tmp && /tmp/venv-install/bin/python -m ptadiff generate --format beancount --generator g3 --seed 1 --n 3 > /dev/null)
+          (cd /tmp && /tmp/venv-install/bin/python -m ptadiff generate --semantic --format beancount --generator s3 --seed 1 --n 3 > /dev/null)
 
   validate-examples:
     name: Validate Examples

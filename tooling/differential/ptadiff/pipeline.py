@@ -105,6 +105,13 @@ def load_hooks(fmt: FormatPlugin, path: str | Path) -> None:
     lists). They run after the format's own normalizers. This is where an
     implementation states its DELIBERATE differences from the oracle, so
     they are not counted as mismatches.
+
+    For the semantic differential it may also define
+    `normalize_oracle_snapshot(ledger, snapshot) -> snapshot`,
+    `normalize_impl_snapshot(ledger, snapshot) -> snapshot` (canonical
+    snapshots, see `ptadiff.snapshot`), and `DEVIATIONS`, a list of
+    `ptadiff.semantic.Deviation`: differences the implementation makes on
+    purpose, counted apart from the mismatches.
     """
     spec = importlib.util.spec_from_file_location("ptadiff_hooks", path)
     if spec is None or spec.loader is None:
@@ -119,3 +126,18 @@ def load_hooks(fmt: FormatPlugin, path: str | Path) -> None:
         fn = getattr(module, attr, None)
         if fn is not None:
             fmt.normalizers.append(Normalizer(f"hooks:{attr}", side, fn, f"from {path}"))
+    for attr, side in (
+        ("normalize_oracle_snapshot", "oracle"),
+        ("normalize_impl_snapshot", "impl"),
+    ):
+        fn = getattr(module, attr, None)
+        if fn is not None:
+            fmt.semantic_normalizers.append(
+                Normalizer(
+                    f"hooks:{attr}",
+                    side,
+                    lambda ledger, snap, _side, fn=fn: fn(ledger, snap),
+                    f"from {path}",
+                )
+            )
+    fmt.deviations.extend(getattr(module, "DEVIATIONS", ()))

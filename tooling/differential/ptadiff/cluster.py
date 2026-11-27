@@ -17,6 +17,9 @@ class Member:
     text: str
     source: str = ""
     label: str = ""
+    #: The input itself when it is more than `text` (a multi-file
+    #: `ptadiff.snapshot.Ledger`, whose `text` is its rendering).
+    payload: object = None
 
 
 @dataclass
@@ -26,6 +29,9 @@ class Cluster:
     #: The minimized form of `shortest`, once a minimizer has run.
     minimized: str | None = None
     minimized_complete: bool | None = None
+    #: What the minimized example is made of (the format's
+    #: `ledger_features`), for a semantic cluster.
+    features: list[str] | None = None
 
     @property
     def size(self) -> int:
