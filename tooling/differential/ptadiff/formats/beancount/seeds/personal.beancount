@@ -1,0 +1,96 @@
+; Personal Finance Example - Beancount
+; Demonstrates basic personal accounting with Beancount v3
+
+option "title" "Personal Finance"
+option "operating_currency" "USD"
+
+; ============================================================
+; Account Declarations
+; ============================================================
+
+2024-01-01 open Assets:Bank:Checking        USD
+2024-01-01 open Assets:Bank:Savings         USD
+2024-01-01 open Assets:Cash                 USD
+2024-01-01 open Liabilities:CreditCard      USD
+2024-01-01 open Income:Salary               USD
+2024-01-01 open Income:Interest             USD
+2024-01-01 open Expenses:Food:Groceries     USD
+2024-01-01 open Expenses:Food:Restaurants   USD
+2024-01-01 open Expenses:Housing:Rent       USD
+2024-01-01 open Expenses:Utilities:Electric USD
+2024-01-01 open Expenses:Utilities:Internet USD
+2024-01-01 open Expenses:Transportation:Gas USD
+2024-01-01 open Expenses:Entertainment      USD
+2024-01-01 open Equity:Opening-Balances     USD
+
+; ============================================================
+; Opening Balances
+; ============================================================
+
+2024-01-01 * "Opening Balances"
+  Assets:Bank:Checking         5000.00 USD
+  Assets:Bank:Savings         10000.00 USD
+  Assets:Cash                   200.00 USD
+  Liabilities:CreditCard       -500.00 USD
+  Equity:Opening-Balances
+
+; ============================================================
+; January Transactions
+; ============================================================
+
+2024-01-05 * "Whole Foods" "Weekly groceries"
+  Assets:Bank:Checking        -125.50 USD
+  Expenses:Food:Groceries      125.50 USD
+
+2024-01-10 * "Shell" "Gas fill-up"
+  Assets:Bank:Checking         -45.00 USD
+  Expenses:Transportation:Gas   45.00 USD
+
+2024-01-15 * "ACME Corp" "Salary deposit"
+  Assets:Bank:Checking        3500.00 USD
+  Income:Salary              -3500.00 USD
+
+2024-01-15 * "Landlord" "January rent"
+  Assets:Bank:Checking       -1500.00 USD
+  Expenses:Housing:Rent       1500.00 USD
+
+2024-01-18 * "Electric Company" "January electric bill"
+  Assets:Bank:Checking        -120.00 USD
+  Expenses:Utilities:Electric  120.00 USD
+
+2024-01-20 * "Thai Restaurant" "Dinner with friends"
+  Liabilities:CreditCard       -65.00 USD
+  Expenses:Food:Restaurants     65.00 USD
+
+2024-01-22 * "ISP" "Internet service"
+  Assets:Bank:Checking         -79.99 USD
+  Expenses:Utilities:Internet   79.99 USD
+
+2024-01-25 * "Transfer to Savings"
+  Assets:Bank:Checking       -1000.00 USD
+  Assets:Bank:Savings         1000.00 USD
+
+2024-01-28 * "ATM Withdrawal"
+  Assets:Bank:Checking        -200.00 USD
+  Assets:Cash                  200.00 USD
+
+2024-01-30 * "Coffee Shop"
+  Assets:Cash                   -5.50 USD
+  Expenses:Food:Restaurants      5.50 USD
+
+2024-01-31 * "Credit Card Payment"
+  Assets:Bank:Checking        -565.00 USD
+  Liabilities:CreditCard       565.00 USD
+
+2024-01-31 * "Bank" "Interest earned"
+  Assets:Bank:Savings            2.50 USD
+  Income:Interest               -2.50 USD
+
+; ============================================================
+; Balance Assertions
+; ============================================================
+
+2024-02-01 balance Assets:Bank:Checking     4864.51 USD
+2024-02-01 balance Assets:Bank:Savings     11002.50 USD
+2024-02-01 balance Assets:Cash               394.50 USD
+2024-02-01 balance Liabilities:CreditCard      0.00 USD

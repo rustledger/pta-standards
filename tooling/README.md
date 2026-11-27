@@ -47,6 +47,21 @@ diff/
 └── semantic.md   # Semantic diff rules
 ```
 
+### Differential Testing
+
+`ptadiff`, a Python package (not a specification): it compares a parser's
+errors with a reference implementation's, names each mismatch with a
+category key, minimizes examples while keeping their key, and reports
+per-category counts. Format-generic, with beancount complete and ledger /
+hledger stubs. See [differential/README.md](differential/README.md).
+
+```
+differential/
+├── README.md     # Pipeline, protocol, keys, usage
+├── ptadiff/      # The package (formats/, oracles/, minimize, cluster, report)
+└── tests/        # pytest suite
+```
+
 ### MCP Integration
 
 Model Context Protocol integration for AI assistants.

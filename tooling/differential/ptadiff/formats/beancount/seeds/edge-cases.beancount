@@ -1,0 +1,95 @@
+; Edge cases for parser fuzzing
+
+; Empty transaction
+2024-01-01 open Assets:A USD
+2024-01-01 open Assets:B USD
+
+; Minimum valid transaction
+2024-01-15 * ""
+  Assets:A  1 USD
+  Assets:B
+
+; Very long narration
+2024-01-15 * "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  Assets:A  1 USD
+  Assets:B
+
+; Very small amount
+2024-02-01 * "Tiny"
+  Assets:A  0.0001 USD
+  Assets:B
+
+; Very large amount
+2024-02-02 * "Huge"
+  Assets:A  999999999.99 USD
+  Assets:B
+
+; Negative zero
+2024-02-03 * "NegZero"
+  Assets:A  0 USD
+  Assets:B  0 USD
+
+; Many postings
+2024-01-01 open Expenses:A USD
+2024-01-01 open Expenses:B USD
+2024-01-01 open Expenses:C USD
+2024-01-01 open Expenses:D USD
+2024-01-01 open Expenses:E USD
+
+2024-03-01 * "Many postings"
+  Expenses:A  10 USD
+  Expenses:B  20 USD
+  Expenses:C  30 USD
+  Expenses:D  40 USD
+  Expenses:E  50 USD
+  Assets:A   -150 USD
+
+; Deep account hierarchy
+2024-01-01 open Expenses:A:B:C:D:E:F:G:H USD
+2024-04-01 * "Deep"
+  Expenses:A:B:C:D:E:F:G:H  1 USD
+  Assets:A
+
+; Tags and links together
+2024-05-01 * "Tagged" #tag1 #tag2 #tag3 ^link1 ^link2
+  Assets:A  1 USD
+  Assets:B
+
+; Metadata on everything
+2024-06-01 * "Meta"
+  memo: "test"
+  ref: "12345"
+  Assets:A  1 USD
+    lot: "A"
+  Assets:B
+    lot: "B"
+
+; Multiple currencies in one transaction
+2024-01-01 open Assets:EUR EUR
+2024-07-01 * "Multi-currency"
+  Assets:A    100 USD
+  Assets:EUR  85 EUR @ 1.1765 USD
+  Assets:B
+
+; Unicode in payee and narration
+2024-08-01 * "Café Müller" "Frühstück für zwei"
+  Expenses:A  25 USD
+  Assets:A
+
+; Date edge: leap year
+2024-02-29 * "Leap day"
+  Assets:A  1 USD
+  Assets:B
+
+; Date edge: year boundary
+2024-12-31 * "Year end"
+  Assets:A  1 USD
+  Assets:B
+
+; Consecutive semicolons (comments)
+; This is a comment
+;; Double comment
+;;; Triple comment
+
+; Balance at zero
+2024-12-31 balance Assets:B 0 USD
