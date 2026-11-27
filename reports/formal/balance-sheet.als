@@ -2,7 +2,7 @@
  * Balance Sheet Report Formal Model
  *
  * This is a reference to the core balance sheet model.
- * See core/formal/reports/balance-sheet.als for the full specification.
+ * See core/formal/reports/balance_sheet.als for the full specification.
  */
 
 module reports/formal/balance_sheet

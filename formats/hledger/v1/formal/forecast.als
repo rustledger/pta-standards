@@ -15,6 +15,11 @@ sig Date {
   ordinal: Int
 }
 
+-- Day ordinals follow the date ordering (distinct dates, distinct days)
+fact DateOrdinals {
+  all d: Date - last | d.ordinal < d.next.ordinal
+}
+
 sig Currency {}
 sig Amount {
   value: Int,
@@ -42,16 +47,15 @@ sig PeriodicTransaction {
 
 -- Period specification
 abstract sig Period {}
-sig Daily extends Period {}
-sig Weekly extends Period {}
-sig Monthly extends Period {}
-sig Quarterly extends Period {}
-sig Yearly extends Period {}
+abstract sig BasePeriod extends Period {}
+one sig Daily, Weekly, Monthly, Quarterly, Yearly extends BasePeriod {}
 
--- Custom period with interval
+-- Custom period with interval ("every 2 weeks"). The unit is a base period:
+-- Alloy functions cannot recurse, and nested intervals ("every 2 (every 3
+-- days)") are not hledger syntax.
 sig EveryN extends Period {
   n: Int,
-  unit: Period
+  unit: BasePeriod
 }
 
 -- Date range for forecast generation
@@ -60,34 +64,39 @@ sig DateRange {
   endDate: Date
 }
 
--- Period interval in days (simplified)
-fun periodDays[p: Period]: Int {
+-- Base period interval in days (simplified)
+fun baseDays[p: BasePeriod]: Int {
   p = Daily implies 1
   else p = Weekly implies 7
   else p = Monthly implies 30
   else p = Quarterly implies 90
-  else p = Yearly implies 365
-  else p in EveryN implies mul[p.n, periodDays[p.unit]]
-  else 0
+  else 365
 }
 
--- Generate dates for a periodic transaction within a range
+-- Period interval in days (simplified)
+fun periodDays[p: Period]: Int {
+  p in BasePeriod implies baseDays[p]
+  else mul[p.n, baseDays[p.unit]]
+}
+
+-- Generate dates for a periodic transaction within a range: exactly the
+-- dates in the range that lie on a period boundary
 pred GenerateDates[pt: PeriodicTransaction, range: DateRange, dates: set Date] {
-  all d: dates |
+  all d: Date | d in dates iff (
     gte[d.ordinal, range.startDate.ordinal] and
     lte[d.ordinal, range.endDate.ordinal] and
     -- Date is on the period boundary
-    rem[sub[d.ordinal, range.startDate.ordinal], periodDays[pt.period]] = 0
+    rem[sub[d.ordinal, range.startDate.ordinal], periodDays[pt.period]] = 0)
 }
 
--- Generate transactions from periodic template
+-- Generate transactions from periodic template: one transaction per
+-- generated date, each with the template's postings, and nothing else
 pred GenerateForecast[pt: PeriodicTransaction, range: DateRange, txns: set Transaction] {
   some dates: set Date |
     GenerateDates[pt, range, dates] and
-    -- Each date gets a transaction with the same postings
-    all d: dates | one t: txns |
-      t.date = d and
-      t.postings = pt.postings
+    txns.date = dates and
+    (all d: dates | one t: txns | t.date = d) and
+    (all t: txns | t.postings = pt.postings)
 }
 
 -- Forecast mode: only generate if --forecast flag is set
@@ -110,9 +119,7 @@ pred ForecastGeneration[pt: PeriodicTransaction, mode: ForecastMode, txns: set T
 --   expenses:food  $400
 --   budget:food
 pred BudgetAllocation[pt: PeriodicTransaction] {
-  all p: pt.postings |
-    -- Budget postings should balance
-    true
+  -- Budget postings should balance
   (sum p: pt.postings | p.amount.value) = 0
 }
 
@@ -129,15 +136,24 @@ pred MonthlyBudgetExample {
     BudgetAllocation[pt]
 }
 
+-- A range whose start does not come after its end
+pred ValidRange[range: DateRange] {
+  lte[range.startDate.ordinal, range.endDate.ordinal]
+}
+
 -- Forecast generates correct number of transactions
+-- (for a reversed range, days < 0 and the bound is meaningless: nothing is
+-- generated, but the bound goes negative, so the range must be valid)
 assert ForecastCountCorrect {
   all pt: PeriodicTransaction, range: DateRange, txns: set Transaction |
-    GenerateForecast[pt, range, txns] implies
+    (ValidRange[range] and GenerateForecast[pt, range, txns]) implies
     let days = sub[range.endDate.ordinal, range.startDate.ordinal] |
     let interval = periodDays[pt.period] |
     interval > 0 implies #txns <= add[div[days, interval], 1]
 }
 
-check ForecastCountCorrect for 5
+-- 10-bit integers so the 365-day year fits (smaller widths would silently
+-- drop quarterly and yearly periods, whose lengths would wrap negative)
+check ForecastCountCorrect for 3 but 10 Int, 1 PeriodicTransaction, 1 DateRange, 1 EveryN, 1 ForecastMode
 
-run MonthlyBudgetExample for 3
+run MonthlyBudgetExample for 3 but 10 Int

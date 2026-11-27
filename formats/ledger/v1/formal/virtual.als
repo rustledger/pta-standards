@@ -52,8 +52,9 @@ pred BalancedVirtualBalance[t: Transaction] {
 -- Unbalanced virtual postings don't need to balance
 -- (They're typically used for tracking/budgeting)
 pred VirtualPostingsAllowed[t: Transaction] {
-  -- Virtual postings can be any amount
-  true
+  -- Virtual postings can be any amount: ValidTransaction places no
+  -- constraint on them (see UnbalancedVirtualUnconstrained below)
+  some t.postings or no t.postings
 }
 
 -- Transaction is valid if real and balanced-virtual portions balance
@@ -66,14 +67,21 @@ pred ValidTransaction[t: Transaction] {
 -- Virtual postings are typically excluded from balance reports
 fun realBalance[acct: Account, cur: Currency, txns: set Transaction]: Int {
   sum t: txns, p: t.postings |
-    (p.account = acct and p.amount.currency = c and p.postingType = Real)
+    (p.account = acct and p.amount.currency = cur and p.postingType = Real)
+    implies p.amount.value else 0
+}
+
+-- Real plus balanced-virtual postings (the [] view); excludes () postings
+fun balancedBalance[acct: Account, cur: Currency, txns: set Transaction]: Int {
+  sum t: txns, p: t.postings |
+    (p.account = acct and p.amount.currency = cur and p.postingType in Real + BalancedVirtual)
     implies p.amount.value else 0
 }
 
 -- Include virtual for full picture
 fun totalBalance[acct: Account, cur: Currency, txns: set Transaction]: Int {
   sum t: txns, p: t.postings |
-    (p.account = acct and p.amount.currency = c)
+    (p.account = acct and p.amount.currency = cur)
     implies p.amount.value else 0
 }
 
@@ -83,11 +91,13 @@ pred BudgetEnvelopePattern[t: Transaction] {
   some disj checking, expense, budgetFrom, budgetTo: Account |
   some c: Currency |
     -- Real: money flows from checking to expense
-    real1.postingType = Real and real1.account = checking and real1.amount.value = -50 and
-    real2.postingType = Real and real2.account = expense and real2.amount.value = 50 and
+    -- (amounts scaled from $50 to 5 to fit Alloy's small integers)
+    real1.postingType = Real and real1.account = checking and real1.amount.value = -5 and
+    real2.postingType = Real and real2.account = expense and real2.amount.value = 5 and
     -- Balanced virtual: budget tracking
-    bv1.postingType = BalancedVirtual and bv1.account = budgetFrom and bv1.amount.value = -50 and
-    bv2.postingType = BalancedVirtual and bv2.account = budgetTo and bv2.amount.value = 50 and
+    bv1.postingType = BalancedVirtual and bv1.account = budgetFrom and bv1.amount.value = -5 and
+    bv2.postingType = BalancedVirtual and bv2.account = budgetTo and bv2.amount.value = 5 and
+    (real1 + real2 + bv1 + bv2).amount.currency = c and
     t.postings = real1 + real2 + bv1 + bv2 and
     ValidTransaction[t]
 }
@@ -98,27 +108,63 @@ pred SavingsGoalPattern[t: Transaction] {
   some disj checking, savings, goalTracker: Account |
   some c: Currency |
     -- Real: transfer to savings
-    real1.postingType = Real and real1.account = checking and real1.amount.value = -100 and
-    real2.postingType = Real and real2.account = savings and real2.amount.value = 100 and
+    -- (amounts scaled from $100 to 10 to fit Alloy's small integers)
+    real1.postingType = Real and real1.account = checking and real1.amount.value = -10 and
+    real2.postingType = Real and real2.account = savings and real2.amount.value = 10 and
     -- Virtual: track progress toward goal (doesn't balance)
-    virtual.postingType = Virtual and virtual.account = goalTracker and virtual.amount.value = 100 and
+    virtual.postingType = Virtual and virtual.account = goalTracker and virtual.amount.value = 10 and
+    (real1 + real2 + virtual).amount.currency = c and
     t.postings = real1 + real2 + virtual and
     ValidTransaction[t]
 }
 
+-- Sum over every account of the balance restricted to `types`: since each
+-- posting has exactly one account, this is the sum of all such postings
+-- (written posting-wise because a nested per-account sum is far slower to
+-- solve). With types = Real it is sum[realBalance], with Real+BalancedVirtual
+-- it is sum[balancedBalance].
+fun ledgerTotal[types: set PostingType, cur: Currency, txns: set Transaction]: Int {
+  sum t: txns, p: t.postings |
+    (p.postingType in types and p.amount.currency = cur) implies p.amount.value else 0
+}
+
+-- Amounts small enough that no ledger total in the check scopes below
+-- (3 transactions x 3 postings, |value| <= 2, so |total| <= 18) can overflow
+-- 6-bit integers. Without it, an overflowing sum makes the analyzer's
+-- no-overflow mode report a spurious counterexample.
+pred NoOverflowAmounts {
+  all a: Amount | a.value >= -2 and a.value <= 2
+}
+
 -- Assertions
+--
+-- Across a ledger of valid transactions, the real postings sum to zero in
+-- every currency, so real balances obey the accounting equation no matter
+-- what () virtual postings say.
 assert RealAlwaysBalances {
-  all t: Transaction |
-    ValidTransaction[t] implies RealPostingsBalance[t]
+  all txns: set Transaction, cur: Currency |
+    (NoOverflowAmounts and all t: txns | ValidTransaction[t]) implies
+    ledgerTotal[Real, cur, txns] = 0
 }
 
+-- The [] view (real + balanced virtual, excluding ()) also sums to zero:
+-- balanced virtual postings never unbalance the ledger.
 assert BalancedVirtualAlwaysBalances {
-  all t: Transaction |
-    ValidTransaction[t] implies BalancedVirtualBalance[t]
+  all txns: set Transaction, cur: Currency |
+    (NoOverflowAmounts and all t: txns | ValidTransaction[t]) implies
+    ledgerTotal[Real + BalancedVirtual, cur, txns] = 0
 }
 
-check RealAlwaysBalances for 5
-check BalancedVirtualAlwaysBalances for 5
+-- Unbalanced () postings are unconstrained: a valid transaction may carry a
+-- non-zero virtual total (an instance is the point).
+run UnbalancedVirtualUnconstrained {
+  some t: Transaction, c: Currency |
+    ValidTransaction[t] and
+    (sum p: { p: t.postings | p.postingType = Virtual and p.amount.currency = c } | p.amount.value) != 0
+} for 4 but 5 Int
 
-run BudgetEnvelopePattern for 5
-run SavingsGoalPattern for 5
+check RealAlwaysBalances for 3 but 6 Int
+check BalancedVirtualAlwaysBalances for 3 but 6 Int
+
+run BudgetEnvelopePattern for 5 but 5 Int
+run SavingsGoalPattern for 5 but 5 Int

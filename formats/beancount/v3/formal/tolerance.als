@@ -25,7 +25,7 @@ sig Precision {
  * An Amount with its precision for tolerance computation.
  */
 sig Amount {
-    value: one Int,        -- Scaled integer (e.g., 10000 for 100.00)
+    value: one Int,        -- Scaled integer in units of 0.005 (e.g., 20 for 0.10)
     precision: one Precision,
     currency: one Currency
 }
@@ -82,25 +82,71 @@ sig BalanceAssertion {
 }
 
 -- =============================================================================
+-- BOUNDED ARITHMETIC
+-- =============================================================================
+
+/**
+ * Alloy integers are fixed-width and wrap around, and the analyzer's
+ * no-overflow option does not reliably discard wrapped sums inside nested
+ * quantifiers. Real amounts do not wrap, so amount magnitudes are capped such
+ * that a sum of up to 5 weights (|sum| <= 15), or a difference of two amounts,
+ * always fits the smallest Int width the commands use (5 bits, -16..15).
+ */
+fact boundedMagnitudes {
+    all a: Amount | a.value >= -3 and a.value <= 3
+}
+
+-- =============================================================================
 -- TOLERANCE COMPUTATION
 -- =============================================================================
 
 /**
  * Tolerance from precision: 0.5 × 10^(-precision)
  *
- * We model this inversely: lower precision = higher tolerance value.
- * precision 0 → tolerance 500 (representing 0.5)
- * precision 1 → tolerance 50  (representing 0.05)
- * precision 2 → tolerance 5   (representing 0.005)
+ * All values (tolerances, weights, residuals) are integers in units of 0.005,
+ * the smallest tolerance that is distinct from zero at this granularity:
+ * precision 0 → tolerance 100 (representing 0.5)
+ * precision 1 → tolerance 10  (representing 0.05)
+ * precision 2 → tolerance 1   (representing 0.005)
  * precision 3 → tolerance 0   (representing 0.0005, rounded)
+ *
+ * The concrete scale needs an 8-bit Int, and integer sums at that width make
+ * the checks far too slow for SAT. So the scale is a parameter: the facts only
+ * require that tolerance strictly decreases as precision grows (and is 0 from
+ * 3 places on). The examples pin it to the decimal values above
+ * (`decimalToleranceScale`, run at 8 bits); the checks run at 5 bits over every
+ * admissible scale that fits there (e.g. 3/2/1). The decimal scale itself does
+ * not fit 5 bits, so the checks cover it only through the ordering the facts
+ * impose, together with the amount cap below: they are bounded checks of the
+ * shape of the rule, not of the literal 0.5/0.05/0.005 values.
  */
+one sig ToleranceScale {
+    tol0: one Int,  -- tolerance for 0 decimal places
+    tol1: one Int,  -- tolerance for 1 decimal place
+    tol2: one Int   -- tolerance for 2 decimal places
+}
+
+fact toleranceDecreasesWithPrecision {
+    ToleranceScale.tol0 > ToleranceScale.tol1
+    ToleranceScale.tol1 > ToleranceScale.tol2
+    ToleranceScale.tol2 > 0
+}
+
+/**
+ * The actual decimal scale: 0.5, 0.05, 0.005 in units of 0.005.
+ */
+pred decimalToleranceScale {
+    ToleranceScale.tol0 = 100
+    ToleranceScale.tol1 = 10
+    ToleranceScale.tol2 = 1
+}
+
 pred toleranceFromPrecision[t: Tolerance, p: Precision] {
     t.fromPrecision = p
     -- Inverse relationship: higher precision = lower tolerance value
-    -- Simplified: use 10^(2-precision) as tolerance value
-    p.decimalPlaces = 0 implies t.value = 500
-    p.decimalPlaces = 1 implies t.value = 50
-    p.decimalPlaces = 2 implies t.value = 5
+    p.decimalPlaces = 0 implies t.value = ToleranceScale.tol0
+    p.decimalPlaces = 1 implies t.value = ToleranceScale.tol1
+    p.decimalPlaces = 2 implies t.value = ToleranceScale.tol2
     p.decimalPlaces >= 3 implies t.value = 0
 }
 
@@ -157,10 +203,25 @@ pred transactionBalances[txn: Transaction] {
     all cur: Currency | {
         (some p: txn.postings | p.weight.currency = cur) implies {
             -- Sum of weights for this currency
-            let sum = sumWeightsForCurrency[txn, cur] | {
+            let s = sumWeightsForCurrency[txn, cur] | {
                 -- Check if within tolerance
-                abs[sum] <= txn.tolerance.value
+                abs[s] <= txn.tolerance.value
             }
+        }
+    }
+}
+
+/**
+ * The residual of a transaction: the largest absolute per-currency sum of
+ * weights (0 for a transaction with no postings). A transaction balances iff
+ * its residual is within its tolerance.
+ */
+pred residualOf[txn: Transaction] {
+    let present = { cur: Currency | some p: txn.postings | p.weight.currency = cur } | {
+        no present implies txn.residual = 0
+        some present implies {
+            some cur: present | txn.residual = abs[sumWeightsForCurrency[txn, cur]]
+            all cur: present | abs[sumWeightsForCurrency[txn, cur]] <= txn.residual
         }
     }
 }
@@ -171,6 +232,9 @@ pred transactionBalances[txn: Transaction] {
 pred computeTransactionBalance[txn: Transaction] {
     -- Compute max tolerance from postings
     maxToleranceOfPostings[txn.postings, txn.tolerance]
+
+    -- Compute the residual
+    residualOf[txn]
 
     -- Check if balances
     transactionBalances[txn] implies txn.balances = 1
@@ -292,8 +356,10 @@ assert zeroToleranceRequiresExact {
  */
 assert lowerPrecisionMoreTolerant {
     all txn1, txn2: Transaction |
+        -- Both transactions are evaluated under the balance semantics
+        (computeTransactionBalance[txn1] and computeTransactionBalance[txn2] and
         -- If txn1 has lower precision (higher tolerance)
-        (txn1.tolerance.value > txn2.tolerance.value and
+        txn1.tolerance.value > txn2.tolerance.value and
          -- And same residual
          txn1.residual = txn2.residual and
          -- And txn2 balances
@@ -310,10 +376,11 @@ assert lowerPrecisionMoreTolerant {
  * Example: Two decimal places gives 0.005 tolerance.
  */
 pred exampleTwoDecimalTolerance {
+    decimalToleranceScale
     some t: Tolerance, p: Precision | {
         p.decimalPlaces = 2
         toleranceFromPrecision[t, p]
-        t.value = 5  -- Representing 0.005
+        t.value = 1  -- Representing 0.005
     }
 }
 
@@ -321,10 +388,11 @@ pred exampleTwoDecimalTolerance {
  * Example: Transaction with mixed precision uses max tolerance.
  */
 pred exampleMixedPrecisionMax {
+    decimalToleranceScale
     some txn: Transaction, p1, p2, p3: Posting, pr1, pr2: Precision | {
         -- Different precisions
-        pr1.decimalPlaces = 2  -- tolerance 5
-        pr2.decimalPlaces = 0  -- tolerance 500
+        pr1.decimalPlaces = 2  -- tolerance 1 (0.005)
+        pr2.decimalPlaces = 0  -- tolerance 100 (0.5)
 
         p1.amount.precision = pr1
         p2.amount.precision = pr1
@@ -333,8 +401,8 @@ pred exampleMixedPrecisionMax {
         txn.postings = p1 + p2 + p3
         computeTransactionBalance[txn]
 
-        -- Max tolerance should be 500 (from precision 0)
-        txn.tolerance.value = 500
+        -- Max tolerance should be 100, i.e. 0.5 (from precision 0)
+        txn.tolerance.value = 100
     }
 }
 
@@ -342,21 +410,22 @@ pred exampleMixedPrecisionMax {
  * Example: Transaction balances within tolerance.
  */
 pred exampleTransactionBalances {
+    decimalToleranceScale
     some txn: Transaction, p1, p2: Posting, cur: Currency, pr: Precision | {
-        pr.decimalPlaces = 2  -- tolerance 5
+        pr.decimalPlaces = 2  -- tolerance 1 (0.005)
 
-        -- Postings: 10000 and -9997 (residual 3)
+        -- Weights: 3 and -2, i.e. 0.015 and -0.010 (residual 1 = 0.005)
         p1.amount.precision = pr
         p2.amount.precision = pr
         p1.weight.currency = cur
         p2.weight.currency = cur
-        p1.weight.value = 10000
-        p2.weight.value = -9997
+        p1.weight.value = 3
+        p2.weight.value = -2
 
         txn.postings = p1 + p2
         computeTransactionBalance[txn]
 
-        -- Residual 3 is within tolerance 5
+        -- Residual 0.005 is within tolerance 0.005
         txn.balances = 1
     }
 }
@@ -365,21 +434,22 @@ pred exampleTransactionBalances {
  * Example: Transaction fails to balance.
  */
 pred exampleTransactionFails {
+    decimalToleranceScale
     some txn: Transaction, p1, p2: Posting, cur: Currency, pr: Precision | {
-        pr.decimalPlaces = 2  -- tolerance 5
+        pr.decimalPlaces = 2  -- tolerance 1 (0.005)
 
-        -- Postings: 10000 and -9990 (residual 10)
+        -- Weights: 3 and -1, i.e. 0.015 and -0.005 (residual 2 = 0.010)
         p1.amount.precision = pr
         p2.amount.precision = pr
         p1.weight.currency = cur
         p2.weight.currency = cur
-        p1.weight.value = 10000
-        p2.weight.value = -9990
+        p1.weight.value = 3
+        p2.weight.value = -1
 
         txn.postings = p1 + p2
         computeTransactionBalance[txn]
 
-        -- Residual 10 exceeds tolerance 5
+        -- Residual 0.010 exceeds tolerance 0.005
         txn.balances = 0
     }
 }
@@ -391,8 +461,8 @@ pred exampleZeroTolerance {
     some ba: BalanceAssertion, t: Tolerance | {
         t.value = 0
         ba.explicitTolerance = t
-        ba.expected.value = 100000
-        ba.actual.value = 100001  -- Off by 1
+        ba.expected.value = 2
+        ba.actual.value = 3  -- Off by 1
 
         computeBalanceAssertion[ba]
 
@@ -404,13 +474,36 @@ pred exampleZeroTolerance {
 -- =============================================================================
 -- RUN COMMANDS
 -- =============================================================================
+-- Examples pinning the decimal tolerance scale (tolerance 100 = 0.5 for
+-- precision 0) need an 8-bit Int (-128..127). The checks quantify over every
+-- admissible scale that fits 5 bits (-16..15); see ToleranceScale.
 
-run exampleTwoDecimalTolerance for 3
-run exampleMixedPrecisionMax for 5 but 3 Posting, 2 Precision
-run exampleTransactionBalances for 4 but 2 Posting, 1 Currency
-run exampleTransactionFails for 4 but 2 Posting, 1 Currency
-run exampleZeroTolerance for 3
+run exampleTwoDecimalTolerance for 3 but 8 Int
+run exampleMixedPrecisionMax for 5 but 3 Posting, 2 Precision, 8 Int
+run exampleTransactionBalances for 4 but 2 Posting, 1 Currency, 8 Int
+run exampleTransactionFails for 4 but 2 Posting, 1 Currency, 8 Int
+run exampleZeroTolerance for 3 but 5 Int
 
-check balancedWithinTolerance for 5
-check zeroToleranceRequiresExact for 5
-check lowerPrecisionMoreTolerant for 5
+check balancedWithinTolerance for 3 but 1 Transaction, 5 Int
+check zeroToleranceRequiresExact for 3 but 1 BalanceAssertion, 5 Int
+check lowerPrecisionMoreTolerant for 3 but 2 Transaction, 5 Int
+
+-- Non-vacuity: the premise of lowerPrecisionMoreTolerant is satisfiable with a non-zero residual.
+run nonVacuousLowerPrecision {
+    some disj txn1, txn2: Transaction |
+        computeTransactionBalance[txn1] and computeTransactionBalance[txn2] and
+        txn1.tolerance.value > txn2.tolerance.value and
+        txn1.residual = txn2.residual and txn2.balances = 1 and txn1.residual > 0
+} for 3 but 2 Transaction, 5 Int
+-- Non-vacuity: the premise of balancedWithinTolerance is satisfiable with a non-zero weight.
+run nonVacuousBalanced {
+    some txn: Transaction |
+        txn.balances = 1 and computeTransactionBalance[txn] and
+        some p: txn.postings | p.weight.value != 0
+} for 3 but 1 Transaction, 5 Int
+-- Non-vacuity: the premise of zeroToleranceRequiresExact is satisfiable.
+run nonVacuousZeroTolerance {
+    some ba: BalanceAssertion |
+        some ba.explicitTolerance and ba.explicitTolerance.value = 0 and
+        computeBalanceAssertion[ba] and ba.passes = 1
+} for 3 but 1 BalanceAssertion, 5 Int

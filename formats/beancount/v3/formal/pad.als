@@ -287,7 +287,7 @@ assert generatedTxnMeansUsed {
  */
 assert paddingAmountCorrect {
     all p: Pad |
-        (some p.generatedTxn and some p.linkedBalance) implies
+        (applyPad[p] and some p.generatedTxn and some p.linkedBalance) implies
             p.generatedTxn.amount.value = paddingAmount[p.linkedBalance]
 }
 
@@ -311,10 +311,10 @@ assert matchingBalanceUnused {
  * Example: Pad generates transaction when balance differs.
  */
 pred examplePadGeneratesTransaction {
-    some p: Pad, b: BalanceAssertion, t: PaddingTransaction |
-        -- Balance assertion expects 1000 but actual is 0
+    some p: Pad, b: BalanceAssertion, t: PaddingTransaction | {
+        -- Balance assertion expects 5 but actual is 0 (small values: default 4-bit Int)
         b.actualAmount.value = 0
-        b.expectedAmount.value = 1000
+        b.expectedAmount.value = 5
 
         -- Pad is before balance
         dateBefore[p.padDate, b.assertDate]
@@ -323,22 +323,23 @@ pred examplePadGeneratesTransaction {
         -- Apply pad
         applyPad[p]
 
-        -- Should generate transaction with amount 1000
+        -- Should generate transaction with amount 5
         p.linkedBalance = b
         p.generatedTxn = t
-        t.amount.value = 1000
+        t.amount.value = 5
         p.isUsed = 1
         p.hasError = 0
+    }
 }
 
 /**
  * Example: Pad is unused when balance already matches.
  */
 pred examplePadUnusedWhenMatches {
-    some p: Pad, b: BalanceAssertion |
+    some p: Pad, b: BalanceAssertion | {
         -- Balance assertion matches actual
-        b.actualAmount.value = 1000
-        b.expectedAmount.value = 1000
+        b.actualAmount.value = 5
+        b.expectedAmount.value = 5
 
         -- Pad is before balance
         dateBefore[p.padDate, b.assertDate]
@@ -351,13 +352,14 @@ pred examplePadUnusedWhenMatches {
         p.isUsed = 0
         p.hasError = 1
         no p.generatedTxn
+    }
 }
 
 /**
  * Example: Pad without balance is error.
  */
 pred examplePadWithoutBalance {
-    some p: Pad |
+    some p: Pad | {
         -- No balance assertion for this account after pad date
         no b: BalanceAssertion | balanceMatchesPad[b, p]
 
@@ -367,6 +369,7 @@ pred examplePadWithoutBalance {
         -- Should be error
         p.hasError = 1
         no p.generatedTxn
+    }
 }
 
 -- =============================================================================
@@ -379,5 +382,10 @@ run examplePadWithoutBalance for 4 but 1 Pad, 0 BalanceAssertion
 
 check padRequiresBalance for 5
 check generatedTxnMeansUsed for 5
-check paddingAmountCorrect for 5
+check paddingAmountCorrect for 5 but 1 Pad, 2 BalanceAssertion, 1 PaddingTransaction
 check matchingBalanceUnused for 5
+
+-- Non-vacuity: the premise of paddingAmountCorrect is satisfiable.
+run nonVacuousPaddingAmount {
+    some p: Pad | applyPad[p] and some p.generatedTxn and some p.linkedBalance
+} for 5 but 1 Pad, 2 BalanceAssertion, 1 PaddingTransaction

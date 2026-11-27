@@ -63,10 +63,29 @@ tlc -config FIFOCorrect.cfg FIFOCorrect.tla
    - Multiple readers safe
    - Write operations serialize correctly
 
-## Alloy Specifications (Future)
+## Alloy Specifications
 
-The `alloy/` directory will contain Alloy specifications as an alternative to TLA+.
-Alloy provides relational modeling suitable for structural properties.
+Alloy models (`*.als`) live beside the specs they formalize: this directory
+(`inventory.als`, `balance_equation.als`, `booking/`, `reports/`),
+`core/types/decimal.als`, and `formats/*/formal/`. Alloy provides relational
+modeling suitable for structural properties.
+
+The `Run Alloy` workflow runs every command of every model with Alloy 6.2:
+
+```bash
+python3 scripts/run_alloy.py --jar alloy.jar            # all models
+python3 scripts/run_alloy.py --jar alloy.jar core/formal/inventory.als
+```
+
+A `check` passes when it finds no counterexample and a `run` when it finds an
+instance (unless the command says `expect`). Commands known to fail are listed,
+with the reason, in `scripts/alloy-known-failures.txt`. Module names cannot
+contain `-`, so a model that another model `open`s must use `_` in its file name.
+
+Alloy integers are small fixed-width two's complement numbers that wrap
+around, and the analyzer's overflow guard does not reliably reject wrapped
+sums. Models therefore scale example amounts down and bound magnitudes in the
+premises of their checks; keep scopes small so CI stays fast.
 
 See [ADR-0002](../../meta/adrs/0002-alloy-over-tlaplus.md) for rationale.
 
