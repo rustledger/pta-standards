@@ -19,9 +19,9 @@ beancount is used only as a black box through its public Python API.
 With nix:
 
 ```bash
-nix shell nixpkgs#bison --impure --expr \
-  'let p = import (builtins.getFlake "nixpkgs") {}; in p.python3.withPackages (ps: [ ps.beancount ])' \
-  -c python3 equivalence.py --random 2000 --check-lexer
+PY=$(nix build --impure --no-link --print-out-paths --expr \
+  'let p = import (builtins.getFlake "nixpkgs") {}; in p.python3.withPackages (ps: [ ps.beancount ])')
+nix shell nixpkgs#bison -c "$PY/bin/python3" equivalence.py --random 2000 --check-lexer
 ```
 
 ## Usage
@@ -58,11 +58,17 @@ The lexer is checked separately (`--check-lexer`) against the same stream.
 
 ## Results
 
-Against beancount 3.2.3, at the time of writing:
+Against beancount 3.2.3 (bison 3.8.2), at the time of writing.
+"With errors" counts inputs on which beancount reports at least one syntax error.
 
-| Input set | Inputs | Compared | Count + lines | Exact messages | Reference lexer |
-|-----------|-------:|---------:|--------------:|---------------:|----------------:|
-| rustledger `fuzz-corpus` @ `9bc79f4f` (all targets) | 71,784 | see PR | 100% | 100% | see PR |
-| rustledger `tests/compatibility/**/*.beancount` | 731 | see PR | 100% | 100% | see PR |
-| G1–G3 generators (6 × 3,000) | 18,000 | 17,998 | 100% | 100% | see PR |
-| `--random 5000` + conformance inline tests | 5,480 | 5,479 | 100% | 100% | 100% |
+| Input set | Inputs | Compared | With errors | Syntax errors | Count + lines | Exact messages | Reference lexer |
+|-----------|-------:|---------:|------------:|--------------:|--------------:|---------------:|----------------:|
+| rustledger `fuzz-corpus` @ `9bc79f4f` (all targets) | 71,784 | 71,717 | 27,778 | 57,927 | 100% | 100% | 100% |
+| rustledger `tests/compatibility/**/*.beancount` | 731 | 731 | 24 | 1,789 | 100% | 100% | 100% |
+| G1–G3 generators, seed 1 (6 × 3,000) | 18,000 | 17,998 | 13,156 | 15,831 | 100% | 100% | 100% |
+| G1–G3 generators, seed 2 (6 × 5,000) | 30,000 | 29,995 | 21,791 | 26,132 | 100% | 100% | 100% |
+| `--random 5000` + conformance inline tests | 5,480 | 5,479 | see CI | see CI | 100% | 100% | 100% |
+
+Excluded (beancount failed): fuzz corpus 18 crashes, 48 exceptions, 1 divide-by-zero quirk; generators 2 + 5 exceptions; random 1 exception.
+
+`explore.py --walks 2000 --steps 40 --seed 7`: 57,096 steps (each comparing the acceptance of every token kind and the rejection messages), 0 diverging walks, 0 message differences.
