@@ -8,11 +8,14 @@ of a canonical snapshot, applied to the side(s) it names):
   (`CategorizationError` at the posting's line) and others at the entry;
   an implementation may choose either. Where in a directive an error is
   reported is presentation; which directive has it is semantics.
-* `drop-errored-transactions` (both): a transaction with an error of the
-  same side inside its lines is left out of `entries`. beancount drops an
-  entry booking refuses, or keeps it with no postings, depending on the
-  error; an implementation may keep it as written. Its errors are compared
-  (they come first); its booked form is not, because there is none.
+* `drop-errored-entries` (both): an entry with an error of the same side
+  inside its lines is left out of `entries`. beancount drops an entry its
+  parser or booking refuses (an `open` of an invalid account name, a
+  `balance` with a syntax error, a transaction booking cannot resolve), or
+  keeps it emptied, depending on the error; an implementation may keep it
+  as written. Its errors are compared (they come first); its form is not,
+  because there is none to agree on. Entries a load generates (located
+  nowhere) are kept.
 * `placeholder-locations` (both): an entry or error located nowhere in the
   input (beancount's `<auto_accounts>`, `<load>`, any `<...>` name, with
   whatever line the plugin gave it; an implementation's synthesized
@@ -107,14 +110,14 @@ def error_at_directive(fmt, ledger: Ledger, snap: dict, side: str) -> dict:
     return {**snap, "errors": errors}
 
 
-def drop_errored_transactions(fmt, ledger: Ledger, snap: dict, side: str) -> dict:
+def drop_errored_entries(fmt, ledger: Ledger, snap: dict, side: str) -> dict:
     texts = {fmt.main_file: ledger.text, **ledger.files}
     err_lines: dict[str, set[int]] = {}
     for e in snap["errors"]:
         err_lines.setdefault(e["file"], set()).add(e["line"])
     kept = []
     for entry in snap["entries"]:
-        if entry.get("type") == "transaction" and entry.get("file") in err_lines:
+        if entry.get("file") in err_lines:
             text = texts.get(entry["file"])
             if text is not None and entry.get("line", 0) > 0:
                 start, end = fmt.directive_lines(text, entry["line"])

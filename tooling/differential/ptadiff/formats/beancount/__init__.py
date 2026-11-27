@@ -162,10 +162,10 @@ class BeancountFormat(FormatPlugin):
                 "place each error on its directive's first line",
             ),
             Normalizer(
-                "drop-errored-transactions",
+                "drop-errored-entries",
                 "both",
-                lambda led, snap, side: semkey.drop_errored_transactions(self, led, snap, side),
-                "leave out a transaction its own side reports an error in",
+                lambda led, snap, side: semkey.drop_errored_entries(self, led, snap, side),
+                "leave out an entry its own side reports an error in",
             ),
             Normalizer(
                 "placeholder-locations",
