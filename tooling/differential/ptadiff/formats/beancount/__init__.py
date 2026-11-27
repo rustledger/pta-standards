@@ -174,12 +174,6 @@ class BeancountFormat(FormatPlugin):
                 "locate what has no place in the input at nowhere",
             ),
             Normalizer(
-                "load-errors-at-directive",
-                "oracle",
-                lambda led, snap, side: semkey.load_errors_at_directive(self, led, snap, side),
-                "place a missing include, plugin or document root on its directive",
-            ),
-            Normalizer(
                 "errored-transaction-balances",
                 "pair",
                 lambda led, o, i: semkey.errored_transaction_balances(self, led, o, i),

@@ -28,10 +28,6 @@ of a canonical snapshot, applied to the side(s) it names):
   up; a named currency's default is in them. The `*` default is filled in
   for every currency a posting of the transaction names (units, cost or
   price) that has no tolerance, so both sides list the tolerance in effect.
-* `load-errors-at-directive` (oracle): beancount reports a missing
-  include, a plugin it cannot import and a missing document root at
-  `<load>` or line 0; each is placed on the `include`, `plugin` or
-  `option "documents"` line that names it.
 * `errored-transaction-balances` (pair): when a transaction holds an error
   (the same on both sides, or the errors differ first), what it leaves in
   the inventories is the implementation's choice: beancount keeps some
@@ -181,38 +177,6 @@ def missing_third_party_plugin(snapshot: dict) -> str | None:
         if m and not m.group(1).startswith("beancount."):
             return f"unjudged: the oracle cannot import plugin {m.group(1)!r}"
     return None
-
-
-_LOAD_ERRORS = (
-    (re.compile(r'^File glob "([^"]*)" does not match any files'), "include"),
-    (re.compile(r'^Error importing "([^"]*)"'), "plugin"),
-    (re.compile(r"^Document root '([^']*)' does not exist"), 'option "documents"'),
-)
-
-
-def load_errors_at_directive(fmt, ledger: Ledger, snap: dict, side: str) -> dict:
-    texts = {fmt.main_file: ledger.text, **ledger.files}
-    errors = []
-    for e in snap["errors"]:
-        for pattern, directive in _LOAD_ERRORS:
-            m = pattern.match(e["msg"])
-            if not m:
-                continue
-            needle = f'{directive} "{m.group(1)}"'
-            found = next(
-                (
-                    (path, n)
-                    for path, text in texts.items()
-                    for n, line in enumerate(text.split("\n"), 1)
-                    if line.startswith(needle)
-                ),
-                None,
-            )
-            if found:
-                e = {**e, "file": found[0], "line": found[1]}
-            break
-        errors.append(e)
-    return {**snap, "errors": errors}
 
 
 _POSTING_ACCOUNT = re.compile(r"^[ \t]+(?:[*!&#?%PSTCURM][ \t]+)?([A-Z][^ \t;]*:[^ \t;]*)")

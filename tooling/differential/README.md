@@ -155,7 +155,7 @@ A format plugs in the same kinds of parts, in their own registries:
 | Part | beancount |
 |---|---|
 | `semantic_oracle` | `loader.load_file` over the input written to a temporary directory (`semantic.py`) |
-| `semantic_normalizers` | `error-at-directive`, `drop-errored-entries`, `placeholder-locations`, `load-errors-at-directive`, `errored-transaction-balances`, `tolerance-fallback`, `drop-zero-tolerances` (`semkey.py`) |
+| `semantic_normalizers` | `error-at-directive`, `drop-errored-entries`, `placeholder-locations`, `errored-transaction-balances`, `tolerance-fallback`, `drop-zero-tolerances` (`semkey.py`) |
 | `semantic_keys` | `sem` (default): `field\|path\|kind\|booking\|features`; `field`: `field\|path\|kind` |
 | `semantic_generators` | `s1` lots and booking, `s2` pads, balances and tolerances, `s3` multi-file, `s4` built-in plugins, `smix` (`semgen.py`) |
 | `oracle_unjudged` | a third-party plugin beancount cannot import where it runs |
