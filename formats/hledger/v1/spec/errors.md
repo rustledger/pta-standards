@@ -194,14 +194,16 @@ V-011: Transaction date in future
   (Disable with --future)
 ```
 
-### V-012: Negative Balance
+### V-012: (Reserved, not an hledger check)
 
-```
-V-012: Account balance went negative
-  Line 105:     Assets:Checking    $-100 = $-50
-  Assets:Checking has negative balance
-  (Disable with --permissive)
-```
+hledger has no negative-balance check. `hledger check`, including
+`--strict` mode and the optional named checks (`ordereddates`, `payees`,
+`tags`, `recentassertions`, `uniqueleafnames`), accepts an Assets account
+with a negative balance or a Liabilities account with a positive one; the
+normal balance is a display convention (see
+[Normal Balance Direction](../../../../core/model/account.md#normal-balance-direction)).
+To require a sign, write a balance assertion. This code is kept reserved so
+later codes keep their numbers; implementations MUST NOT emit it.
 
 ### V-013: Invalid Account Type
 
@@ -347,7 +349,6 @@ All errors abort processing.
 
 Some errors become warnings:
 - V-011 (future dates)
-- V-012 (negative balances)
 - W-007 (balance checks)
 
 ### Pedantic Mode

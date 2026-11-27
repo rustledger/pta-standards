@@ -63,6 +63,30 @@ Debit-normal:  Increases with debits    (Assets, Expenses)
 Credit-normal: Increases with credits   (Liabilities, Equity, Income)
 ```
 
+The normal balance is a **presentation convention, not a validity rule**.
+An account MAY hold a balance of either sign, and implementations MUST NOT
+reject a ledger, or report a validation error, because a balance has the
+opposite sign to its type's normal balance. Legitimate opposite-sign
+balances include:
+
+- an overdrawn checking account (an Assets account with a credit balance);
+- an over-paid credit card (a Liabilities account with a debit balance);
+- contra accounts, such as accumulated depreciation or an allowance for
+  doubtful accounts, which sit under Assets and normally carry a credit
+  balance.
+
+Beancount, hledger, Ledger and GnuCash all accept such ledgers. Users who
+want a sign guarantee for a particular account should state it with a
+balance assertion, or with a format's opt-in checks (for example Ledger's
+automated-transaction `check`).
+
+Reports MAY use the normal balance to choose how signs are displayed, for
+example by showing credit-normal balances as positive numbers. Examples are
+BQL's `POSSIGN(amount, account)`, Fava's `invert-income-liabilities-equity`
+option, hledger's `balancesheet`/`incomestatement` (which show "normal
+positive sign"), and GnuCash's "Reverse Balanced accounts" preference. Such
+display flips MUST NOT change stored amounts or the balance equation.
+
 ## Account Naming Rules
 
 ### Character Set

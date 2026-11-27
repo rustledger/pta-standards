@@ -115,19 +115,29 @@ assert BalanceSheetBalances {
     AccountingEquation[bs]
 }
 
-assert AssetsArePositive {
-  all bs: BalanceSheet |
-    ValidBalanceSheet[bs] implies bs.totalAssets >= 0
-}
-
-assert LiabilitiesAreNegative {
-  all bs: BalanceSheet |
-    ValidBalanceSheet[bs] implies bs.totalLiabilities <= 0
-}
+-- The sign of a category total is NOT an invariant. "Normal balance"
+-- (Assets debit/positive, Liabilities credit/negative) is a presentation
+-- convention (see core/model/account.md): an overdrawn checking account
+-- leaves Assets negative and an over-paid credit card leaves Liabilities
+-- positive, and both are valid ledgers (beancount, hledger, ledger and
+-- GnuCash all accept them). The runs below pin that: if a later change made
+-- either state unrepresentable, they would stop finding an instance.
 
 check BalanceSheetBalances for 3
-check AssetsArePositive for 3
-check LiabilitiesAreNegative for 3
+
+-- An overdrawn asset account is a valid, balanced, closed ledger.
+run OverdrawnAssetIsValid {
+  some bs: BalanceSheet |
+    BoundedBalances and ValidBalanceSheet[bs] and ClosedLedger[bs] and
+    bs.totalAssets < 0
+} for 3
+
+-- An over-paid liability is a valid, balanced, closed ledger.
+run OverpaidLiabilityIsValid {
+  some bs: BalanceSheet |
+    BoundedBalances and ValidBalanceSheet[bs] and ClosedLedger[bs] and
+    bs.totalLiabilities > 0
+} for 3
 
 -- Example: simple balanced balance sheet
 pred SimpleBalanceSheet {

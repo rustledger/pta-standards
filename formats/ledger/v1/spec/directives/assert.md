@@ -8,6 +8,17 @@ The `assert` directive validates conditions and stops processing on failure.
 assert EXPRESSION
 ```
 
+> **Ledger 3.4.1 behavior.** A top-level `assert` evaluates its expression
+> once, where it appears, with no posting or account in scope. Account names
+> are not identifiers there: `assert Assets:Checking >= $0` and
+> `assert total(Assets) > 0` both fail to parse ("Unknown identifier
+> 'Assets'"). To constrain an account's balance, attach `assert` or `check`
+> to postings with an automated transaction or an `account` sub-directive,
+> where `amount` is the posting's amount and `account.total` is the
+> account's running balance after it (see [Balance Assertion](#balance-assertion)).
+> The other top-level examples below that name accounts have not been
+> verified against Ledger.
+
 ## Comparison with Check
 
 | Directive | On Failure |
@@ -26,8 +37,12 @@ assert total(Assets) > 0
 ### Balance Assertion
 
 ```ledger
-assert Assets:Checking >= $0
+= /^Assets:Checking$/
+    assert account.total >= 0
 ```
+
+The automated transaction applies to every posting to `Assets:Checking`;
+`account.total` is the account's balance after that posting.
 
 ### Complex Expression
 
@@ -39,14 +54,24 @@ assert total(Assets) >= total(Liabilities)
 
 ### Prevent Overdraft
 
-```ledger
-assert Assets:Checking >= $0
+A negative balance in an Assets account is valid in Ledger, as in every
+plain-text accounting tool (see
+[Normal Balance Direction](../../../../../core/model/account.md#normal-balance-direction)).
+A user who wants to forbid it for one account opts in:
 
-; This transaction would fail:
+```ledger
+= /^Assets:Checking$/
+    assert account.total >= 0
+
+; This transaction fails with
+; "Transaction assertion failed: ((account.total) >= {0})":
 2024/01/15 Overspend
     Expenses:Shopping    $1000.00
     Assets:Checking              ; Would go negative
 ```
+
+Using `check` instead of `assert` reports "Transaction check failed" as a
+warning and continues.
 
 ### Net Worth Check
 
@@ -208,14 +233,16 @@ assert any(Assets, amount > $1000)
 
 ## Account Subdirective
 
-Assert within account definition:
+Assert within account definition. The expression is evaluated for each
+posting to the account: `amount` is that posting's amount, and
+`account.total` is the account's balance after it.
 
 ```ledger
 account Assets:Checking
-    assert amount >= $0
+    assert account.total >= 0      ; balance never negative
 
-account Liabilities:CreditCard
-    assert amount >= $-5000
+account Expenses:Food
+    assert amount >= 0             ; no negative (refund) postings
 ```
 
 ## Validation Timing
@@ -246,13 +273,13 @@ ledger --no-assertions -f journal.ledger balance
 ; ===== Account Constraints =====
 
 account Assets:Checking
-    assert amount >= $0
+    assert account.total >= 0
 
 account Assets:Savings
-    assert amount >= $0
+    assert account.total >= 0
 
 account Liabilities:CreditCard
-    assert amount >= $-10000
+    assert account.total >= -10000
 
 ; ===== Global Constraints =====
 

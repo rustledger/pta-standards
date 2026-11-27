@@ -60,6 +60,24 @@ Assets = Liabilities + Equity
 
 This is verified formally in [balance-sheet.als](../formal/balance-sheet.als).
 
+## Signs and Presentation
+
+The sign of a category total is not constrained. "Normally positive" and
+"normally negative" below describe the usual case, not a rule (see
+[Normal Balance Direction](../../core/model/account.md#normal-balance-direction)):
+an overdrawn bank account makes an Assets balance negative, an over-paid
+credit card makes a Liabilities balance positive, and contra accounts (such
+as accumulated depreciation) carry the opposite sign to their category. A
+balance sheet containing them is still valid and still satisfies the
+accounting equation.
+
+The report above shows liabilities and equity as positive numbers. That is
+a display choice: in the stored, signed form they are negative and
+`Assets + Liabilities + Equity = 0`. Implementations MAY flip the sign of
+credit-normal categories for display (hledger's `bs`, Fava's
+`invert-income-liabilities-equity`, BQL's `POSSIGN`); an opposite-sign
+account then shows with a minus sign under its category.
+
 ## Data Model
 
 ```yaml
@@ -97,7 +115,7 @@ AccountBalance:
 
 ## Account Classification
 
-### Assets (positive balance expected)
+### Assets (normally positive)
 
 | Prefix | Classification |
 |--------|---------------|
@@ -108,7 +126,7 @@ AccountBalance:
 | `Assets:Property:*` | Fixed |
 | `Assets:Vehicle:*` | Fixed |
 
-### Liabilities (negative balance expected)
+### Liabilities (normally negative)
 
 | Prefix | Classification |
 |--------|---------------|
@@ -117,7 +135,7 @@ AccountBalance:
 | `Liabilities:Loans:*` | Long-term |
 | `Liabilities:Mortgage:*` | Long-term |
 
-### Equity (negative balance expected)
+### Equity (normally negative)
 
 | Prefix | Description |
 |--------|-------------|
