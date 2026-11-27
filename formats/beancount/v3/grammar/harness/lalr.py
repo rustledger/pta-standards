@@ -32,7 +32,16 @@ import tempfile
 from dataclasses import dataclass, field
 
 ARRAYS = ("yypact", "yydefact", "yypgoto", "yydefgoto", "yytable", "yycheck", "yyr1", "yyr2")
-DEFINES = ("YYFINAL", "YYLAST", "YYNTOKENS", "YYNNTS", "YYNRULES", "YYNSTATES", "YYPACT_NINF", "YYTABLE_NINF")
+DEFINES = (
+    "YYFINAL",
+    "YYLAST",
+    "YYNTOKENS",
+    "YYNNTS",
+    "YYNRULES",
+    "YYNSTATES",
+    "YYPACT_NINF",
+    "YYTABLE_NINF",
+)
 
 
 @dataclass
@@ -86,8 +95,12 @@ def compile_grammar(path: str, bison: str | None = None) -> Tables:
         raise RuntimeError("bison not found (set $BISON or put it on PATH)")
     with tempfile.TemporaryDirectory() as td:
         out = os.path.join(td, "parser.c")
-        subprocess.run([bison, "-Wall", "-Werror=conflicts-rr", "-o", out, path], check=True,
-                       capture_output=True, text=True)
+        subprocess.run(
+            [bison, "-Wall", "-Werror=conflicts-rr", "-o", out, path],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         with open(out) as f:
             return parse_c_tables(f.read())
 
@@ -133,7 +146,11 @@ class Parser:
         checklim = self.last - yyn + 1
         xend = min(checklim, self.ntokens)
         for x in range(xbegin, xend):
-            if self.check[x + yyn] == x and x != self.ERROR and not self._table_is_error(self.table[x + yyn]):
+            if (
+                self.check[x + yyn] == x
+                and x != self.ERROR
+                and not self._table_is_error(self.table[x + yyn])
+            ):
                 res.append(self.t.names[x])
         return res
 
@@ -152,7 +169,7 @@ class Parser:
         pos = 0
         n = len(tokens)
         last_line = tokens[-1][1] if tokens else 1
-        yychar = self.EMPTY      # symbol number of the lookahead, or EMPTY
+        yychar = self.EMPTY  # symbol number of the lookahead, or EMPTY
         yyline = last_line
         errstatus = 0
         state = 0

@@ -28,9 +28,11 @@ import datetime
 import re
 
 # Valid UTF-8 encoded non-ASCII code point (RFC 3629).
-U8 = (rb"(?:[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}"
-      rb"|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}"
-      rb"|\xF4[\x80-\x8F][\x80-\xBF]{2})")
+U8 = (
+    rb"(?:[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}"
+    rb"|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}"
+    rb"|\xF4[\x80-\x8F][\x80-\xBF]{2})"
+)
 
 TAGCHARS = rb"A-Za-z0-9\-_/."
 CURCHARS = rb"A-Z0-9'._\-"
@@ -63,11 +65,25 @@ def _string_ok(text: bytes) -> bool:
 
 
 KEYWORDS = [
-    (b"txn", "TXN"), (b"balance", "BALANCE"), (b"open", "OPEN"), (b"close", "CLOSE"),
-    (b"commodity", "COMMODITY"), (b"pad", "PAD"), (b"event", "EVENT"), (b"price", "PRICE"),
-    (b"note", "NOTE"), (b"document", "DOCUMENT"), (b"query", "QUERY"), (b"custom", "CUSTOM"),
-    (b"pushtag", "PUSHTAG"), (b"poptag", "POPTAG"), (b"pushmeta", "PUSHMETA"),
-    (b"popmeta", "POPMETA"), (b"option", "OPTION"), (b"include", "INCLUDE"), (b"plugin", "PLUGIN"),
+    (b"txn", "TXN"),
+    (b"balance", "BALANCE"),
+    (b"open", "OPEN"),
+    (b"close", "CLOSE"),
+    (b"commodity", "COMMODITY"),
+    (b"pad", "PAD"),
+    (b"event", "EVENT"),
+    (b"price", "PRICE"),
+    (b"note", "NOTE"),
+    (b"document", "DOCUMENT"),
+    (b"query", "QUERY"),
+    (b"custom", "CUSTOM"),
+    (b"pushtag", "PUSHTAG"),
+    (b"poptag", "POPTAG"),
+    (b"pushmeta", "PUSHMETA"),
+    (b"popmeta", "POPMETA"),
+    (b"option", "OPTION"),
+    (b"include", "INCLUDE"),
+    (b"plugin", "PLUGIN"),
 ]
 
 # (token or None to skip, regex, trailing-context regex or None, bol-only, check)
@@ -89,8 +105,14 @@ RULES = [
     *[(tok, re.escape(kw), None, False, None) for kw, tok in KEYWORDS],
     ("BOOL", rb"TRUE|FALSE", None, False, None),
     ("NONE", rb"NULL", None, False, None),
-    ("ACCOUNT", rb"(?:[A-Z]|" + U8 + rb")(?:[A-Za-z0-9\-]|" + U8 + rb")*"
-                rb"(?::(?:[A-Z0-9]|" + U8 + rb")(?:[A-Za-z0-9\-]|" + U8 + rb")*)+", None, False, None),
+    (
+        "ACCOUNT",
+        rb"(?:[A-Z]|" + U8 + rb")(?:[A-Za-z0-9\-]|" + U8 + rb")*"
+        rb"(?::(?:[A-Z0-9]|" + U8 + rb")(?:[A-Za-z0-9\-]|" + U8 + rb")*)+",
+        None,
+        False,
+        None,
+    ),
     ("CURRENCY", rb"[A-Z][" + CURCHARS + rb"]*[A-Z0-9]", None, False, None),
     ("CURRENCY", rb"/[0-9'._\-]*[A-Z](?:[" + CURCHARS + rb"]*[A-Z0-9])?", None, False, None),
     ("STRING", rb'"(?:[^"\\]|\\[^\n])*"', None, False, _string_ok),
@@ -118,8 +140,10 @@ RULES = [
     ("FLAG", rb"[!&?%]", None, False, None),
 ]
 
-_COMPILED = [(tok, re.compile(rx), re.compile(tc) if tc else None, bol, chk)
-             for tok, rx, tc, bol, chk in RULES]
+_COMPILED = [
+    (tok, re.compile(rx), re.compile(tc) if tc else None, bol, chk)
+    for tok, rx, tc, bol, chk in RULES
+]
 # A single capital letter needs a following blank or newline.  It is listed
 # separately because its single-letter match must lose to CURRENCY.
 _CAPITAL = re.compile(rb"[A-Z](?=[ \t\n])")
@@ -130,7 +154,7 @@ def lex(data: bytes):
     """Yield ``(token_name, line, text)`` like ``lex_iter_string`` does."""
     pos, line, n = 0, 1, len(data)
     while pos < n:
-        bol = pos == 0 or data[pos - 1:pos] == b"\n"
+        bol = pos == 0 or data[pos - 1 : pos] == b"\n"
         best = None  # (length, -rule_index, tok, text_len, check)
         for i, (tok, rx, tc, only_bol, chk) in enumerate(_COMPILED):
             if only_bol and not bol:
@@ -148,7 +172,7 @@ def lex(data: bytes):
             if best is None or tot > best[0]:
                 best = (tot, i, tok, ln, chk)
         m = _CAPITAL.match(data, pos)
-        if m and (best is None or 2 > best[0]):
+        if m and (best is None or best[0] < 2):
             best = (2, len(_COMPILED), "CAPITAL", 1, None)
         if best is None:
             m = _INVALID.match(data, pos)
@@ -158,7 +182,7 @@ def lex(data: bytes):
             pos = m.end()
             continue
         _, _, tok, ln, chk = best
-        text = data[pos:pos + ln]
+        text = data[pos : pos + ln]
         pos += ln
         line += text.count(b"\n")
         if tok is None:

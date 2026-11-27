@@ -40,15 +40,55 @@ from lalr import Parser, compile_grammar  # noqa: E402
 # One sample spelling per token kind.  KEY can only be lexed in front of a
 # colon, so its sample produces KEY COLON.
 SAMPLES = {
-    "DATE": "2024-01-01", "OPEN": "open", "CLOSE": "close", "COMMODITY": "commodity", "PAD": "pad",
-    "BALANCE": "balance", "PRICE": "price", "EVENT": "event", "QUERY": "query", "NOTE": "note",
-    "DOCUMENT": "document", "CUSTOM": "custom", "OPTION": "option", "PLUGIN": "plugin",
-    "INCLUDE": "include", "PUSHTAG": "pushtag", "POPTAG": "poptag", "PUSHMETA": "pushmeta",
-    "POPMETA": "popmeta", "TXN": "txn", "BOOL": "TRUE", "NONE": "NULL", "COMMA": ",", "MINUS": "-",
-    "PLUS": "+", "SLASH": "/", "AT": "@", "ATAT": "@@", "LCURL": "{", "RCURL": "}", "LCURLCURL": "{{",
-    "RCURLCURL": "}}", "TILDE": "~", "LPAREN": "(", "RPAREN": ")", "PIPE": "|", "STRING": '"s"',
-    "TAG": "#t", "LINK": "^l", "KEY": "kk:", "COLON": ":", "ACCOUNT": "Assets:A", "CURRENCY": "USD",
-    "CAPITAL": "P", "NUMBER": "1", "ASTERISK": "*", "FLAG": "!", "HASH": "#", "EOL": "\n",
+    "DATE": "2024-01-01",
+    "OPEN": "open",
+    "CLOSE": "close",
+    "COMMODITY": "commodity",
+    "PAD": "pad",
+    "BALANCE": "balance",
+    "PRICE": "price",
+    "EVENT": "event",
+    "QUERY": "query",
+    "NOTE": "note",
+    "DOCUMENT": "document",
+    "CUSTOM": "custom",
+    "OPTION": "option",
+    "PLUGIN": "plugin",
+    "INCLUDE": "include",
+    "PUSHTAG": "pushtag",
+    "POPTAG": "poptag",
+    "PUSHMETA": "pushmeta",
+    "POPMETA": "popmeta",
+    "TXN": "txn",
+    "BOOL": "TRUE",
+    "NONE": "NULL",
+    "COMMA": ",",
+    "MINUS": "-",
+    "PLUS": "+",
+    "SLASH": "/",
+    "AT": "@",
+    "ATAT": "@@",
+    "LCURL": "{",
+    "RCURL": "}",
+    "LCURLCURL": "{{",
+    "RCURLCURL": "}}",
+    "TILDE": "~",
+    "LPAREN": "(",
+    "RPAREN": ")",
+    "PIPE": "|",
+    "STRING": '"s"',
+    "TAG": "#t",
+    "LINK": "^l",
+    "KEY": "kk:",
+    "COLON": ":",
+    "ACCOUNT": "Assets:A",
+    "CURRENCY": "USD",
+    "CAPITAL": "P",
+    "NUMBER": "1",
+    "ASTERISK": "*",
+    "FLAG": "!",
+    "HASH": "#",
+    "EOL": "\n",
     "INDENT": "  ",
 }
 TOKENS = list(SAMPLES)
@@ -84,6 +124,7 @@ def render(toks) -> bytes:
 class Oracle:
     def __init__(self):
         from beancount.parser import lexer, parser
+
         self.lexer, self.parser = lexer, parser
 
     def lex(self, src):
@@ -105,7 +146,11 @@ class Oracle:
             return None
         if any("exception set" in e.message for e in errs):
             return None
-        return [(e.source.get("lineno"), e.message) for e in errs if e.message.startswith("syntax error")]
+        return [
+            (e.source.get("lineno"), e.message)
+            for e in errs
+            if e.message.startswith("syntax error")
+        ]
 
     def _forked(self, src):
         r, w = os.pipe()
@@ -133,7 +178,9 @@ def first_error_at_last(errors, toks_lexed, last_n):
     msg = errors[0][1]
     for name, _ in toks_lexed[-last_n:]:
         if msg.startswith(f"syntax error, unexpected {name}") and (
-                len(msg) == len(f"syntax error, unexpected {name}") or msg[len(f"syntax error, unexpected {name}")] == ","):
+            len(msg) == len(f"syntax error, unexpected {name}")
+            or msg[len(f"syntax error, unexpected {name}")] == ","
+        ):
             return msg
     return None
 
@@ -141,7 +188,7 @@ def first_error_at_last(errors, toks_lexed, last_n):
 def step_sets(oracle, parser, prefix):
     acc_o, acc_g, msgs = set(), set(), {}
     for t in TOKENS:
-        p2 = prefix + [t]
+        p2 = [*prefix, t]
         src = render(p2)
         lexed = oracle.lex(src)
         if [n for n, _ in lexed] != expand(p2):
@@ -165,13 +212,34 @@ def step_sets(oracle, parser, prefix):
 # Walks start from these prefixes in turn so that every directive kind and
 # the deeper sub-languages (costs, prices, expressions) are reached often.
 STARTS = [
-    "", "DATE", "DATE ASTERISK", "DATE ASTERISK EOL INDENT", "DATE FLAG STRING EOL INDENT ACCOUNT",
-    "DATE TXN EOL INDENT ACCOUNT NUMBER", "DATE ASTERISK EOL INDENT ACCOUNT LCURL",
-    "DATE ASTERISK EOL INDENT ACCOUNT LCURLCURL", "DATE ASTERISK EOL INDENT ACCOUNT CURRENCY AT",
-    "DATE ASTERISK EOL INDENT KEY", "DATE BALANCE ACCOUNT", "DATE OPEN ACCOUNT", "DATE CLOSE ACCOUNT",
-    "DATE COMMODITY CURRENCY", "DATE PAD ACCOUNT", "DATE PRICE CURRENCY", "DATE EVENT STRING",
-    "DATE QUERY STRING", "DATE NOTE ACCOUNT", "DATE DOCUMENT ACCOUNT", "DATE CUSTOM STRING",
-    "DATE OPEN ACCOUNT EOL INDENT", "PUSHMETA", "POPMETA", "OPTION", "PLUGIN", "INCLUDE", "PUSHTAG",
+    "",
+    "DATE",
+    "DATE ASTERISK",
+    "DATE ASTERISK EOL INDENT",
+    "DATE FLAG STRING EOL INDENT ACCOUNT",
+    "DATE TXN EOL INDENT ACCOUNT NUMBER",
+    "DATE ASTERISK EOL INDENT ACCOUNT LCURL",
+    "DATE ASTERISK EOL INDENT ACCOUNT LCURLCURL",
+    "DATE ASTERISK EOL INDENT ACCOUNT CURRENCY AT",
+    "DATE ASTERISK EOL INDENT KEY",
+    "DATE BALANCE ACCOUNT",
+    "DATE OPEN ACCOUNT",
+    "DATE CLOSE ACCOUNT",
+    "DATE COMMODITY CURRENCY",
+    "DATE PAD ACCOUNT",
+    "DATE PRICE CURRENCY",
+    "DATE EVENT STRING",
+    "DATE QUERY STRING",
+    "DATE NOTE ACCOUNT",
+    "DATE DOCUMENT ACCOUNT",
+    "DATE CUSTOM STRING",
+    "DATE OPEN ACCOUNT EOL INDENT",
+    "PUSHMETA",
+    "POPMETA",
+    "OPTION",
+    "PLUGIN",
+    "INCLUDE",
+    "PUSHTAG",
     "POPTAG",
 ]
 
@@ -197,28 +265,47 @@ def walk(args):
             if mo != mg:
                 msg_diffs.append((list(prefix), t, mo, mg))
         if acc_o != acc_g:
-            return {"seed": seed, "prefix": prefix, "text": render(prefix).decode(),
-                    "only_beancount": sorted(acc_o - acc_g), "only_grammar": sorted(acc_g - acc_o),
-                    "msg_diffs": msg_diffs[:50], "steps": checked, "n_msg_diffs": len(msg_diffs)}
+            return {
+                "seed": seed,
+                "prefix": prefix,
+                "text": render(prefix).decode(),
+                "only_beancount": sorted(acc_o - acc_g),
+                "only_grammar": sorted(acc_g - acc_o),
+                "msg_diffs": msg_diffs[:50],
+                "steps": checked,
+                "n_msg_diffs": len(msg_diffs),
+            }
         choices = sorted(acc_o)
         if not choices:
             break
         weights = [0.15 if c == "EOL" else 1.0 for c in choices]
-        prefix = prefix + [r.choices(choices, weights)[0]]
-    return {"seed": seed, "ok": True, "steps": checked, "msg_diffs": msg_diffs[:50], "n_msg_diffs": len(msg_diffs)}
+        prefix = [*prefix, r.choices(choices, weights)[0]]
+    return {
+        "seed": seed,
+        "ok": True,
+        "steps": checked,
+        "msg_diffs": msg_diffs[:50],
+        "n_msg_diffs": len(msg_diffs),
+    }
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--grammar", default=os.path.join(HERE, "..", "beancount.y"))
     ap.add_argument("--walks", type=int, default=200)
     ap.add_argument("--steps", type=int, default=40)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
-    ap.add_argument("--show-messages", type=int, default=0, help="print up to N message differences")
+    ap.add_argument(
+        "--show-messages", type=int, default=0, help="print up to N message differences"
+    )
     args = ap.parse_args()
 
-    tasks = [(args.seed * 100003 + i, args.steps, STARTS[i % len(STARTS)]) for i in range(args.walks)]
+    tasks = [
+        (args.seed * 100003 + i, args.steps, STARTS[i % len(STARTS)]) for i in range(args.walks)
+    ]
     bad = 0
     steps = 0
     nmsg = 0
@@ -231,13 +318,19 @@ def main() -> int:
                 bad += 1
                 print(f"DIVERGE seed={res['seed']} prefix={' '.join(res['prefix'])}")
                 print(f"    text={res['text']!r}")
-                print(f"    only beancount accepts: {res['only_beancount']}  only grammar accepts: {res['only_grammar']}")
+                print(
+                    f"    only beancount accepts: {res['only_beancount']}  only grammar accepts: {res['only_grammar']}"
+                )
             for d in res["msg_diffs"]:
                 if shown < args.show_messages:
                     shown += 1
-                    print(f"MSG prefix={' '.join(d[0])} + {d[1]}\n    beancount: {d[2]}\n    grammar:   {d[3]}")
-    print(f"walks: {args.walks}  steps checked: {steps}  diverging walks: {bad}  "
-          f"rejection-message differences: {nmsg}")
+                    print(
+                        f"MSG prefix={' '.join(d[0])} + {d[1]}\n    beancount: {d[2]}\n    grammar:   {d[3]}"
+                    )
+    print(
+        f"walks: {args.walks}  steps checked: {steps}  diverging walks: {bad}  "
+        f"rejection-message differences: {nmsg}"
+    )
     return 1 if bad else 0
 
 

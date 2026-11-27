@@ -42,7 +42,6 @@ sys.path.insert(0, HERE)
 from lalr import Parser, compile_grammar  # noqa: E402
 from oracle import OraclePool  # noqa: E402
 
-
 # A division by zero inside an arithmetic expression leaves a pending Python
 # exception behind in beancount 3.2.3; the *next* token the lexer produces is
 # then replaced by a lexer error carrying this text, so the parser no longer
@@ -78,7 +77,11 @@ def load_inputs(args) -> list[tuple[str, bytes]]:
                 with open(p) as fh:
                     doc = json.load(fh)
                 for t in doc.get("tests", []) if isinstance(doc, dict) else []:
-                    src = t.get("input", {}).get("inline") if isinstance(t.get("input"), dict) else None
+                    src = (
+                        t.get("input", {}).get("inline")
+                        if isinstance(t.get("input"), dict)
+                        else None
+                    )
                     if isinstance(src, str):
                         items.append((f"{p}#{t.get('id')}", src.encode()))
     if args.random:
@@ -92,20 +95,102 @@ def load_inputs(args) -> list[tuple[str, bytes]]:
 
 # Pieces for random inputs: well-formed lines, broken lines and token soup.
 _LINES = [
-    '2024-01-01 open Assets:A USD', '2024-01-01 open Assets:A USD,EUR "FIFO"', '2024-01-02 * "p" "n" #t ^l',
-    '2024-01-02 txn "n"', '2024-01-02 ! "n"', '2024-01-02 P', '  Assets:A  -1,000.50 USD', '  Assets:A 1 HOOL {10 USD}',
-    '  Assets:A 1 HOOL {{10 USD, 2024-01-01, "lot"}} @ 11 USD', '  Assets:A 1 HOOL {1 # 2 USD} @@ 3 USD',
-    '  ! Assets:B', '  kk: "v"', '  kk: 1 + 2 * (3 - 1) USD', '  #tag ^link', '  ;comment', '  Assets:A {}',
-    '2024-01-03 balance Assets:A 1 ~ 0.01 USD', '2024-01-03 pad Assets:A Equity:B', '2024-01-03 close Assets:A',
-    '2024-01-03 commodity USD', '2024-01-03 price HOOL 10 USD', '2024-01-03 event "a" "b"', '2024-01-03 query "a" "b"',
-    '2024-01-03 note Assets:A "x" #t', '2024-01-03 document Assets:A "f.pdf" ^l', '2024-01-03 custom "x" 1 USD TRUE "s" Assets:A 2024-01-01',
-    'option "title" "x"', 'include "x.bean"', 'plugin "p" "cfg"', 'pushtag #a', 'poptag #a', 'pushmeta kk: "v"', 'popmeta kk:',
-    '* heading', '', ';c', 'garbage line', '2024-02-30 open Assets:A', '  $', '1,0',
+    "2024-01-01 open Assets:A USD",
+    '2024-01-01 open Assets:A USD,EUR "FIFO"',
+    '2024-01-02 * "p" "n" #t ^l',
+    '2024-01-02 txn "n"',
+    '2024-01-02 ! "n"',
+    "2024-01-02 P",
+    "  Assets:A  -1,000.50 USD",
+    "  Assets:A 1 HOOL {10 USD}",
+    '  Assets:A 1 HOOL {{10 USD, 2024-01-01, "lot"}} @ 11 USD',
+    "  Assets:A 1 HOOL {1 # 2 USD} @@ 3 USD",
+    "  ! Assets:B",
+    '  kk: "v"',
+    "  kk: 1 + 2 * (3 - 1) USD",
+    "  #tag ^link",
+    "  ;comment",
+    "  Assets:A {}",
+    "2024-01-03 balance Assets:A 1 ~ 0.01 USD",
+    "2024-01-03 pad Assets:A Equity:B",
+    "2024-01-03 close Assets:A",
+    "2024-01-03 commodity USD",
+    "2024-01-03 price HOOL 10 USD",
+    '2024-01-03 event "a" "b"',
+    '2024-01-03 query "a" "b"',
+    '2024-01-03 note Assets:A "x" #t',
+    '2024-01-03 document Assets:A "f.pdf" ^l',
+    '2024-01-03 custom "x" 1 USD TRUE "s" Assets:A 2024-01-01',
+    'option "title" "x"',
+    'include "x.bean"',
+    'plugin "p" "cfg"',
+    "pushtag #a",
+    "poptag #a",
+    'pushmeta kk: "v"',
+    "popmeta kk:",
+    "* heading",
+    "",
+    ";c",
+    "garbage line",
+    "2024-02-30 open Assets:A",
+    "  $",
+    "1,0",
 ]
-_SOUP = ['2024-01-02', 'open', 'close', 'balance', 'pad', 'note', 'event', 'price', 'commodity', 'custom', 'document', 'query',
-         'txn', 'pushtag', 'poptag', 'pushmeta', 'popmeta', 'option', 'include', 'plugin', '*', '!', '#', '&', 'P', 'USD',
-         'Assets:A', '"s"', '5', '1.5', '-', '+', '/', '#t', '^l', 'kk:', ':', '|', '@', '@@', '{', '}', '{{', '}}', ',', '~',
-         '(', ')', '$', 'TRUE', 'NULL', ';c', 'x']
+_SOUP = [
+    "2024-01-02",
+    "open",
+    "close",
+    "balance",
+    "pad",
+    "note",
+    "event",
+    "price",
+    "commodity",
+    "custom",
+    "document",
+    "query",
+    "txn",
+    "pushtag",
+    "poptag",
+    "pushmeta",
+    "popmeta",
+    "option",
+    "include",
+    "plugin",
+    "*",
+    "!",
+    "#",
+    "&",
+    "P",
+    "USD",
+    "Assets:A",
+    '"s"',
+    "5",
+    "1.5",
+    "-",
+    "+",
+    "/",
+    "#t",
+    "^l",
+    "kk:",
+    ":",
+    "|",
+    "@",
+    "@@",
+    "{",
+    "}",
+    "{{",
+    "}}",
+    ",",
+    "~",
+    "(",
+    ")",
+    "$",
+    "TRUE",
+    "NULL",
+    ";c",
+    "x",
+]
 
 
 def random_inputs(n: int, seed: int) -> list[tuple[str, bytes]]:
@@ -122,7 +207,9 @@ def random_inputs(n: int, seed: int) -> list[tuple[str, bytes]]:
                     ws.insert(r.randrange(len(ws) + 1), r.choice(_SOUP))
                     line = " ".join(ws)
             else:
-                line = r.choice(["", "", "  ", "\t"]) + " ".join(r.choice(_SOUP) for _ in range(r.randint(1, 6)))
+                line = r.choice(["", "", "  ", "\t"]) + " ".join(
+                    r.choice(_SOUP) for _ in range(r.randint(1, 6))
+                )
             lines.append(line)
         nl = "\r\n" if r.random() < 0.1 else "\n"
         text = nl.join(lines) + (nl if r.random() < 0.8 else "")
@@ -139,7 +226,7 @@ class Cache:
                 for line in f:
                     k, v = line.split("\t", 1)
                     self.data[k] = json.loads(v)
-        self.fh = open(path, "a") if path else None
+        self.fh = open(path, "a") if path else None  # noqa: SIM115 (lives as long as the run)
 
     @staticmethod
     def key(b: bytes) -> str:
@@ -156,27 +243,50 @@ class Cache:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--grammar", default=os.path.join(HERE, "..", "beancount.y"))
-    ap.add_argument("--dir", action="append",
-                    help="directory of input files (read as bytes); DIR::PATTERN keeps only file names matching PATTERN")
+    ap.add_argument(
+        "--dir",
+        action="append",
+        help="directory of input files (read as bytes); DIR::PATTERN keeps only file names matching PATTERN",
+    )
     ap.add_argument("--json", action="append")
     ap.add_argument("--file", action="append")
-    ap.add_argument("--inline-tests", action="append",
-                    help="directory searched for conformance tests.json files; their input.inline sources are used")
-    ap.add_argument("--random", type=int, default=0,
-                    help="add N random token-soup inputs (see random_inputs; uses --seed)")
+    ap.add_argument(
+        "--inline-tests",
+        action="append",
+        help="directory searched for conformance tests.json files; their input.inline sources are used",
+    )
+    ap.add_argument(
+        "--random",
+        type=int,
+        default=0,
+        help="add N random token-soup inputs (see random_inputs; uses --seed)",
+    )
     ap.add_argument("--cache")
     ap.add_argument("--jobs", type=int)
     ap.add_argument("--sample", type=int)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-bytes", type=int, default=0, help="skip inputs larger than this")
     ap.add_argument("--mismatches", help="write mismatching inputs here (JSON lines)")
-    ap.add_argument("--message-mismatches", help="write inputs whose messages differ here (JSON lines)")
-    ap.add_argument("--min-rate", type=float, help="exit 1 if the match rate (and, with --check-lexer, the lexer rate) is below this (0-100)")
-    ap.add_argument("--check-lexer", action="store_true",
-                    help="also compare the reference lexer (reflexer.py) with beancount's token stream")
-    ap.add_argument("--lexer-mismatches", help="write inputs where the reference lexer differs here")
+    ap.add_argument(
+        "--message-mismatches", help="write inputs whose messages differ here (JSON lines)"
+    )
+    ap.add_argument(
+        "--min-rate",
+        type=float,
+        help="exit 1 if the match rate (and, with --check-lexer, the lexer rate) is below this (0-100)",
+    )
+    ap.add_argument(
+        "--check-lexer",
+        action="store_true",
+        help="also compare the reference lexer (reflexer.py) with beancount's token stream",
+    )
+    ap.add_argument(
+        "--lexer-mismatches", help="write inputs where the reference lexer differs here"
+    )
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
@@ -188,20 +298,18 @@ def main() -> int:
     todo = [i for i, (_, b) in enumerate(items) if cache.get(b) is None]
     if todo:
         pool = OraclePool(args.jobs)
-        done = 0
-        for k, res in pool.map([items[i][1] for i in todo]):
+        for done, (k, res) in enumerate(pool.map([items[i][1] for i in todo]), 1):
             cache.put(items[todo[k]][1], res)
-            done += 1
             if not args.quiet and done % 2000 == 0:
                 print(f"  oracle: {done}/{len(todo)}", file=sys.stderr)
 
     if args.check_lexer:
         import reflexer
-    lex_out = open(args.lexer_mismatches, "w") if args.lexer_mismatches else None
+    lex_out = open(args.lexer_mismatches, "w") if args.lexer_mismatches else None  # noqa: SIM115
     stats = Counter()
     kinds = Counter()
-    mism_out = open(args.mismatches, "w") if args.mismatches else None
-    msg_out = open(args.message_mismatches, "w") if args.message_mismatches else None
+    mism_out = open(args.mismatches, "w") if args.mismatches else None  # noqa: SIM115
+    msg_out = open(args.message_mismatches, "w") if args.message_mismatches else None  # noqa: SIM115
     for name, data in items:
         res = cache.get(data)
         st = res["status"]
@@ -216,41 +324,74 @@ def main() -> int:
             if mine == res["tokens"]:
                 stats["lex_match"] += 1
             elif lex_out:
-                lex_out.write(json.dumps({"name": name, "input": base64.b64encode(data).decode(),
-                                          "beancount": res["tokens"], "reflexer": mine}) + "\n")
+                lex_out.write(
+                    json.dumps(
+                        {
+                            "name": name,
+                            "input": base64.b64encode(data).decode(),
+                            "beancount": res["tokens"],
+                            "reflexer": mine,
+                        }
+                    )
+                    + "\n"
+                )
         ref = [(ln, msg) for ln, msg in res["syntax"]]
         got = [(e.line, e.message) for e in parser.run([tuple(t) for t in res["tokens"]])]
         if ref:
             stats["with_errors"] += 1
             stats["errors"] += len(ref)
-        if [l for l, _ in ref] == [l for l, _ in got]:
+        if [ln for ln, _ in ref] == [ln for ln, _ in got]:
             stats["match"] += 1
             if ref == got:
                 stats["message_match"] += 1
             elif msg_out:
-                msg_out.write(json.dumps({"name": name, "text": data.decode("utf-8", "replace"),
-                                          "beancount": ref, "grammar": got}) + "\n")
+                msg_out.write(
+                    json.dumps(
+                        {
+                            "name": name,
+                            "text": data.decode("utf-8", "replace"),
+                            "beancount": ref,
+                            "grammar": got,
+                        }
+                    )
+                    + "\n"
+                )
             continue
         stats["mismatch"] += 1
         if len(ref) != len(got):
-            kinds["count %+d" % (len(got) - len(ref))] += 1
+            kinds[f"count {len(got) - len(ref):+d}"] += 1
         else:
             kinds["line"] += 1
         if mism_out:
-            mism_out.write(json.dumps({"name": name, "input": base64.b64encode(data).decode(),
-                                       "text": data.decode("utf-8", "replace"),
-                                       "beancount": ref, "grammar": got}) + "\n")
+            mism_out.write(
+                json.dumps(
+                    {
+                        "name": name,
+                        "input": base64.b64encode(data).decode(),
+                        "text": data.decode("utf-8", "replace"),
+                        "beancount": ref,
+                        "grammar": got,
+                    }
+                )
+                + "\n"
+            )
 
     c = stats["compared"]
     rate = 100.0 * stats["match"] / c if c else 100.0
     mrate = 100.0 * stats["message_match"] / c if c else 100.0
-    print(f"inputs: {len(items)}  compared: {c}  beancount crash: {stats['crash']}  "
-          f"beancount exception: {stats['exception']}  divide-by-zero quirk: {stats['divzero']}")
-    print(f"inputs with syntax errors (beancount): {stats['with_errors']}  syntax errors: {stats['errors']}")
+    print(
+        f"inputs: {len(items)}  compared: {c}  beancount crash: {stats['crash']}  "
+        f"beancount exception: {stats['exception']}  divide-by-zero quirk: {stats['divzero']}"
+    )
+    print(
+        f"inputs with syntax errors (beancount): {stats['with_errors']}  syntax errors: {stats['errors']}"
+    )
     print(f"error count+lines match: {stats['match']}/{c} = {rate:.3f}%")
     print(f"exact message match:     {stats['message_match']}/{c} = {mrate:.3f}%")
     if args.check_lexer:
-        print(f"reference lexer tokens:  {stats['lex_match']}/{c} = {100.0 * stats['lex_match'] / max(c, 1):.3f}%")
+        print(
+            f"reference lexer tokens:  {stats['lex_match']}/{c} = {100.0 * stats['lex_match'] / max(c, 1):.3f}%"
+        )
     if kinds:
         print("mismatch kinds (grammar vs beancount):", dict(kinds.most_common()))
     if args.min_rate is not None:

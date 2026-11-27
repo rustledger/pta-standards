@@ -66,8 +66,12 @@ class OraclePool:
         self.jobs = jobs or os.cpu_count() or 2
 
     def _spawn(self):
-        return subprocess.Popen([PYTHON, "-I", os.path.abspath(__file__)], stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE, bufsize=0)
+        return subprocess.Popen(
+            [PYTHON, "-I", os.path.abspath(__file__)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            bufsize=0,
+        )
 
     def map(self, inputs: list[bytes]):
         """Yield ``(index, result)`` for every input, in completion order."""
