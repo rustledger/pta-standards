@@ -101,9 +101,14 @@ option "operating_currency" "USD"
 
 | Format | File | Description |
 |--------|------|-------------|
+| LALR (bison) | [grammar/beancount.y](grammar/beancount.y) | Token-level grammar that reproduces beancount 3.2.3's syntax errors and error recovery exactly; verified by [grammar/harness](grammar/harness/README.md). **Authoritative** for which inputs are syntax errors. |
+| Lexical spec | [grammar/LEXICAL.md](grammar/LEXICAL.md) | Ordered token rules and post-lex checks matching beancount 3.2.3's lexer; executable as [grammar/harness/reflexer.py](grammar/harness/reflexer.py). |
 | PEG | [grammar/beancount.peg](grammar/beancount.peg) | Parsing Expression Grammar |
 | EBNF | [grammar/beancount.ebnf](grammar/beancount.ebnf) | ISO 14977 EBNF |
 | ABNF | [grammar/beancount.abnf](grammar/beancount.abnf) | RFC 5234 ABNF |
+
+The PEG, EBNF, ABNF and tree-sitter grammars are hand-written approximations for readers and editors.
+They are not verified against beancount and disagree with it in places (see [grammar/LEXICAL.md](grammar/LEXICAL.md#corrections-to-speclexicalmd)); where they differ from `beancount.y` / `LEXICAL.md`, the latter are correct.
 
 ## Schema
 

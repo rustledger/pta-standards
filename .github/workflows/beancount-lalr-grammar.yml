@@ -1,0 +1,50 @@
+name: Beancount LALR Grammar Equivalence
+
+# Checks that the clean-room LALR grammar (formats/beancount/v3/grammar/beancount.y)
+# reports syntax errors exactly like beancount, and that the reference lexer
+# (LEXICAL.md / harness/reflexer.py) tokenises exactly like it.  beancount is
+# used only as a black-box oracle.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'formats/beancount/v3/grammar/**'
+      - '.github/workflows/beancount-lalr-grammar.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'formats/beancount/v3/grammar/**'
+      - '.github/workflows/beancount-lalr-grammar.yml'
+  workflow_dispatch:
+
+jobs:
+  equivalence:
+    name: Grammar and lexer equivalence (sample)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install bison and beancount
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bison
+          bison --version | head -1
+          pip install 'beancount==3.2.3'
+
+      - name: Equivalence on random inputs and conformance sources
+        working-directory: formats/beancount/v3/grammar/harness
+        run: |
+          python equivalence.py --random 3000 --seed 1 \
+            --inline-tests ../../../../../tests \
+            --check-lexer --min-rate 100 --quiet
+
+      - name: Viable-prefix exploration
+        working-directory: formats/beancount/v3/grammar/harness
+        run: python explore.py --walks 150 --steps 30 --seed 1

@@ -1,4 +1,7 @@
 ; Beancount ABNF Grammar
+; NOTE: hand-written approximation, not verified against beancount. For exact
+; syntax-error behaviour see beancount.y (LALR) and LEXICAL.md, which are
+; checked against beancount 3.2.3 by harness/equivalence.py.
 ; RFC 5234 Augmented BNF notation
 ;
 ; This grammar defines the concrete syntax for Beancount v3.

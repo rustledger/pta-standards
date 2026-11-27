@@ -1,4 +1,7 @@
 // Beancount PEG Grammar
+// NOTE: hand-written approximation, not verified against beancount. For exact
+// syntax-error behaviour see beancount.y (LALR) and LEXICAL.md, which are
+// checked against beancount 3.2.3 by harness/equivalence.py.
 // For use with pest, tree-sitter, or similar PEG parsers
 //
 // This grammar produces a concrete syntax tree. Semantic validation
