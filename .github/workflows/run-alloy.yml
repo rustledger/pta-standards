@@ -6,17 +6,29 @@ on:
     paths:
       - '**/*.als'
       - '.github/workflows/run-alloy.yml'
+      - 'scripts/run_alloy.py'
+      - 'scripts/alloy-known-failures.txt'
   pull_request:
     branches: [main]
     paths:
       - '**/*.als'
       - '.github/workflows/run-alloy.yml'
+      - 'scripts/run_alloy.py'
+      - 'scripts/alloy-known-failures.txt'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ALLOY_VERSION: 6.2.0
+  ALLOY_SHA256: 6b8c1cb5bc93bedfc7c61435c4e1ab6e688a242dc702a394628d9a9801edb78d
 
 jobs:
   alloy:
     name: Alloy Model Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -28,30 +40,18 @@ jobs:
 
       - name: Download Alloy
         run: |
-          mkdir -p alloy
-          curl -L -o alloy/alloy.jar \
-            https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v6.1.0/org.alloytools.alloy.dist-6.1.0.jar
+          mkdir -p "$RUNNER_TEMP/alloy"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/alloy/alloy.jar" \
+            "https://github.com/AlloyTools/org.alloytools.alloy/releases/download/v${ALLOY_VERSION}/org.alloytools.alloy.dist.jar"
+          echo "${ALLOY_SHA256}  $RUNNER_TEMP/alloy/alloy.jar" | sha256sum --check --strict
+          java -jar "$RUNNER_TEMP/alloy/alloy.jar" version
 
-      - name: Find Alloy models
-        id: find-models
-        run: |
-          echo "models=$(find . -name '*.als' -type f | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-      - name: Run Alloy checks
-        run: |
-          for model in ${{ steps.find-models.outputs.models }}; do
-            echo "Checking: $model"
-            java -cp alloy/alloy.jar edu.mit.csail.sdg.alloy4whole.ExampleUsingTheAPI "$model" || {
-              echo "::error file=$model::Alloy model check failed"
-              exit 1
-            }
-          done
-
-      - name: Summary
-        if: always()
-        run: |
-          echo "## Alloy Model Verification Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          for model in $(find . -name '*.als' -type f); do
-            echo "- \`$model\`" >> $GITHUB_STEP_SUMMARY
-          done
+      # Runs every command of every *.als model and judges each one from
+      # Alloy's receipt.json (the exit code only says the model compiled):
+      # a check must find no counterexample and a run must find an instance,
+      # unless the command says `expect` otherwise or is listed in
+      # scripts/alloy-known-failures.txt. Writes a per-command table to the
+      # job summary and exits non-zero on any failure, compile error, or
+      # known failure that has started passing.
+      - name: Verify Alloy models
+        run: python3 scripts/run_alloy.py --jar "$RUNNER_TEMP/alloy/alloy.jar"
