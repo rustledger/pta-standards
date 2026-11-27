@@ -1,4 +1,4 @@
-# ptadiff: differential testing for plain-text-accounting parsers
+# ptadiff: differential testing for plain-text-accounting implementations
 
 `ptadiff` compares an implementation's parse errors with a reference
 implementation's (the *oracle*) over many inputs. It turns the mismatches into
@@ -133,6 +133,53 @@ fmt.keys["state"] = state_key        # then: Differ(fmt, ..., key="state")
 
 No other stage changes. Consumers that pin counts per key (rustledger's
 parity manifest pins the key's name) re-pin once.
+
+## The semantic differential
+
+The parse differential compares syntax errors. The semantic differential
+(`ptadiff.semantic`) compares what two implementations make of a
+WELL-FORMED ledger after a full load: booking, interpolation, pads, balance
+assertions, options and includes, plugins. Both sides describe each ledger
+with a snapshot (`ptadiff-snapshot/1`: errors, booked entries, final
+balances, effective options), specified in [SNAPSHOT.md](SNAPSHOT.md) with
+its canonical form, comparison rules and verdicts.
+
+It reuses every stage above. The implementation speaks the same JSON-lines
+protocol in semantic mode (an input may span several files; the answer is
+a snapshot). The oracle runs in the same forked, crash-isolated workers.
+The minimizer is the same key-preserving one, shrinking each file by lines
+and then whole words, and it keeps only candidates the oracle still reads as
+well-formed. Clusters and reports are the same, with a deviation count added.
+A format plugs in the same kinds of parts, in their own registries:
+
+| Part | beancount |
+|---|---|
+| `semantic_oracle` | `loader.load_file` over the input written to a temporary directory (`semantic.py`) |
+| `semantic_normalizers` | `error-at-directive`, `drop-errored-entries`, `placeholder-locations`, `errored-transaction-balances`, `tolerance-fallback`, `drop-zero-tolerances` (`semkey.py`) |
+| `semantic_keys` | `sem` (default): `field\|path\|kind\|booking\|features`; `field`: `field\|path\|kind` |
+| `semantic_generators` | `s1` lots and booking, `s2` pads, balances and tolerances, `s3` multi-file, `s4` built-in plugins, `smix` (`semgen.py`) |
+| `oracle_unjudged` | a third-party plugin beancount cannot import where it runs |
+
+An implementation's DELIBERATE differences go in its hooks module: a
+representation difference as `normalize_impl_snapshot` /
+`normalize_oracle_snapshot`, a difference in meaning as a
+`ptadiff.semantic.Deviation` in `DEVIATIONS`, each pointing at where the
+implementation documents it. A ledger a deviation explains is counted as
+that deviation, not as a mismatch.
+
+```sh
+python -m ptadiff generate --semantic --format beancount --generator s1 --seed 1 --n 100 -o s1.jsonl
+python -m ptadiff run --semantic --format beancount --impl "semantic_snapshot" \
+    --gen s1:1:5000 --gen s3:1:5000 --input ledgers/ --hooks hooks.py \
+    --minimize 10 --json report.json --markdown report.md --results results.jsonl
+python -m ptadiff minimize --semantic --format beancount --impl "semantic_snapshot" \
+    results.jsonl --line 3
+```
+
+rustledger's `cargo run -p rustledger-loader --example semantic_snapshot` is
+such an implementation, and its `scripts/semantic_parity_hooks.py` such a
+hooks module. The nightly `semantic-differential` workflow runs a large
+sample against rustledger's main branch.
 
 ## Usage
 

@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rustledger/pta-standards/tooling/differential/snapshot-1.schema.json",
+  "title": "ptadiff-snapshot/1",
+  "description": "What a ledger means after a full load: its errors, booked entries, final balances and effective options. See SNAPSHOT.md.",
+  "type": "object",
+  "required": ["errors", "entries", "balances", "options"],
+  "properties": {
+    "errors": {"type": "array", "items": {"$ref": "#/$defs/error"}},
+    "entries": {"type": "array", "items": {"$ref": "#/$defs/entry"}},
+    "balances": {
+      "type": "object",
+      "additionalProperties": {"type": "array", "items": {"$ref": "#/$defs/position"}}
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "operating_currency": {"type": "array", "items": {"type": "string"}},
+        "booking_method": {"type": ["string", "null"]},
+        "inferred_tolerance_default": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/number"}
+        },
+        "tolerance_multiplier": {"$ref": "#/$defs/numberOrNull"},
+        "infer_tolerance_from_cost": {"type": "boolean"},
+        "display_precision": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "common": {"type": ["integer", "null"]},
+              "max": {"type": ["integer", "null"]}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "number": {"type": ["string", "number"]},
+    "numberOrNull": {"type": ["string", "number", "null"]},
+    "error": {
+      "type": "object",
+      "required": ["file", "line", "code", "msg"],
+      "properties": {
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 0},
+        "code": {"type": "string"},
+        "msg": {"type": "string"}
+      }
+    },
+    "amount": {
+      "type": ["object", "null"],
+      "properties": {
+        "number": {"$ref": "#/$defs/numberOrNull"},
+        "currency": {"type": ["string", "null"]}
+      }
+    },
+    "cost": {
+      "type": ["object", "null"],
+      "properties": {
+        "number": {"$ref": "#/$defs/numberOrNull"},
+        "currency": {"type": ["string", "null"]},
+        "date": {"type": ["string", "null"]},
+        "label": {"type": ["string", "null"]},
+        "spec": {"type": "boolean"},
+        "number_per": {"$ref": "#/$defs/numberOrNull"},
+        "number_total": {"$ref": "#/$defs/numberOrNull"},
+        "merge": {"type": "boolean"}
+      }
+    },
+    "posting": {
+      "type": "object",
+      "required": ["account", "units", "cost", "price", "flag"],
+      "properties": {
+        "account": {"type": "string"},
+        "units": {"$ref": "#/$defs/amount"},
+        "cost": {"$ref": "#/$defs/cost"},
+        "price": {"$ref": "#/$defs/amount"},
+        "flag": {"type": ["string", "null"]}
+      }
+    },
+    "position": {
+      "type": "object",
+      "required": ["units", "cost"],
+      "properties": {"units": {"$ref": "#/$defs/amount"}, "cost": {"$ref": "#/$defs/cost"}}
+    },
+    "entry": {
+      "type": "object",
+      "required": ["type", "date", "file", "line"],
+      "properties": {
+        "type": {
+          "enum": ["open", "close", "commodity", "pad", "balance", "transaction", "price",
+                   "note", "event", "query", "document", "custom"]
+        },
+        "date": {"type": ["string", "null"]},
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 0},
+        "account": {"type": "string"},
+        "source_account": {"type": "string"},
+        "currency": {"type": "string"},
+        "currencies": {"type": "array", "items": {"type": "string"}},
+        "booking": {"type": ["string", "null"]},
+        "amount": {"$ref": "#/$defs/amount"},
+        "tolerance": {"$ref": "#/$defs/numberOrNull"},
+        "flag": {"type": ["string", "null"]},
+        "payee": {"type": ["string", "null"]},
+        "narration": {"type": ["string", "null"]},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "links": {"type": "array", "items": {"type": "string"}},
+        "postings": {"type": "array", "items": {"$ref": "#/$defs/posting"}},
+        "tolerances": {"type": "object", "additionalProperties": {"$ref": "#/$defs/number"}},
+        "comment": {"type": "string"},
+        "event": {"type": "string"},
+        "description": {"type": "string"},
+        "name": {"type": "string"},
+        "query": {"type": "string"},
+        "filename": {"type": "string"},
+        "custom": {"type": "string"},
+        "values": {"type": "integer"}
+      }
+    }
+  }
+}

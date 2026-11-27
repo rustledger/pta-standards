@@ -29,6 +29,11 @@ Category keys (`plugin.keys`, the first is the default):
 
 A key built from a parser's state at the error needs that parser's tables;
 it plugs in as another entry of `keys` (see the package README).
+
+Semantic differential (`ptadiff.semantic`): the oracle is beancount's full
+loader (`semantic.BeancountSemanticOracle`, `loader.load_file`), the
+normalizers, features and `sem` key are in `semkey.py`, the generators of
+well-formed ledgers in `semgen.py`.
 """
 
 from __future__ import annotations
@@ -37,9 +42,12 @@ import re
 from dataclasses import dataclass
 
 from ...model import Error
-from ..base import FormatPlugin, Mismatch, Normalizer
+from ..base import FormatPlugin, Mismatch, Normalizer, generic_semantic_key
+from . import semkey
 from .generators import GENERATORS
 from .oracle import BeancountOracle
+from .semantic import MAIN, BeancountSemanticOracle
+from .semgen import SEMANTIC_GENERATORS
 
 #: The beancount release the bundled normalizers and keys were checked against.
 TESTED_VERSION = "3.2.3"
@@ -126,6 +134,7 @@ class BeancountFormat(FormatPlugin):
     name: str = "beancount"
     extensions: tuple[str, ...] = (".beancount", ".bean")
     needs_tokens: bool = True
+    main_file: str = MAIN
 
     def __post_init__(self) -> None:
         self.normalizers = [
@@ -145,6 +154,61 @@ class BeancountFormat(FormatPlugin):
         ]
         self.keys = {"shape": self.shape_key, "coarse": self.coarse_key}
         self.generators = dict(GENERATORS)
+        self.semantic_normalizers = [
+            Normalizer(
+                "error-at-directive",
+                "both",
+                lambda led, snap, side: semkey.error_at_directive(self, led, snap, side),
+                "place each error on its directive's first line",
+            ),
+            Normalizer(
+                "drop-errored-entries",
+                "both",
+                lambda led, snap, side: semkey.drop_errored_entries(self, led, snap, side),
+                "leave out an entry its own side reports an error in",
+            ),
+            Normalizer(
+                "placeholder-locations",
+                "both",
+                lambda led, snap, side: semkey.placeholder_locations(self, led, snap, side),
+                "locate what has no place in the input at nowhere",
+            ),
+            Normalizer(
+                "errored-transaction-balances",
+                "pair",
+                lambda led, o, i: semkey.errored_transaction_balances(self, led, o, i),
+                "compare no balance of an account an errored transaction posts to",
+            ),
+            Normalizer(
+                "tolerance-fallback",
+                "oracle",
+                lambda led, snap, side: semkey.tolerance_fallback(self, led, snap, side),
+                "fill in the `*` tolerance default beancount applies on lookup",
+            ),
+            Normalizer(
+                "drop-zero-tolerances",
+                "both",
+                lambda led, snap, side: semkey.drop_zero_tolerances(self, led, snap, side),
+                "drop a zero inferred tolerance",
+            ),
+        ]
+        self.semantic_keys = {
+            "sem": lambda m: semkey.sem_key(self, m),
+            "field": generic_semantic_key,
+        }
+        self.semantic_generators = dict(SEMANTIC_GENERATORS)
+
+    def semantic_oracle(self, version: str | None = TESTED_VERSION, **options):
+        return BeancountSemanticOracle(version=version, **options)
+
+    def ledger_features(self, ledger) -> list[str]:
+        return semkey.ledger_features(self, ledger)
+
+    def oracle_unjudged(self, ledger, snapshot: dict) -> str | None:
+        return semkey.missing_third_party_plugin(snapshot)
+
+    def well_formed(self, snapshot: dict) -> bool:
+        return not any(e["code"] in semkey.SYNTAX_ERRORS for e in snapshot.get("errors", ()))
 
     def oracle(self, version: str | None = TESTED_VERSION, **options):
         return BeancountOracle(version=version, **options)
@@ -167,6 +231,7 @@ __all__ = [
     "TESTED_VERSION",
     "BeancountFormat",
     "BeancountOracle",
+    "BeancountSemanticOracle",
     "error_kind",
     "line_shape",
 ]

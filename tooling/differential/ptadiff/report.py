@@ -48,6 +48,7 @@ def build_report(
                 },
                 "minimized": c.minimized,
                 "minimized_complete": c.minimized_complete,
+                **({"features": c.features} if c.features is not None else {}),
             }
             for c in clusters
         ],
@@ -96,7 +97,10 @@ def render_markdown(
     out.append(
         f"- inputs: {t['inputs']}; match {t.get('match', 0)}, mismatch "
         f"{t.get('mismatch', 0)}, oracle crashed {t.get('crash', 0)}"
+        + (f", deliberate deviation {t['deviation']}" if t.get("deviation") else "")
     )
+    for name, n in sorted((report.get("deviations") or {}).items()):
+        out.append(f"  - deviation `{name}`: {n}")
     cats = report["categories"]
     out.append(f"- categories: {len(cats)}")
     out.append("")
@@ -121,6 +125,8 @@ def render_markdown(
             ex = _cell(c["minimized"]) + " *"
         else:
             ex = _cell(c["example"]["text"])
+        if c.get("features"):
+            ex += " (" + ", ".join(c["features"]) + ")"
         labels = f" {_labels(c['labels'])} |" if labelled else ""
         out.append(
             f"| {rank} | {c['size']} | {100 * c['share']:.1f}% | {_cell(c['key'])} |{labels} {ex} |"

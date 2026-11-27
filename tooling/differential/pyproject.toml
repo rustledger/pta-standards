@@ -23,6 +23,7 @@ include = ["ptadiff*"]
 
 [tool.setuptools.package-data]
 "ptadiff.formats.beancount" = ["seeds/*.beancount"]
+"ptadiff.schemas" = ["*.json"]
 
 [tool.ruff]
 extend = "../../pyproject.toml"
