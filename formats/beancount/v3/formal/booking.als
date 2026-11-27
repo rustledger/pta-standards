@@ -331,8 +331,10 @@ assert noMatchingLotsFails {
 
 /**
  * FIFO and LIFO may select different lots when dates differ.
+ * This is an existence claim, so it is a `run` (an instance must exist),
+ * not a `check`.
  */
-assert fifoLifoMayDiffer {
+pred fifoLifoMayDiffer {
     some inv: Inventory, r1, r2: Reduction, l1, l2: Lot |
         l1 != l2 and
         l1 in inv.lots and l2 in inv.lots and
@@ -352,7 +354,7 @@ assert fifoLifoMayDiffer {
  * Example: Two lots, FIFO should select the older one.
  */
 pred exampleFifoTwoLots {
-    some inv: Inventory, r: Reduction, l1, l2: Lot |
+    some inv: Inventory, r: Reduction, l1, l2: Lot | {
         -- Setup: two lots with different dates
         l1 != l2
         inv.lots = l1 + l2
@@ -367,13 +369,14 @@ pred exampleFifoTwoLots {
         -- Should select l1 (older)
         l1 in r.matchedLots
         r.succeeded = 1
+    }
 }
 
 /**
  * Example: Specific lot selection in STRICT mode.
  */
 pred exampleStrictSpecificLot {
-    some inv: Inventory, r: Reduction, l1, l2: Lot |
+    some inv: Inventory, r: Reduction, l1, l2: Lot | {
         -- Setup: two lots with different costs
         l1 != l2
         inv.lots = l1 + l2
@@ -390,13 +393,14 @@ pred exampleStrictSpecificLot {
         -- Should match only l1
         r.matchedLots = l1
         r.succeeded = 1
+    }
 }
 
 /**
  * Example: STRICT fails with ambiguous empty spec.
  */
 pred exampleStrictAmbiguousFails {
-    some inv: Inventory, r: Reduction, l1, l2: Lot |
+    some inv: Inventory, r: Reduction, l1, l2: Lot | {
         -- Setup: two lots
         l1 != l2
         inv.lots = l1 + l2
@@ -409,6 +413,7 @@ pred exampleStrictAmbiguousFails {
 
         -- Should fail
         r.succeeded = 0
+    }
 }
 
 -- =============================================================================
@@ -418,6 +423,7 @@ pred exampleStrictAmbiguousFails {
 run exampleFifoTwoLots for 4 but 2 Lot, 2 Date
 run exampleStrictSpecificLot for 4 but 2 Lot
 run exampleStrictAmbiguousFails for 4 but 2 Lot
+run fifoLifoMayDiffer for 4 but 2 Lot
 
 check strictEmptySpecMultipleLotsFails for 5
 check noneAlwaysSucceeds for 5
