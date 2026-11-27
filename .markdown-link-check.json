@@ -23,6 +23,9 @@
     },
     {
       "pattern": "^https://beancount.github.io"
+    },
+    {
+      "pattern": "^https://www\\.ofx\\.net/?$"
     }
   ],
   "httpHeaders": [
