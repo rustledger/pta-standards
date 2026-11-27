@@ -66,99 +66,133 @@ sig AccountRef extends Expr {
   account: Account
 }
 
--- Evaluation context
+abstract sig TruthValue {}
+one sig True, False extends TruthValue {}
+
+-- Evaluation context. Alloy functions cannot recurse, so evaluation is
+-- defined relationally: `val` and `truth` hold the value of every expression
+-- in this context, pinned down case by case by fact Evaluation below, and
+-- `defined` is the set of expressions that evaluate without error.
 sig Context {
-  balances: Account -> Int  -- Account balances
+  balances: Account -> one Int,  -- Account balances
+  val: Expr -> one Int,
+  truth: BoolExpr -> one TruthValue,
+  defined: set Expr
+}
+
+-- Direct subexpressions (BoolExpr conditions included via their operands)
+fun children: Expr -> Expr {
+  BinaryExpr <: left + BinaryExpr <: right + operand + thenExpr + elseExpr
+    + condition.(CompareExpr <: left + CompareExpr <: right)
+}
+
+-- Arithmetic subexpressions: always evaluated (unlike if/else branches)
+fun arithChildren: Expr -> Expr {
+  BinaryExpr <: left + BinaryExpr <: right + operand
+}
+
+-- Expressions are finite trees: no expression contains itself
+fact Acyclic {
+  no e: Expr | e in e.^children
+}
+
+fact Evaluation {
+  all ctx: Context {
+    all e: LiteralExpr | ctx.val[e] = e.value
+    all e: AccountRef | ctx.val[e] = ctx.balances[e.account]
+    all e: UnaryExpr | let x = ctx.val[e.operand] |
+      ctx.val[e] = (e.op = Neg implies negate[x] else (x >= 0 implies x else negate[x]))
+    all e: BinaryExpr | let l = ctx.val[e.left], r = ctx.val[e.right] |
+      ctx.val[e] = (e.op = Add implies add[l, r]
+        else e.op = Sub implies sub[l, r]
+        else e.op = Mul implies mul[l, r]
+        -- div by zero is an error (see `defined`); its value is irrelevant, and
+        -- is pinned to 0 so the analyzer never evaluates an x/0 term, which
+        -- no-overflow mode would treat as an overflow and silently discard
+        else r = 0 implies 0 else div[l, r])
+    all e: IfExpr |
+      ctx.val[e] = (ctx.truth[e.condition] = True implies ctx.val[e.thenExpr] else ctx.val[e.elseExpr])
+    all b: CompareExpr | let l = ctx.val[b.left], r = ctx.val[b.right] |
+      ctx.truth[b] = (((b.compareOp = Lt and l < r) or (b.compareOp = Le and l <= r)
+        or (b.compareOp = Eq and l = r) or (b.compareOp = Ne and l != r)
+        or (b.compareOp = Ge and l >= r) or (b.compareOp = Gt and l > r))
+        implies True else False)
+
+    -- Definedness: division by zero is an error (spec: expressions/spec.md
+    -- "Division by Zero", errors.md X-001); errors propagate through
+    -- arithmetic, and through an if/else only from the condition and the
+    -- branch actually taken.
+    all e: LiteralExpr + AccountRef | e in ctx.defined
+    all e: UnaryExpr | e in ctx.defined iff e.operand in ctx.defined
+    all e: BinaryExpr | e in ctx.defined iff
+      (e.left + e.right in ctx.defined and not (e.op = Div and ctx.val[e.right] = 0))
+    all e: IfExpr | e in ctx.defined iff
+      (e.condition.(CompareExpr <: left + CompareExpr <: right) in ctx.defined and
+       (ctx.truth[e.condition] = True implies e.thenExpr else e.elseExpr) in ctx.defined)
+  }
 }
 
 -- Evaluate an expression in a context
 fun eval[e: Expr, ctx: Context]: Int {
-  e in LiteralExpr implies e.value
-  else e in AccountRef implies ctx.balances[e.account]
-  else e in UnaryExpr implies (
-    e.op = Neg implies negate[eval[e.operand, ctx]]
-    else e.op = Abs implies (
-      eval[e.operand, ctx] >= 0 implies eval[e.operand, ctx]
-      else negate[eval[e.operand, ctx]]
-    )
-    else 0
-  )
-  else e in BinaryExpr implies (
-    e.op = Add implies add[eval[e.left, ctx], eval[e.right, ctx]]
-    else e.op = Sub implies sub[eval[e.left, ctx], eval[e.right, ctx]]
-    else e.op = Mul implies mul[eval[e.left, ctx], eval[e.right, ctx]]
-    else e.op = Div implies div[eval[e.left, ctx], eval[e.right, ctx]]
-    else 0
-  )
-  else e in IfExpr implies (
-    evalBool[e.condition, ctx] = True implies eval[e.thenExpr, ctx]
-    else eval[e.elseExpr, ctx]
-  )
-  else 0
+  ctx.val[e]
 }
-
-abstract sig TruthValue {}
-one sig True, False extends TruthValue {}
 
 -- Evaluate a boolean expression
 fun evalBool[e: BoolExpr, ctx: Context]: TruthValue {
-  e in CompareExpr implies (
-    let l = eval[e.left, ctx], r = eval[e.right, ctx] |
-    e.compareOp = Lt implies (l < r implies True else False)
-    else e.compareOp = Le implies (l <= r implies True else False)
-    else e.compareOp = Eq implies (l = r implies True else False)
-    else e.compareOp = Ne implies (l != r implies True else False)
-    else e.compareOp = Ge implies (l >= r implies True else False)
-    else e.compareOp = Gt implies (l > r implies True else False)
-    else False
-  )
-  else False
+  ctx.truth[e]
 }
 
 -- Example: computed amount expression
 -- = (account_balance * 0.1)  -- 10% of balance
+-- (balance scaled from 1000 to 30 to fit Alloy's small integers)
 pred PercentageExpression {
   some e: BinaryExpr, ref: AccountRef, lit: LiteralExpr |
   some acct: Account, ctx: Context |
-    ctx.balances[acct] = 1000 and
+    ctx.balances[acct] = 30 and
     ref.account = acct and
     lit.value = 10 and
     e.op = Div and e.left = ref and e.right = lit and
-    -- Result should be 100 (10% of 1000, using integer division)
-    eval[e, ctx] = 100
+    -- Result should be 3 (10% of 30, using integer division)
+    eval[e, ctx] = 3 and e in ctx.defined
 }
 
 -- Conditional: use different rates based on amount
+-- (scaled: balance 5000 -> 20, threshold 1000 -> 10, fees 50/10 -> 5/1)
 pred ConditionalExpression {
   some ifE: IfExpr, cmp: CompareExpr |
   some thenE, elseE: LiteralExpr, amtRef: AccountRef |
   some threshold: LiteralExpr |
   some acct: Account, ctx: Context |
-    ctx.balances[acct] = 5000 and
+    ctx.balances[acct] = 20 and
     amtRef.account = acct and
-    threshold.value = 1000 and
+    threshold.value = 10 and
     cmp.left = amtRef and cmp.right = threshold and cmp.compareOp = Gt and
-    thenE.value = 50 and   -- Higher fee for large amounts
-    elseE.value = 10 and   -- Lower fee for small amounts
+    thenE.value = 5 and   -- Higher fee for large amounts
+    elseE.value = 1 and   -- Lower fee for small amounts
     ifE.condition = cmp and ifE.thenExpr = thenE and ifE.elseExpr = elseE and
-    -- Since 5000 > 1000, result should be 50
-    eval[ifE, ctx] = 50
+    -- Since 20 > 10, result should be 5
+    eval[ifE, ctx] = 5
 }
 
 -- Assertions
+
+-- Division by zero is an error, and the error is not masked by any
+-- enclosing arithmetic: an expression with a zero-divisor division among its
+-- arithmetic subexpressions has no value.
 assert DivisionByZeroUndefined {
-  all e: BinaryExpr, ctx: Context |
-    e.op = Div and eval[e.right, ctx] = 0 implies
-    -- In practice, this would be an error; Alloy returns 0
-    true
+  all e: Expr, ctx: Context, d: e.*arithChildren & BinaryExpr |
+    (d.op = Div and eval[d.right, ctx] = 0) implies e not in ctx.defined
 }
 
+-- (abs of the most negative machine integer would overflow; Ledger amounts
+-- are unbounded, and the analyzer runs in no-overflow mode, which excludes it)
 assert AbsNonNegative {
   all e: UnaryExpr, ctx: Context |
     e.op = Abs implies eval[e, ctx] >= 0
 }
 
+check DivisionByZeroUndefined for 4
 check AbsNonNegative for 4
 
-run PercentageExpression for 4
-run ConditionalExpression for 5
+run PercentageExpression for 4 but 6 Int
+run ConditionalExpression for 5 but 6 Int
