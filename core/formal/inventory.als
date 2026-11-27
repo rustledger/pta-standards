@@ -50,24 +50,24 @@ pred InventoryConsistent[inv: Inventory] {
 }
 
 -- Adding units to inventory creates a new lot
-pred AcquireUnits[inv, inv': Inventory, c: Commodity, units: Int, cost: Int, cur: Currency, t: Time] {
-  units > 0
-  some newLot: Lot |
+pred AcquireUnits[inv, invAfter: Inventory, c: Commodity, n: Int, cost: Int, cur: Currency, t: Time] {
+  n > 0
+  some newLot: Lot - inv.lots |
     newLot.commodity = c and
-    newLot.units = units and
+    newLot.units = n and
     newLot.costPerUnit = cost and
     newLot.costCurrency = cur and
     newLot.acquisitionDate = t and
-    inv'.lots = inv.lots + newLot
+    invAfter.lots = inv.lots + newLot
 }
 
 -- Reducing units removes from lots according to booking method
 -- This is the base predicate; specific methods (FIFO, LIFO) extend this
-pred ReduceUnits[inv, inv': Inventory, c: Commodity, units: Int, lotsUsed: set Lot] {
-  units > 0
+pred ReduceUnits[inv, invAfter: Inventory, c: Commodity, n: Int, lotsUsed: set Lot] {
+  n > 0
   all lot: lotsUsed | lot in inv.lots and lot.commodity = c
-  (sum lot: lotsUsed | lot.units) = units
-  inv'.lots = inv.lots - lotsUsed
+  (sum lot: lotsUsed | lot.units) = n
+  invAfter.lots = inv.lots - lotsUsed
 }
 
 -- Total cost basis of inventory for a commodity
@@ -87,28 +87,42 @@ pred EmptyPosition[inv: Inventory, c: Commodity] {
   no lot: inv.lots | lot.commodity = c
 }
 
+-- Bounded magnitudes: the checks assume lots of at most 2 units so that, at
+-- scope 3, no sum of lot units can wrap around Alloy's 4-bit integers (its
+-- overflow guard does not reliably reject wrapped sums).
+pred BoundedLots {
+  all lot: Lot | lot.units >= -2 and lot.units <= 2
+}
+
 -- Assertions
 assert AcquireIncreasesUnits {
-  all inv, inv': Inventory, c: Commodity, u, cost: Int, cur: Currency, t: Time |
-    AcquireUnits[inv, inv', c, u, cost, cur, t] implies
-    totalUnitsFromLots[inv', c] = add[totalUnitsFromLots[inv, c], u]
+  all inv, invAfter: Inventory, c: Commodity, u, cost: Int, cur: Currency, t: Time |
+    (BoundedLots and AcquireUnits[inv, invAfter, c, u, cost, cur, t]) implies
+    totalUnitsFromLots[invAfter, c] = add[totalUnitsFromLots[inv, c], u]
 }
 
 assert ReduceDecreasesUnits {
-  all inv, inv': Inventory, c: Commodity, u: Int, lots: set Lot |
-    ReduceUnits[inv, inv', c, u, lots] implies
-    totalUnitsFromLots[inv', c] = sub[totalUnitsFromLots[inv, c], u]
+  all inv, invAfter: Inventory, c: Commodity, u: Int, lots: set Lot |
+    (BoundedLots and ReduceUnits[inv, invAfter, c, u, lots]) implies
+    totalUnitsFromLots[invAfter, c] = sub[totalUnitsFromLots[inv, c], u]
 }
 
-check AcquireIncreasesUnits for 4
-check ReduceDecreasesUnits for 4
+check AcquireIncreasesUnits for 3
+check ReduceDecreasesUnits for 3
 
 -- Example: simple inventory operations
 pred SimpleInventoryExample {
-  some inv1, inv2, inv3: Inventory, c: Commodity, cur: Currency, t1, t2: Time |
+  some inv1, inv2: Inventory, c: Commodity, cur: Currency, t1: Time |
     no inv1.lots and
-    AcquireUnits[inv1, inv2, c, 100, 10, cur, t1] and
-    totalUnitsFromLots[inv2, c] = 100
+    -- (100 units at 10, scaled to fit Alloy's 4-bit integers)
+    AcquireUnits[inv1, inv2, c, 5, 2, cur, t1] and
+    totalUnitsFromLots[inv2, c] = 5
 }
 
 run SimpleInventoryExample for 4
+
+-- Non-vacuity: the premise of ReduceDecreasesUnits is satisfiable.
+run ReduceExample {
+  some inv, invAfter: Inventory, c: Commodity, n: Int, used: set Lot |
+    BoundedLots and some inv.lots and ReduceUnits[inv, invAfter, c, n, used]
+} for 3

@@ -2,7 +2,7 @@
  * Trial Balance Report Formal Model
  *
  * This is a reference to the core trial balance model.
- * See core/formal/reports/trial-balance.als for the full specification.
+ * See core/formal/reports/trial_balance.als for the full specification.
  */
 
 module reports/formal/trial_balance

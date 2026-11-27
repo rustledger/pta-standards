@@ -19,7 +19,7 @@ sig IdentifiedLot extends Lot {
 }
 
 -- Specific reduction: user selects exact lots
-pred SpecificReduce[inv, inv': Inventory, c: Commodity, selectedLots: set IdentifiedLot] {
+pred SpecificReduce[inv, invAfter: Inventory, c: Commodity, selectedLots: set IdentifiedLot] {
   -- All selected lots are for this commodity
   all lot: selectedLots | lot.commodity = c
 
@@ -27,24 +27,24 @@ pred SpecificReduce[inv, inv': Inventory, c: Commodity, selectedLots: set Identi
   selectedLots in inv.lots
 
   -- Remove selected lots from inventory
-  inv'.lots = inv.lots - selectedLots
+  invAfter.lots = inv.lots - selectedLots
 }
 
 -- Partial lot reduction: reduce part of a specific lot
-pred SpecificPartialReduce[inv, inv': Inventory, lot: IdentifiedLot, units: Int] {
-  units > 0
-  units < lot.units
+pred SpecificPartialReduce[inv, invAfter: Inventory, lot: IdentifiedLot, n: Int] {
+  n > 0
+  n < lot.units
   lot in inv.lots
 
   -- Create reduced lot
   some reducedLot: IdentifiedLot |
     reducedLot.id = lot.id and
     reducedLot.commodity = lot.commodity and
-    reducedLot.units = sub[lot.units, units] and
+    reducedLot.units = sub[lot.units, n] and
     reducedLot.costPerUnit = lot.costPerUnit and
     reducedLot.costCurrency = lot.costCurrency and
     reducedLot.acquisitionDate = lot.acquisitionDate and
-    inv'.lots = (inv.lots - lot) + reducedLot
+    invAfter.lots = (inv.lots - lot) + reducedLot
 }
 
 -- Lot specification syntax (as in beancount)
@@ -69,12 +69,12 @@ fun matchingLots[inv: Inventory, c: Commodity, spec: LotSpecifier]: set Lot {
 }
 
 -- Specific identification with specifier
-pred SpecificReduceWithSpec[inv, inv': Inventory, c: Commodity, units: Int, spec: LotSpecifier] {
+pred SpecificReduceWithSpec[inv, invAfter: Inventory, c: Commodity, n: Int, spec: LotSpecifier] {
   let matching = matchingLots[inv, c, spec] |
   some selectedLots: set Lot |
     selectedLots in matching and
-    (sum lot: selectedLots | lot.units) = units and
-    inv'.lots = inv.lots - selectedLots
+    (sum lot: selectedLots | lot.units) = n and
+    invAfter.lots = inv.lots - selectedLots
 }
 
 -- Example: specific lot selection
@@ -84,20 +84,26 @@ pred SpecificExample {
   some disj t1, t2: Time |
   some disj id1, id2: LotId |
     lt[t1, t2] and
-    lot1.id = id1 and lot1.commodity = c and lot1.units = 100 and lot1.costPerUnit = 10 and lot1.acquisitionDate = t1 and
-    lot2.id = id2 and lot2.commodity = c and lot2.units = 100 and lot2.costPerUnit = 20 and lot2.acquisitionDate = t2 and
+    -- (units scaled by 1/100 and costs by 1/10 to fit Alloy's integers)
+    lot1.id = id1 and lot1.commodity = c and lot1.units = 1 and lot1.costPerUnit = 1 and lot1.acquisitionDate = t1 and
+    lot2.id = id2 and lot2.commodity = c and lot2.units = 1 and lot2.costPerUnit = 2 and lot2.acquisitionDate = t2 and
     inv.lots = lot1 + lot2 and
     -- Specifically select lot2 (the more expensive one)
-    some inv': Inventory |
-      SpecificReduce[inv, inv', c, lot2] and
-      inv'.lots = lot1
+    some invAfter: Inventory |
+      SpecificReduce[inv, invAfter, c, lot2] and
+      invAfter.lots = lot1
 }
 
--- Specific identification can achieve any valid reduction
+-- Specific identification can achieve any valid reduction: whatever set of
+-- identified lots of the commodity another method (FIFO, LIFO, HIFO, ...)
+-- would remove, SpecificReduce accepts that same selection and produces the
+-- same resulting inventory. (`invAfter` is the inventory with exactly those
+-- lots removed; quantifying over an arbitrary `invAfter` would be false.)
 assert SpecificCanMatchAnyMethod {
-  all inv, inv': Inventory, c: Commodity, lotsToRemove: set Lot |
+  all inv, invAfter: Inventory, c: Commodity, lotsToRemove: set Lot |
     (lotsToRemove in inv.lots and all lot: lotsToRemove | lot.commodity = c) implies
-    (lotsToRemove in IdentifiedLot implies SpecificReduce[inv, inv', c, lotsToRemove])
+    ((lotsToRemove in IdentifiedLot and invAfter.lots = inv.lots - lotsToRemove)
+      implies SpecificReduce[inv, invAfter, c, lotsToRemove])
 }
 
 -- Tax lot identification rules
@@ -108,9 +114,9 @@ pred LongTermHolding[lot: Lot, saleDate: Time] {
 }
 
 -- Select lots for tax optimization
-pred TaxOptimizedSelection[inv: Inventory, c: Commodity, units: Int, saleDate: Time, salePrice: Int, selected: set Lot] {
+pred TaxOptimizedSelection[inv: Inventory, c: Commodity, n: Int, saleDate: Time, salePrice: Int, selected: set Lot] {
   selected in { lot: inv.lots | lot.commodity = c }
-  (sum lot: selected | lot.units) = units
+  (sum lot: selected | lot.units) = n
   -- Prefer: 1) losses over gains, 2) long-term over short-term
 }
 

@@ -82,7 +82,7 @@ pta-spec/
 │   ├── formal/                         # Alloy models (mathematical proofs)
 │   │   ├── README.md                   # How to run Alloy, what's verified
 │   │   ├── inventory.als               # Inventory tracking invariants
-│   │   ├── balance-equation.als        # Assets = Liabilities + Equity
+│   │   ├── balance_equation.als        # Assets = Liabilities + Equity
 │   │   ├── booking/
 │   │   │   ├── fifo.als
 │   │   │   ├── lifo.als
@@ -90,8 +90,8 @@ pta-spec/
 │   │   │   ├── average.als
 │   │   │   └── specific.als
 │   │   └── reports/
-│   │       ├── trial-balance.als
-│   │       └── balance-sheet.als
+│   │       ├── trial_balance.als
+│   │       └── balance_sheet.als
 │   │
 │   ├── i18n/                           # Internationalization
 │   │   ├── README.md

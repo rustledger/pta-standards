@@ -189,7 +189,7 @@ Close(a) ==
 ```
 core/formal/
 ├── inventory.als           # Alloy: inventory invariants
-├── balance-equation.als    # Alloy: balance checking
+├── balance_equation.als    # Alloy: balance checking
 ├── booking/
 │   ├── fifo.als           # Alloy: FIFO booking
 │   ├── lifo.als           # Alloy: LIFO booking

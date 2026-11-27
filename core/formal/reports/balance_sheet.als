@@ -87,10 +87,32 @@ fun workingCapital[bs: BalanceSheet]: Int {
   add[currentAssets, currentLiabilities]  -- liabilities are negative
 }
 
+-- Bounded magnitudes (see balance_equation's BoundedMagnitudes): the checks
+-- assume account balances of at most |2| so that, at scope 3, no sum of
+-- balances can wrap around Alloy's 4-bit integers.
+pred BoundedBalances {
+  all a: Account | a.balance.value >= -2 and a.balance.value <= 2
+}
+
+-- The balance sheet is drawn from a whole single-currency ledger after the
+-- books are closed: it lists every Asset, Liability and Equity account,
+-- Income and Expenses have been closed into Equity (shown as "Retained
+-- Earnings" in reports/model/balance-sheet.md), and the ledger satisfies the
+-- balance equation of core/formal/balance_equation.
+pred ClosedLedger[bs: BalanceSheet] {
+  lone Account.balance.currency
+  bs.assets = type.Assets
+  bs.liabilities = type.Liabilities
+  bs.equity = type.Equity
+  all a: type.(Income + Expenses) | a.balance.value = 0
+  BalanceEquation[Account]
+}
+
 -- Assertions
 assert BalanceSheetBalances {
   all bs: BalanceSheet |
-    ValidBalanceSheet[bs] implies AccountingEquation[bs]
+    (BoundedBalances and ValidBalanceSheet[bs] and ClosedLedger[bs]) implies
+    AccountingEquation[bs]
 }
 
 assert AssetsArePositive {
@@ -103,25 +125,34 @@ assert LiabilitiesAreNegative {
     ValidBalanceSheet[bs] implies bs.totalLiabilities <= 0
 }
 
-check BalanceSheetBalances for 5
-check AssetsArePositive for 5
-check LiabilitiesAreNegative for 5
+check BalanceSheetBalances for 3
+check AssetsArePositive for 3
+check LiabilitiesAreNegative for 3
 
 -- Example: simple balanced balance sheet
 pred SimpleBalanceSheet {
   some bs: BalanceSheet |
   some disj cash, property: Account |
-  some disj loan, equity: Account |
+  some disj loan, owners: Account |
   some c: Currency |
-    cash.type = Assets and cash.balance.value = 10000 and cash.balance.currency = c and
-    property.type = Assets and property.balance.value = 100000 and property.balance.currency = c and
-    loan.type = Liabilities and loan.balance.value = -60000 and loan.balance.currency = c and
-    equity.type = Equity and equity.balance.value = -50000 and equity.balance.currency = c and
+    -- (amounts in units of 10000, to fit Alloy's integers)
+    cash.type = Assets and cash.balance.value = 1 and cash.balance.currency = c and
+    property.type = Assets and property.balance.value = 10 and property.balance.currency = c and
+    loan.type = Liabilities and loan.balance.value = -6 and loan.balance.currency = c and
+    owners.type = Equity and owners.balance.value = -5 and owners.balance.currency = c and
     bs.assets = cash + property and
     bs.liabilities = loan and
-    bs.equity = equity and
+    bs.equity = owners and
     ValidBalanceSheet[bs] and
     AccountingEquation[bs]
 }
 
-run SimpleBalanceSheet for 5
+run SimpleBalanceSheet for 5 but 6 Int
+
+-- Non-vacuity: the premise of BalanceSheetBalances holds for a closed ledger
+-- with an asset, a liability and an equity account.
+run ClosedLedgerExample {
+  some bs: BalanceSheet |
+    BoundedBalances and ValidBalanceSheet[bs] and ClosedLedger[bs] and
+    some bs.assets and some bs.liabilities and some bs.equity
+} for 3

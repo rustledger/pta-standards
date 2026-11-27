@@ -135,44 +135,56 @@ pred StandardPrecision[d: Decimal] {
   d.exponent <= 4
 }
 
+-- Bounded magnitudes for the checks below. Alloy integers are fixed-width
+-- and wrap around silently, including the scaleFactor literals (10, 100, ...)
+-- once they exceed the bitwidth, and its overflow guard does not reliably
+-- reject wrapped results. With exponents of at most 1 and mantissas of at
+-- most |3|, every aligned mantissa (<= 30) and every sum of two (<= 60) fits
+-- the 7-bit integers the checks use, so the arithmetic below is exact.
+pred Small[d: Decimal] {
+  d.exponent <= 1
+  d.mantissa >= -3 and d.mantissa <= 3
+}
+
 -- Assertions
 assert AdditionCommutative {
   all a, b: Decimal |
-    ValidDecimal[a] and ValidDecimal[b] implies
+    ValidDecimal[a] and ValidDecimal[b] and Small[a] and Small[b] implies
     let sum1 = decimalAdd[a, b], sum2 = decimalAdd[b, a] |
     one sum1 and one sum2 implies DecimalEqual[sum1, sum2]
 }
 
 assert ZeroIdentity {
   all a: Decimal, zero: Decimal |
-    ValidDecimal[a] and IsZero[zero] implies
+    ValidDecimal[a] and ValidDecimal[zero] and Small[a] and Small[zero] and IsZero[zero] implies
     let result = decimalAdd[a, zero] |
     one result implies DecimalEqual[result, a]
 }
 
 assert NegationInverse {
   all a: Decimal |
-    ValidDecimal[a] implies
+    ValidDecimal[a] and Small[a] implies
     let negA = decimalNeg[a] |
     one negA implies
     let result = decimalAdd[a, negA] |
     one result implies IsZero[result]
 }
 
-check AdditionCommutative for 3
-check ZeroIdentity for 3
-check NegationInverse for 3
+check AdditionCommutative for 3 but 7 Int
+check ZeroIdentity for 3 but 7 Int
+check NegationInverse for 3 but 7 Int
 
 -- Example: simple decimal arithmetic
 pred DecimalArithmeticExample {
-  some disj a, b, sum: Decimal |
+  some disj a, b, total: Decimal |
     -- a = 10.50 (mantissa: 1050, exponent: 2)
     a.mantissa = 1050 and a.exponent = 2 and
     -- b = 3.75 (mantissa: 375, exponent: 2)
     b.mantissa = 375 and b.exponent = 2 and
     -- sum = 14.25 (mantissa: 1425, exponent: 2)
-    sum = decimalAdd[a, b] and
-    sum.mantissa = 1425 and sum.exponent = 2
+    total = decimalAdd[a, b] and
+    total.mantissa = 1425 and total.exponent = 2
 }
 
-run DecimalArithmeticExample for 4
+-- 12-bit integers hold the mantissas 1050, 375 and 1425.
+run DecimalArithmeticExample for 4 but 12 Int
