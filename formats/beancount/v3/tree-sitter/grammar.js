@@ -4,6 +4,9 @@
  * This grammar produces a concrete syntax tree suitable for syntax highlighting,
  * code folding, and other editor features.
  *
+ * NOTE: hand-written approximation, not verified against beancount. For exact
+ * syntax-error behaviour see ../grammar/beancount.y and ../grammar/LEXICAL.md.
+ *
  * @see https://beancount.io/
  * @see https://tree-sitter.github.io/
  */
