@@ -91,6 +91,40 @@ jobs:
           echo "## Unit Test Results" >> $GITHUB_STEP_SUMMARY
           echo "Coverage report uploaded as artifact." >> $GITHUB_STEP_SUMMARY
 
+  differential-tooling:
+    name: Differential tooling (ptadiff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # 3.10 is the oldest Python the package supports (its consumers run
+      # it on 3.11), 3.12 this repository's own.
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: |
+            3.10
+            3.12
+
+      - name: Run the ptadiff tests on 3.10 and 3.12
+        env:
+          # The beancount tests must not pass by skipping.
+          PTADIFF_REQUIRE_BEANCOUNT: '1'
+        run: |
+          for py in python3.10 python3.12; do
+            $py -m venv "/tmp/venv-$py"
+            # Pinned: the normalizers, keys and generator digests are
+            # checked against beancount 3.2.3.
+            "/tmp/venv-$py/bin/pip" install pytest beancount==3.2.3
+            (cd tooling/differential && "/tmp/venv-$py/bin/python" -m pytest -v tests)
+          done
+
+      - name: The package installs from its subdirectory
+        run: |
+          python3.12 -m venv /tmp/venv-install
+          /tmp/venv-install/bin/pip install ./tooling/differential
+          (cd /tmp && /tmp/venv-install/bin/python -m ptadiff generate --format beancount --generator g3 --seed 1 --n 3 > /dev/null)
+
   validate-examples:
     name: Validate Examples
     runs-on: ubuntu-latest

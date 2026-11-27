@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptadiff"
+version = "0.1.0"
+description = "Format-generic differential testing of plain-text-accounting parsers"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+# The beancount oracle. Pin the version your normalizers and keys were
+# checked against (see ptadiff.formats.beancount.TESTED_VERSION).
+beancount = ["beancount==3.2.3"]
+
+[project.scripts]
+ptadiff = "ptadiff.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ptadiff*"]
+
+[tool.setuptools.package-data]
+"ptadiff.formats.beancount" = ["seeds/*.beancount"]
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+# Consumers run it on 3.10+ (rustledger's CI uses 3.11), so no 3.12 syntax.
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

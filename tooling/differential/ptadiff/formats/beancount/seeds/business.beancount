@@ -1,0 +1,113 @@
+; Small Business Example - Beancount
+; Demonstrates business accounting with receivables, payables, and inventory
+
+option "title" "Acme Consulting LLC"
+option "operating_currency" "USD"
+
+; ============================================================
+; Account Declarations
+; ============================================================
+
+2024-01-01 open Assets:Bank:Business           USD
+2024-01-01 open Assets:Receivables:ClientA     USD
+2024-01-01 open Assets:Receivables:ClientB     USD
+2024-01-01 open Assets:Equipment               USD
+2024-01-01 open Liabilities:Payables:Vendor1   USD
+2024-01-01 open Liabilities:CreditCard         USD
+2024-01-01 open Liabilities:Loans:Equipment    USD
+2024-01-01 open Income:Consulting              USD
+2024-01-01 open Income:Training                USD
+2024-01-01 open Expenses:Rent                  USD
+2024-01-01 open Expenses:Utilities             USD
+2024-01-01 open Expenses:Software              USD
+2024-01-01 open Expenses:Office-Supplies       USD
+2024-01-01 open Expenses:Professional-Services USD
+2024-01-01 open Expenses:Travel                USD
+2024-01-01 open Expenses:Interest              USD
+2024-01-01 open Equity:Opening-Balances        USD
+2024-01-01 open Equity:Retained-Earnings       USD
+
+; ============================================================
+; Opening Balances
+; ============================================================
+
+2024-01-01 * "Opening Balances"
+  Assets:Bank:Business        25000.00 USD
+  Assets:Equipment            15000.00 USD
+  Liabilities:Loans:Equipment -10000.00 USD
+  Equity:Opening-Balances
+
+; ============================================================
+; January Transactions
+; ============================================================
+
+2024-01-05 * "Client A" "Consulting services - January"
+  Assets:Receivables:ClientA   8000.00 USD
+  Income:Consulting           -8000.00 USD
+
+2024-01-08 * "Office Space Inc" "January rent"
+  Assets:Bank:Business        -2000.00 USD
+  Expenses:Rent                2000.00 USD
+
+2024-01-10 * "Client B" "Training workshop"
+  Assets:Receivables:ClientB   3500.00 USD
+  Income:Training             -3500.00 USD
+
+2024-01-12 * "Adobe" "Creative Cloud subscription"
+  Liabilities:CreditCard        -54.99 USD
+  Expenses:Software              54.99 USD
+
+2024-01-15 * "Client A" "Invoice payment received"
+  Assets:Bank:Business         8000.00 USD
+  Assets:Receivables:ClientA  -8000.00 USD
+
+2024-01-15 * "Vendor1" "Office supplies order"
+  Liabilities:Payables:Vendor1  -450.00 USD
+  Expenses:Office-Supplies       450.00 USD
+
+2024-01-18 * "Electric Company" "Office utilities"
+  Assets:Bank:Business         -175.00 USD
+  Expenses:Utilities            175.00 USD
+
+2024-01-20 * "CPA Firm" "Quarterly bookkeeping"
+  Assets:Bank:Business         -500.00 USD
+  Expenses:Professional-Services 500.00 USD
+
+2024-01-22 * "United Airlines" "Client site visit"
+  Liabilities:CreditCard       -385.00 USD
+  Expenses:Travel               385.00 USD
+
+2024-01-25 * "Client B" "Invoice payment received"
+  Assets:Bank:Business         3500.00 USD
+  Assets:Receivables:ClientB  -3500.00 USD
+
+2024-01-28 * "Equipment Loan Payment"
+  Assets:Bank:Business         -500.00 USD
+  Liabilities:Loans:Equipment    450.00 USD
+  Expenses:Interest               50.00 USD
+
+2024-01-30 * "Vendor1" "Pay outstanding invoice"
+  Assets:Bank:Business         -450.00 USD
+  Liabilities:Payables:Vendor1   450.00 USD
+
+2024-01-31 * "Credit Card Payment"
+  Assets:Bank:Business         -439.99 USD
+  Liabilities:CreditCard        439.99 USD
+
+; ============================================================
+; Balance Assertions
+; ============================================================
+
+2024-02-01 balance Assets:Bank:Business            32435.01 USD
+2024-02-01 balance Assets:Receivables:ClientA          0.00 USD
+2024-02-01 balance Assets:Receivables:ClientB          0.00 USD
+2024-02-01 balance Liabilities:Loans:Equipment     -9550.00 USD
+2024-02-01 balance Liabilities:CreditCard              0.00 USD
+
+; ============================================================
+; Month-End Reports
+; ============================================================
+
+; Revenue: 8000 + 3500 = 11500 USD
+; Expenses: 2000 + 54.99 + 450 + 175 + 500 + 385 + 50 = 3614.99 USD
+; Net Income: 11500 - 3614.99 = 7885.01 USD
