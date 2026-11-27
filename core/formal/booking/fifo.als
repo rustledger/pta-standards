@@ -2,7 +2,9 @@
  * FIFO Booking Method - First In, First Out
  *
  * Lots are consumed in chronological order of acquisition.
- * The oldest lots are used first when reducing a position.
+ * The oldest lots are used first when reducing a position; the lot at the
+ * boundary may be consumed partially, leaving a residual lot with the same
+ * cost, date and label (see ReduceUnits in core/formal/inventory).
  */
 
 module core/formal/booking/fifo
@@ -10,45 +12,24 @@ module core/formal/booking/fifo
 open core/formal/inventory
 open util/ordering[Time]
 
--- FIFO reduction: use oldest lots first
+-- FIFO selects the chronologically earliest lots: whole lots oldest first,
+-- then k units of the next-oldest lot.
+pred FIFOSelectsEarliest[inv: Inventory, c: Commodity, n: Int, full: set Lot, part: lone Lot, k: Int] {
+  SelectUnits[inv, c, n, full, part, k]
+  FIFOOrder[inv, c, full, part]
+}
+
+-- FIFO reduction: a FIFO selection applied to the inventory.
 pred FIFOReduce[inv, invAfter: Inventory, c: Commodity, n: Int] {
-  n > 0
-  let lotsForCommodity = { lot: inv.lots | lot.commodity = c } |
-  some lotsUsed: set Lot |
-    -- All used lots are from this commodity
-    lotsUsed in lotsForCommodity and
-
-    -- Units sum to requested amount
-    (sum lot: lotsUsed | lot.units) = n and
-
-    -- FIFO constraint: if lot A is used and lot B is not used,
-    -- then A was acquired before or at same time as B
-    (all used: lotsUsed, unused: (lotsForCommodity - lotsUsed) |
-      lt[used.acquisitionDate, unused.acquisitionDate] or
-      used.acquisitionDate = unused.acquisitionDate) and
-
-    -- Update inventory
-    invAfter.lots = inv.lots - lotsUsed
+  some full: set Lot, part, rest: lone Lot |
+    ReduceUnits[inv, invAfter, c, n, full, part, rest] and
+    FIFOOrder[inv, c, full, part]
 }
 
--- FIFO selects the chronologically earliest lots
-pred FIFOSelectsEarliest[inv: Inventory, c: Commodity, n: Int, selected: set Lot] {
-  let available = { lot: inv.lots | lot.commodity = c } |
-  selected in available and
-  (sum lot: selected | lot.units) = n and
-  -- No unselected lot is older than any selected lot
-  (all sel: selected, unsel: (available - selected) |
-    not gt[sel.acquisitionDate, unsel.acquisitionDate] or
-    -- Unless we needed the newer lot to reach the unit count
-    (sum older: { l: available | lt[l.acquisitionDate, sel.acquisitionDate] } | older.units) < n)
-}
-
--- Example: FIFO with two lots.
+-- Example: FIFO with two lots: buy 100 @ 10 then 50 @ 15, sell 80.
 -- Amounts are scaled by 1/10 (costs 10 and 15 become 2 and 3) to fit Alloy's
--- integers. This example reduces part of a lot, which FIFOReduce cannot
--- express (it consumes whole lots only), so it has no instance: see
--- scripts/alloy-known-failures.txt. FIFOWholeLotExample below is the
--- whole-lot case the model does cover.
+-- integers. The sale consumes 80 of the first lot and leaves 20 of it, at
+-- the same cost and date, beside the untouched second lot.
 pred FIFOExample {
   some inv1, inv2, inv3: Inventory, c: Commodity, cur: Currency |
   some disj t1, t2: Time |
@@ -60,7 +41,11 @@ pred FIFOExample {
     (some inv2a: Inventory |
       AcquireUnits[inv2, inv2a, c, 5, 3, cur, t2] and
       -- Reduce 80 units using FIFO (should use t1 lot first)
-      FIFOReduce[inv2a, inv3, c, 8])
+      FIFOReduce[inv2a, inv3, c, 8] and
+      -- 20 units of the t1 lot remain beside the untouched t2 lot
+      #inv3.lots = 2 and
+      (some r: inv3.lots | r.acquisitionDate = t1 and r.units = 2 and r.costPerUnit = 2) and
+      (some r: inv3.lots | r.acquisitionDate = t2 and r.units = 5 and r.costPerUnit = 3))
 }
 
 -- Example: FIFO reducing exactly the oldest lot leaves the newer one.
@@ -76,14 +61,12 @@ pred FIFOWholeLotExample {
       inv3.lots.acquisitionDate = t2)
 }
 
--- FIFO property: cost basis reflects oldest purchases
--- When reducing, the cost realized comes from earliest lots
+-- FIFO property: cost basis reflects oldest purchases.
+-- When reducing, the cost realized comes from the earliest lots.
 pred FIFOCostBasisProperty[inv: Inventory, c: Commodity, n: Int, cur: Currency] {
-  let sortedLots = { lot: inv.lots | lot.commodity = c } |
-  some usedLots: set Lot |
-    FIFOSelectsEarliest[inv, c, n, usedLots] and
-    -- The cost basis is sum of (units * cost) for used lots
-    (sum lot: usedLots | mul[lot.units, lot.costPerUnit]) >= 0
+  some full: set Lot, part: lone Lot, k: Int |
+    FIFOSelectsEarliest[inv, c, n, full, part, k] and
+    selectionCostBasis[full, part, k, cur] >= 0
 }
 
 -- Assertions

@@ -10,33 +10,20 @@ module core/formal/booking/hifo
 open core/formal/inventory
 open util/ordering[Time]
 
--- HIFO reduction: use highest cost lots first
-pred HIFOReduce[inv, invAfter: Inventory, c: Commodity, n: Int] {
-  n > 0
-  let lotsForCommodity = { lot: inv.lots | lot.commodity = c } |
-  some lotsUsed: set Lot |
-    -- All used lots are from this commodity
-    lotsUsed in lotsForCommodity and
-
-    -- Units sum to requested amount
-    (sum lot: lotsUsed | lot.units) = n and
-
-    -- HIFO constraint: used lots have higher cost than unused lots
-    (all used: lotsUsed, unused: (lotsForCommodity - lotsUsed) |
-      gte[used.costPerUnit, unused.costPerUnit]) and
-
-    -- Update inventory
-    invAfter.lots = inv.lots - lotsUsed
+-- HIFO selects the highest cost lots: whole lots dearest first, then k units
+-- of the next-dearest lot.
+pred HIFOSelectsHighestCost[inv: Inventory, c: Commodity, n: Int, full: set Lot, part: lone Lot, k: Int] {
+  SelectUnits[inv, c, n, full, part, k]
+  HIFOOrder[inv, c, full, part]
 }
 
--- HIFO selects the highest cost lots
-pred HIFOSelectsHighestCost[inv: Inventory, c: Commodity, n: Int, selected: set Lot] {
-  let available = { lot: inv.lots | lot.commodity = c } |
-  selected in available and
-  (sum lot: selected | lot.units) = n and
-  -- No unselected lot has higher cost than any selected lot
-  (all sel: selected, unsel: (available - selected) |
-    gte[sel.costPerUnit, unsel.costPerUnit])
+-- HIFO reduction: a HIFO selection applied to the inventory. The lot at the
+-- boundary may be consumed partially, leaving a residual lot with the same
+-- cost, date and label (see ReduceUnits in core/formal/inventory).
+pred HIFOReduce[inv, invAfter: Inventory, c: Commodity, n: Int] {
+  some full: set Lot, part, rest: lone Lot |
+    ReduceUnits[inv, invAfter, c, n, full, part, rest] and
+    HIFOOrder[inv, c, full, part]
 }
 
 -- Example: HIFO with varying costs
@@ -52,23 +39,20 @@ pred HIFOExample {
     lot3.commodity = c and lot3.units = 1 and lot3.costPerUnit = 3 and lot3.acquisitionDate = t3 and
     inv.lots = lot1 + lot2 + lot3 and
     -- HIFO should select lot2 (cost=25) first when reducing
-    some hifoLots: set Lot |
-      HIFOSelectsHighestCost[inv, c, 1, hifoLots] and
-      hifoLots = lot2
+    some hifoFull: set Lot, hifoPart: lone Lot, k: Int |
+      HIFOSelectsHighestCost[inv, c, 1, hifoFull, hifoPart, k] and
+      hifoFull = lot2 and no hifoPart
 }
 
--- HIFO minimizes gain (maximizes cost basis used)
-pred HIFOMinimizesGain[inv: Inventory, c: Commodity, n: Int, salePrice: Int] {
-  some hifoLots: set Lot |
-    HIFOSelectsHighestCost[inv, c, n, hifoLots] and
-    -- Cost basis is maximized
-    let hifoCost = (sum lot: hifoLots | mul[lot.units, lot.costPerUnit]) |
-    -- Compare to any other selection
-    (all otherLots: set Lot |
-      (otherLots in inv.lots and
-       all lot: otherLots | lot.commodity = c and
-       (sum lot: otherLots | lot.units) = n) implies
-      (sum lot: otherLots | mul[lot.units, lot.costPerUnit]) <= hifoCost)
+-- HIFO minimizes gain (maximizes cost basis used): no other selection of n
+-- units, whole or partial, realises a higher cost basis.
+pred HIFOMinimizesGain[inv: Inventory, c: Commodity, n: Int, cur: Currency] {
+  some hifoFull: set Lot, hifoPart: lone Lot, hifoK: Int |
+    HIFOSelectsHighestCost[inv, c, n, hifoFull, hifoPart, hifoK] and
+    (all otherFull: set Lot, otherPart: lone Lot, otherK: Int |
+      SelectUnits[inv, c, n, otherFull, otherPart, otherK] implies
+      selectionCostBasis[otherFull, otherPart, otherK, cur] <=
+        selectionCostBasis[hifoFull, hifoPart, hifoK, cur])
 }
 
 -- Gain calculation: sale proceeds - cost basis
@@ -77,10 +61,21 @@ fun calculateGain[saleProceeds: Int, costBasis: Int]: Int {
 }
 
 -- Assertions
+
+-- HIFO realises the highest cost basis of any selection of the same units
+-- (stated first-order over both selections so that it can be checked; the
+-- HIFOMinimizesGain form quantifies over a set inside an existential).
+-- Premises: one cost currency, positive units and non-negative costs, small
+-- enough that no basis can wrap around Alloy's integers.
 assert HIFOMaximizesCostBasis {
-  all inv: Inventory, c: Commodity, u: Int |
-    u > 0 and (sum lot: inv.lots | lot.commodity = c implies lot.units else 0) >= u implies
-    HIFOMinimizesGain[inv, c, u, 100]
+  all inv: Inventory, c: Commodity, cur: Currency, n: Int,
+      hifoFull, otherFull: set Lot, hifoPart, otherPart: lone Lot, hifoK, otherK: Int |
+    ((all l: Lot | l.units >= 1 and l.units <= 2 and l.costPerUnit >= 0 and
+                   l.costPerUnit <= 2 and l.costCurrency = cur) and
+     HIFOSelectsHighestCost[inv, c, n, hifoFull, hifoPart, hifoK] and
+     SelectUnits[inv, c, n, otherFull, otherPart, otherK]) implies
+    selectionCostBasis[otherFull, otherPart, otherK, cur] <=
+      selectionCostBasis[hifoFull, hifoPart, hifoK, cur]
 }
 
 assert HIFOUsesHighestCostFirst {
@@ -92,6 +87,7 @@ assert HIFOUsesHighestCostFirst {
       lte[remaining.costPerUnit, removed.costPerUnit])
 }
 
+check HIFOMaximizesCostBasis for 3 but 5 Int
 check HIFOUsesHighestCostFirst for 5
 
 run HIFOExample for 5

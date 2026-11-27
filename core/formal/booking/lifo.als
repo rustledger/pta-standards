@@ -2,7 +2,9 @@
  * LIFO Booking Method - Last In, First Out
  *
  * Lots are consumed in reverse chronological order.
- * The newest lots are used first when reducing a position.
+ * The newest lots are used first when reducing a position; the lot at the
+ * boundary may be consumed partially, leaving a residual lot with the same
+ * cost, date and label (see ReduceUnits in core/formal/inventory).
  */
 
 module core/formal/booking/lifo
@@ -10,45 +12,24 @@ module core/formal/booking/lifo
 open core/formal/inventory
 open util/ordering[Time]
 
--- LIFO reduction: use newest lots first
+-- LIFO selects the chronologically latest lots: whole lots newest first,
+-- then k units of the next-newest lot.
+pred LIFOSelectsLatest[inv: Inventory, c: Commodity, n: Int, full: set Lot, part: lone Lot, k: Int] {
+  SelectUnits[inv, c, n, full, part, k]
+  LIFOOrder[inv, c, full, part]
+}
+
+-- LIFO reduction: a LIFO selection applied to the inventory.
 pred LIFOReduce[inv, invAfter: Inventory, c: Commodity, n: Int] {
-  n > 0
-  let lotsForCommodity = { lot: inv.lots | lot.commodity = c } |
-  some lotsUsed: set Lot |
-    -- All used lots are from this commodity
-    lotsUsed in lotsForCommodity and
-
-    -- Units sum to requested amount
-    (sum lot: lotsUsed | lot.units) = n and
-
-    -- LIFO constraint: if lot A is used and lot B is not used,
-    -- then A was acquired after or at same time as B
-    (all used: lotsUsed, unused: (lotsForCommodity - lotsUsed) |
-      gt[used.acquisitionDate, unused.acquisitionDate] or
-      used.acquisitionDate = unused.acquisitionDate) and
-
-    -- Update inventory
-    invAfter.lots = inv.lots - lotsUsed
+  some full: set Lot, part, rest: lone Lot |
+    ReduceUnits[inv, invAfter, c, n, full, part, rest] and
+    LIFOOrder[inv, c, full, part]
 }
 
--- LIFO selects the chronologically latest lots
-pred LIFOSelectsLatest[inv: Inventory, c: Commodity, n: Int, selected: set Lot] {
-  let available = { lot: inv.lots | lot.commodity = c } |
-  selected in available and
-  (sum lot: selected | lot.units) = n and
-  -- No unselected lot is newer than any selected lot
-  (all sel: selected, unsel: (available - selected) |
-    not lt[sel.acquisitionDate, unsel.acquisitionDate] or
-    -- Unless we needed the older lot to reach the unit count
-    (sum newer: { l: available | gt[l.acquisitionDate, sel.acquisitionDate] } | newer.units) < n)
-}
-
--- Example: LIFO with two lots.
+-- Example: LIFO with two lots: buy 100 @ 10 then 50 @ 15, sell 40.
 -- Amounts are scaled by 1/10 (costs 10 and 15 become 2 and 3) to fit Alloy's
--- integers. This example reduces part of a lot, which LIFOReduce cannot
--- express (it consumes whole lots only), so it has no instance: see
--- scripts/alloy-known-failures.txt. LIFOWholeLotExample below is the
--- whole-lot case the model does cover.
+-- integers. The sale consumes 40 of the second lot and leaves 10 of it, at
+-- the same cost and date, beside the untouched first lot.
 pred LIFOExample {
   some inv1, inv2, inv3: Inventory, c: Commodity, cur: Currency |
   some disj t1, t2: Time |
@@ -60,7 +41,11 @@ pred LIFOExample {
     (some inv2a: Inventory |
       AcquireUnits[inv2, inv2a, c, 5, 3, cur, t2] and
       -- Reduce 40 units using LIFO (should use t2 lot first)
-      LIFOReduce[inv2a, inv3, c, 4])
+      LIFOReduce[inv2a, inv3, c, 4] and
+      -- 10 units of the t2 lot remain beside the untouched t1 lot
+      #inv3.lots = 2 and
+      (some r: inv3.lots | r.acquisitionDate = t2 and r.units = 1 and r.costPerUnit = 3) and
+      (some r: inv3.lots | r.acquisitionDate = t1 and r.units = 10 and r.costPerUnit = 2))
 }
 
 -- Example: LIFO reducing exactly the newest lot leaves the older one.
@@ -78,28 +63,33 @@ pred LIFOWholeLotExample {
 
 -- LIFO property: cost basis reflects newest purchases
 pred LIFOCostBasisProperty[inv: Inventory, c: Commodity, n: Int, cur: Currency] {
-  some usedLots: set Lot |
-    LIFOSelectsLatest[inv, c, n, usedLots]
+  some full: set Lot, part: lone Lot, k: Int |
+    LIFOSelectsLatest[inv, c, n, full, part, k]
 }
 
--- LIFO vs FIFO: different cost basis for same reduction
+-- LIFO vs FIFO: different cost basis for the same reduction
 pred LIFODifferentFromFIFO {
   some inv: Inventory, c: Commodity, cur: Currency |
   some disj lot1, lot2: Lot |
   some disj t1, t2: Time |
     lt[t1, t2] and
     -- (units scaled by 1/50 and costs by 1/10 to fit Alloy's integers)
-    lot1.commodity = c and lot1.units = 2 and lot1.costPerUnit = 1 and lot1.acquisitionDate = t1 and
-    lot2.commodity = c and lot2.units = 1 and lot2.costPerUnit = 2 and lot2.acquisitionDate = t2 and
+    lot1.commodity = c and lot1.units = 2 and lot1.costPerUnit = 1 and
+    lot1.costCurrency = cur and lot1.acquisitionDate = t1 and
+    lot2.commodity = c and lot2.units = 1 and lot2.costPerUnit = 2 and
+    lot2.costCurrency = cur and lot2.acquisitionDate = t2 and
     inv.lots = lot1 + lot2 and
     -- Reducing 50 units:
-    -- LIFO uses lot2 (cost basis = 50 * 20 = 1000)
-    -- FIFO uses lot1 (cost basis = 50 * 10 = 500); FIFO's half of lot1 is a
-    -- partial-lot reduction, which this whole-lot model cannot express, so
-    -- only the LIFO side is constrained here.
-    some lifoLots: set Lot |
-      LIFOSelectsLatest[inv, c, 1, lifoLots] and
-      lifoLots = lot2
+    -- LIFO uses all of lot2 (cost basis = 50 * 20 = 1000)
+    (some lifoFull: set Lot, lifoPart: lone Lot, lifoK: Int |
+      LIFOSelectsLatest[inv, c, 1, lifoFull, lifoPart, lifoK] and
+      lifoFull = lot2 and no lifoPart and
+      selectionCostBasis[lifoFull, lifoPart, lifoK, cur] = 2) and
+    -- FIFO uses half of lot1 (cost basis = 50 * 10 = 500)
+    (some fifoFull: set Lot, fifoPart: lone Lot, fifoK: Int |
+      SelectUnits[inv, c, 1, fifoFull, fifoPart, fifoK] and FIFOOrder[inv, c, fifoFull, fifoPart] and
+      no fifoFull and fifoPart = lot1 and fifoK = 1 and
+      selectionCostBasis[fifoFull, fifoPart, fifoK, cur] = 1)
 }
 
 -- Assertions

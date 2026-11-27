@@ -30,21 +30,14 @@ pred SpecificReduce[inv, invAfter: Inventory, c: Commodity, selectedLots: set Id
   invAfter.lots = inv.lots - selectedLots
 }
 
--- Partial lot reduction: reduce part of a specific lot
+-- Partial lot reduction: reduce part of a specific lot. This is the shared
+-- ReduceUnits with the chosen lot as its split lot: the residual is a fresh
+-- lot (not already in the inventory) with the same key and identifier.
 pred SpecificPartialReduce[inv, invAfter: Inventory, lot: IdentifiedLot, n: Int] {
-  n > 0
   n < lot.units
-  lot in inv.lots
-
-  -- Create reduced lot
-  some reducedLot: IdentifiedLot |
-    reducedLot.id = lot.id and
-    reducedLot.commodity = lot.commodity and
-    reducedLot.units = sub[lot.units, n] and
-    reducedLot.costPerUnit = lot.costPerUnit and
-    reducedLot.costCurrency = lot.costCurrency and
-    reducedLot.acquisitionDate = lot.acquisitionDate and
-    invAfter.lots = (inv.lots - lot) + reducedLot
+  some rest: IdentifiedLot |
+    rest.id = lot.id and
+    ReduceUnits[inv, invAfter, lot.commodity, n, none, lot, rest]
 }
 
 -- Lot specification syntax (as in beancount)
@@ -68,13 +61,12 @@ fun matchingLots[inv: Inventory, c: Commodity, spec: LotSpecifier]: set Lot {
   { lot: inv.lots | lot.commodity = c and LotMatchesSpec[lot, spec] }
 }
 
--- Specific identification with specifier
+-- Specific identification with specifier: the matching lots are reduced,
+-- whole or (at most one of them) in part.
 pred SpecificReduceWithSpec[inv, invAfter: Inventory, c: Commodity, n: Int, spec: LotSpecifier] {
-  let matching = matchingLots[inv, c, spec] |
-  some selectedLots: set Lot |
-    selectedLots in matching and
-    (sum lot: selectedLots | lot.units) = n and
-    invAfter.lots = inv.lots - selectedLots
+  some full: set Lot, part, rest: lone Lot |
+    full + part in matchingLots[inv, c, spec] and
+    ReduceUnits[inv, invAfter, c, n, full, part, rest]
 }
 
 -- Example: specific lot selection
@@ -123,3 +115,20 @@ pred TaxOptimizedSelection[inv: Inventory, c: Commodity, n: Int, saleDate: Time,
 check SpecificCanMatchAnyMethod for 4
 
 run SpecificExample for 5
+
+-- A partial specific reduction removes exactly n units. (Before the residual
+-- had to be fresh, it could coincide with a lot already held and be absorbed
+-- by set union, losing units.)
+assert SpecificPartialReduceDecreasesUnits {
+  all inv, invAfter: Inventory, lot: IdentifiedLot, n: Int |
+    (BoundedLots and SpecificPartialReduce[inv, invAfter, lot, n]) implies
+    totalUnitsFromLots[invAfter, lot.commodity] = sub[totalUnitsFromLots[inv, lot.commodity], n]
+}
+
+check SpecificPartialReduceDecreasesUnits for 3
+
+-- Non-vacuity: a partial specific reduction exists.
+run SpecificPartialExample {
+  some inv, invAfter: Inventory, lot: IdentifiedLot, n: Int |
+    SpecificPartialReduce[inv, invAfter, lot, n]
+} for 3

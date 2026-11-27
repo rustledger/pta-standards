@@ -10,24 +10,4 @@
 # fail CI, so remove its line when the model or the spec is fixed. Every
 # entry is a finding about the model or the spec it encodes, not noise.
 
-# Sign of a balance-sheet total is not an invariant. An Assets account can
-# hold a credit balance (an overdrawn checking account) and a Liabilities
-# account a debit balance (an over-paid credit card); nothing in
-# reports/model/balance-sheet.md or the ledger model forbids either, so the
-# assertions state a "normal balance" convention, not a property. Decide in
-# the spec whether these should be warnings (then drop the assertions) or
-# validation rules (then add them as premises).
-core/formal/reports/balance_sheet.als AssetsArePositive  # overdrawn asset account => totalAssets < 0
-core/formal/reports/balance_sheet.als LiabilitiesAreNegative  # over-paid liability => totalLiabilities > 0
-
-# The core booking models reduce whole lots only: FIFOReduce / LIFOReduce
-# pick a set of lots whose units sum exactly to the reduction, and there is
-# no predicate that splits a lot. These two examples (the models' own worked
-# examples: sell 80 of 100+50 FIFO, sell 40 of 100+50 LIFO) need a
-# partial-lot reduction, so they have no instance. Partial reductions are
-# the common case in practice, so the core models are incomplete here, not
-# wrong. The *WholeLotExample runs next to them show the whole-lot case
-# works. Fix by adding a split-lot step to core/formal/inventory.als's
-# ReduceUnits.
-core/formal/booking/fifo.als FIFOExample  # needs a partial-lot reduction, not modeled
-core/formal/booking/lifo.als LIFOExample  # needs a partial-lot reduction, not modeled
+# (none at present)
